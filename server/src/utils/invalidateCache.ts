@@ -18,7 +18,7 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
     await clearCacheForContentType(contentType, cacheStore);
 
     const relatedContentTypes = await getRelatedContentTypes(event, strapi);
-    console.log('relatedContentTypes', relatedContentTypes);
+    loggy.info(`Related content types for ${uid}: ${relatedContentTypes}`);
 
     for (const relatedContentType of relatedContentTypes) {
       const relatedContentTypeSchema = strapi.contentType(relatedContentType);
