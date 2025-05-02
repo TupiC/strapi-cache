@@ -14,15 +14,15 @@ const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
     strapi.db.lifecycles.subscribe({
       async afterCreate(event) {
         await invalidateCache(event, cacheStore, strapi);
-        await invalidateGraphqlCache(event, cacheStore, strapi);
+        await invalidateGraphqlCache(cacheStore);
       },
       async afterUpdate(event) {
         await invalidateCache(event, cacheStore, strapi);
-        await invalidateGraphqlCache(event, cacheStore, strapi);
+        await invalidateGraphqlCache(cacheStore);
       },
       async afterDelete(event) {
         await invalidateCache(event, cacheStore, strapi);
-        await invalidateGraphqlCache(event, cacheStore, strapi);
+        await invalidateGraphqlCache(cacheStore);
       },
     });
 
