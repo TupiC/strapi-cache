@@ -3,9 +3,10 @@ import { Context } from 'koa';
 
 export const generateCacheKey = (context: Context) => {
   const { url } = context.request;
+  const decodedUrl = decodeURIComponent(url);
   const { method } = context.request;
 
-  return `${method}:${url}`;
+  return `${method}:${decodedUrl}`;
 };
 
 export const generateGraphqlCacheKey = (payload: string) => {
