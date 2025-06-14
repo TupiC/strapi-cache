@@ -1,0 +1,23 @@
+services:
+  cache-cluster-node-0: # port 6379
+    image: docker.io/bitnami/valkey-cluster:8.1
+    volumes:
+      - cache-cluster-node-0:/bitnami/valkey/data
+    environment:
+      ALLOW_EMPTY_PASSWORD: 'yes'
+      VALKEY_CLUSTER_CREATOR: 'yes'
+      VALKEY_CLUSTER_REPLICAS: '0'
+      VALKEY_NODES: 'localhost'
+      VALKEY_CLUSTER_ANNOUNCE_HOSTNAME: "localhost"
+      VALKEY_CLUSTER_PREFERRED_ENDPOINT_TYPE: "hostname"
+    network_mode: host
+
+  redis_insight: # port 5540
+    image: redis/redisinsight
+    volumes:
+      - redisinsight:/data
+    network_mode: host
+
+volumes:
+  redisinsight:
+  cache-cluster-node-0:

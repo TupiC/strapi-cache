@@ -1,0 +1,18 @@
+services:
+  cache-standalone: # port 6379
+    image: docker.io/bitnami/valkey:8.1
+    environment:
+      ALLOW_EMPTY_PASSWORD: 'yes'
+    volumes:
+      - cache-standalone:/bitnami/valkey/data
+    network_mode: host
+
+  redis_insight: # port 5540
+    image: redis/redisinsight
+    volumes:
+      - redisinsight:/data
+    network_mode: host
+
+volumes:
+  redisinsight:
+  cache-standalone:
