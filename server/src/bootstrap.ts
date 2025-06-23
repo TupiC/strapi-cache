@@ -12,17 +12,17 @@ const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
     cacheStore.init();
 
     strapi.db.lifecycles.subscribe({
-      async afterCreate(event) {
-        await invalidateCache(event, cacheStore, strapi);
-        await invalidateGraphqlCache(event, cacheStore, strapi);
+      afterCreate(event) {
+        invalidateCache(event, cacheStore, strapi);
+        invalidateGraphqlCache(cacheStore);
       },
-      async afterUpdate(event) {
-        await invalidateCache(event, cacheStore, strapi);
-        await invalidateGraphqlCache(event, cacheStore, strapi);
+      afterUpdate(event) {
+        invalidateCache(event, cacheStore, strapi);
+        invalidateGraphqlCache(cacheStore);
       },
-      async afterDelete(event) {
-        await invalidateCache(event, cacheStore, strapi);
-        await invalidateGraphqlCache(event, cacheStore, strapi);
+      afterDelete(event) {
+        invalidateCache(event, cacheStore, strapi);
+        invalidateGraphqlCache(cacheStore);
       },
     });
 
