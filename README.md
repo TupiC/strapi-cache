@@ -52,6 +52,7 @@ In your Strapi project, navigate to `config/plugins.js` and add the following co
     cacheableRoutes: ['/api/products', '/api/categories'], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
     provider: 'memory', // Cache provider ('memory' or 'redis')
     redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis config takes either a string or an object see https://github.com/redis/ioredis for references to what object is available, the object or string is passed directly to ioredis client (if using Redis)
+    namespace: 'strapi-cache', // Namespace for cache keys (default is 'strapi-cache', only used for Redis cache)
     redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize ioredis redis cluster client. Each object must have keys 'host' and 'port'. See https://github.com/redis/ioredis for references
     redisClusterOptions: {}, // Options for ioredis redis cluster client. redisOptions key is taken from redisConfig parameter above if not set here. See https://github.com/redis/ioredis for references
     cacheHeaders: true, // Plugin also stores response headers in the cache (set to false if you don't want to cache headers)
@@ -60,6 +61,7 @@ In your Strapi project, navigate to `config/plugins.js` and add the following co
     cacheAuthorizedRequests: false, // Cache requests with authorization headers (set to true if you want to cache authorized requests)
     cacheGetTimeoutInMs: 1000, // Timeout for getting cached data in milliseconds (default is 1 second)
     autoPurgeCache: true, // Automatically purge cache on content CRUD operations
+    autoPurgeCacheOnStart: true, // Automatically purge cache on Strapi startup
   },
 },
 ```

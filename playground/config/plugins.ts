@@ -11,6 +11,7 @@ export default ({ env }) => ({
       cacheableRoutes: [], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
       provider: 'memory', // Cache provider ('memory' or 'redis')
       redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis config takes either a string or an object see https://github.com/redis/ioredis for references to what object is available, the object or string is passed directly to ioredis client (if using Redis)
+      namespace: 'strapi-cache', // Namespace for cache keys (default is 'strapi-cache', only used for Redis cache)
       redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize ioredis redis cluster client. Each object must have keys 'host' and 'port'. See https://github.com/redis/ioredis for references
       redisClusterOptions: {}, // Options for ioredis redis cluster client. redisOptions key is taken from redisConfig parameter above if not set here. See https://github.com/redis/ioredis for references
       cacheHeaders: true,
@@ -18,6 +19,7 @@ export default ({ env }) => ({
       cacheHeadersAllowList: ['content-type', 'content-security-policy'], // Headers to include in the cache (must be lowercase, if empty array, all headers are cached, cacheHeaders must be true),
       cacheAuthorizedRequests: false,
       autoPurgeCache: true, // Automatically purge cache on content CRUD operations
+      autoPurgeCacheOnStart: true, // Automatically purge cache on Strapi startup
     },
   },
 });

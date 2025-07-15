@@ -8,6 +8,7 @@ export class RedisCacheProvider implements CacheProvider {
   private initialized = false;
   private client!: Redis | Cluster;
   private cacheGetTimeoutInMs: number;
+  private namespace: string | undefined;
 
   constructor(private strapi: Core.Strapi) { }
 
@@ -24,6 +25,7 @@ export class RedisCacheProvider implements CacheProvider {
       this.cacheGetTimeoutInMs = Number(
         this.strapi.plugin('strapi-cache').config('cacheGetTimeoutInMs')
       );
+      this.namespace = this.strapi.plugin('strapi-cache').config('namespace');
       if (redisClusterNodes.length) {
         const redisClusterOptions: ClusterOptions =
           this.strapi.plugin('strapi-cache').config('redisClusterOptions');
@@ -54,7 +56,8 @@ export class RedisCacheProvider implements CacheProvider {
   async get(key: string): Promise<any | null> {
     if (!this.ready) return null;
 
-    return withTimeout(() => this.client.get(key), this.cacheGetTimeoutInMs)
+    const namespacedKey = this.namespace ? `${this.namespace}:${key}` : key;
+    return withTimeout(() => this.client.get(namespacedKey), this.cacheGetTimeoutInMs)
       .then((data) => (data ? JSON.parse(data) : null))
       .catch((error) => {
         loggy.error(`Redis get error: ${error?.message || error}`);
@@ -70,10 +73,11 @@ export class RedisCacheProvider implements CacheProvider {
       const ttlInMs = Number(this.strapi.plugin('strapi-cache').config('ttl'));
       const ttlInS = Number((ttlInMs/1000).toFixed());
       const serialized = JSON.stringify(val);
+      const namespacedKey = this.namespace ? `${this.namespace}:${key}` : key;
       if (ttlInS > 0) {
-        await this.client.set(key, serialized, 'EX', ttlInS);
+        await this.client.set(namespacedKey, serialized, 'EX', ttlInS);
       } else {
-        await this.client.set(key, serialized);
+        await this.client.set(namespacedKey, serialized);
       }
       return val;
     } catch (error) {
@@ -99,7 +103,8 @@ export class RedisCacheProvider implements CacheProvider {
     if (!this.ready) return null;
 
     try {
-      const keys = await this.client.keys('*');
+      const pattern = this.namespace ? `${this.namespace}*` : '*';
+      const keys = await this.client.keys(pattern);
       return keys;
     } catch (error) {
       loggy.error(`Redis keys error: ${error}`);
@@ -111,6 +116,16 @@ export class RedisCacheProvider implements CacheProvider {
     if (!this.ready) return null;
 
     try {
+      if (this.namespace) {
+        loggy.info(`Redis FLUSHING NAMESPACE: ${this.namespace}`);
+        const keys = await this.keys();
+        if (!keys) return null;
+
+        const toDelete = keys.filter((key) => key.startsWith(this.namespace));
+        await Promise.all(toDelete.map((key) => this.del(key)));
+        return true;
+      }
+
       loggy.info(`Redis FLUSHING ALL KEYS`);
       await this.client.flushdb();
       return true;

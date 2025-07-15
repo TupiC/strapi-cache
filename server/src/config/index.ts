@@ -16,6 +16,7 @@ export default {
     cacheAuthorizedRequests: false,
     cacheGetTimeoutInMs: 1000,
     autoPurgeCache: true,
+    autoPurgeCacheOnStart: true,
   }),
   validator: (config) => {
     if (typeof config.debug !== 'boolean') {
@@ -87,6 +88,12 @@ export default {
     }
     if (typeof config.autoPurgeCache !== 'boolean') {
       throw new Error(`Invalid config: autoPurgeCache must be a boolean`);
+    }
+    if (typeof config.autoPurgeCacheOnStart !== 'boolean') {
+      throw new Error(`Invalid config: autoPurgeCacheOnStart must be a boolean`);
+    }
+    if (config.namespace && typeof config.namespace !== 'string') {
+      throw new Error(`Invalid config: namespace must be a string`);
     }
   },
 };
