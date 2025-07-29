@@ -7,6 +7,10 @@ import { decodeBufferToText, decompressBuffer, streamToBuffer } from '../utils/b
 import { getCacheHeaderConfig, getHeadersToStore } from '../utils/header';
 
 const middleware = async (ctx: any, next: any) => {
+  if (ctx.request.method !== 'POST') {
+    await next();
+    return;
+  }
   const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
     getCacheHeaderConfig();
