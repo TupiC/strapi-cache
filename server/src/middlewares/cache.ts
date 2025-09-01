@@ -15,8 +15,6 @@ const middleware = async (ctx: Context, next: any) => {
   const { url } = ctx.request;
   const key = generateCacheKey(ctx);
   const cacheEntry = await cacheStore.get(key);
-  const cacheControlHeader = ctx.request.headers['cache-control'];
-  const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
   const routeIsCachable =
     cacheableRoutes.some((route) => url.startsWith(route)) ||
     (cacheableRoutes.length === 0 && url.startsWith('/api'));
@@ -28,7 +26,7 @@ const middleware = async (ctx: Context, next: any) => {
     return;
   }
 
-  if (cacheEntry && !noCache) {
+  if (cacheEntry) {
     loggy.info(`HIT with key: ${key}`);
     ctx.status = 200;
     ctx.body = cacheEntry.body;

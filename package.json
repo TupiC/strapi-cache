@@ -1,5 +1,5 @@
 {
-  "version": "1.5.7",
+  "version": "1.5.7-no-cache-header",
   "keywords": [
     "strapi cache",
     "strapi rest cache",

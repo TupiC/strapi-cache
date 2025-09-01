@@ -40,8 +40,6 @@ const middleware = async (ctx: any, next: any) => {
 
   const key = generateGraphqlCacheKey(body);
   const cacheEntry = await cacheStore.get(key);
-  const cacheControlHeader = ctx.request.headers['cache-control'];
-  const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
   const authorizationHeader = ctx.request.headers['authorization'];
 
   if (authorizationHeader && !cacheAuthorizedRequests) {
@@ -50,7 +48,7 @@ const middleware = async (ctx: any, next: any) => {
     return;
   }
 
-  if (cacheEntry && !noCache) {
+  if (cacheEntry) {
     loggy.info(`HIT with key: ${key}`);
     ctx.status = 200;
     ctx.body = cacheEntry.body;
