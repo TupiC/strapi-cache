@@ -50,6 +50,7 @@ In your Strapi project, navigate to `config/plugins.js` and add the following co
     size: 1024 * 1024 * 1024, // Maximum size of the cache (1 GB) (only for memory cache)
     allowStale: false, // Allow stale cache items (only for memory cache)
     cacheableRoutes: ['/api/products', '/api/categories'], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
+    excludeRoutes: ['/api/products/private'], // (NEW) Exclude routes which start with these paths from being cached (takes precedence over cacheableRoutes). **Note:** `excludeRoutes` takes precedence over `cacheableRoutes`.
     provider: 'memory', // Cache provider ('memory' or 'redis')
     redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis config takes either a string or an object see https://github.com/redis/ioredis for references to what object is available, the object or string is passed directly to ioredis client (if using Redis)
     redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize ioredis redis cluster client. Each object must have keys 'host' and 'port'. See https://github.com/redis/ioredis for references

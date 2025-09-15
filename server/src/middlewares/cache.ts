@@ -9,6 +9,7 @@ import { getCacheHeaderConfig, getHeadersToStore } from '../utils/header';
 const middleware = async (ctx: Context, next: any) => {
   const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
   const cacheableRoutes = strapi.plugin('strapi-cache').config('cacheableRoutes') as string[];
+  const excludeRoutes = strapi.plugin('strapi-cache').config('excludeRoutes') as string[];
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
     getCacheHeaderConfig();
   const cacheStore = cacheService.getCacheInstance();
@@ -17,9 +18,19 @@ const middleware = async (ctx: Context, next: any) => {
   const cacheEntry = await cacheStore.get(key);
   const cacheControlHeader = ctx.request.headers['cache-control'];
   const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
+
+  const routeIsExcluded = excludeRoutes.some((route) => url.startsWith(route));
+  
+  if (routeIsExcluded) {
+    loggy.info(`Route excluded from cache: ${url}`);
+    await next();
+    return;
+  }
+
   const routeIsCachable =
     cacheableRoutes.some((route) => url.startsWith(route)) ||
     (cacheableRoutes.length === 0 && url.startsWith('/api'));
+
   const authorizationHeader = ctx.request.headers['authorization'];
 
   if (authorizationHeader && !cacheAuthorizedRequests) {

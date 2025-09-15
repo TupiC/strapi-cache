@@ -7,6 +7,7 @@ export default {
     allowStale: false,
     cacheableRoutes: [],
     provider: 'memory',
+    excludeRoutes: [],
     redisConfig: env('REDIS_URL'),
     redisClusterNodes: [],
     redisClusterOptions: {},
@@ -39,6 +40,12 @@ export default {
       config.cacheableRoutes.some((item) => typeof item !== 'string')
     ) {
       throw new Error(`Invalid config: cacheableRoutes must be an string array`);
+    }
+    if (
+      !Array.isArray(config.excludeRoutes) ||
+      config.excludeRoutes.some((item) => typeof item !== 'string')
+    ) {
+      throw new Error(`Invalid config: excludeRoutes must be a string array`);
     }
     if (typeof config.provider !== 'string') {
       throw new Error(`Invalid config: provider must be a string`);
