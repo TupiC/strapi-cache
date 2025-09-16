@@ -50,6 +50,17 @@ const middleware = async (ctx: any, next: any) => {
     return;
   }
 
+  const middlewaresConfig = strapi.config.get('middlewares') as any[];
+  const corsMiddleware = middlewaresConfig.find((mw: any) => mw.name === 'strapi::cors');
+
+  const corsConfig = corsMiddleware?.config;
+  const origin = ctx?.request?.headers?.origin;
+  let allowedOrigins = corsConfig?.origin ?? '*';
+
+  if (typeof allowedOrigins === 'string') {
+    allowedOrigins = [allowedOrigins];
+  }
+
   if (cacheEntry && !noCache) {
     loggy.info(`HIT with key: ${key}`);
     ctx.status = 200;
@@ -58,18 +69,8 @@ const middleware = async (ctx: any, next: any) => {
       ctx.set(cacheEntry.headers);
     }
 
-    const middlewaresConfig = strapi.config.get('middlewares') as any[];
-    const corsMiddleware = middlewaresConfig.find((mw: any) => mw.name === 'strapi::cors');
-
     if (corsMiddleware) {
       loggy.info('CORS middleware is set, checking allowed origins');
-      const corsConfig = corsMiddleware?.config;
-      const origin = ctx?.request?.headers?.origin;
-      let allowedOrigins = corsConfig?.origin ?? '*';
-
-      if (typeof allowedOrigins === 'string') {
-        allowedOrigins = [allowedOrigins];
-      }
 
       if (allowedOrigins.includes(origin)) {
         loggy.info(`Setting Access-Control-Allow-Origin to ${origin}`);
@@ -109,16 +110,31 @@ const middleware = async (ctx: any, next: any) => {
       cacheHeadersDenyList
     );
 
+    let setCache = true;
+
+    if (corsMiddleware) {
+      if (allowedOrigins.includes(origin)) {
+        //do nothing as the origin is allowed
+      } else if (typeof origin === 'undefined' || allowedOrigins.includes('*')) {
+        //do nothing as the origin is undefined (POSTMAN) or allowedOrigins includes '*'
+      } else {
+        setCache = false;
+      }
+    }
+
     if (ctx.body instanceof Stream) {
       const buf = await streamToBuffer(ctx.body);
       const contentEncoding = ctx.response.headers['content-encoding'];
       const decompressed = await decompressBuffer(buf, contentEncoding);
       const responseText = decodeBufferToText(decompressed);
-
-      await cacheStore.set(key, { body: responseText, headers: headersToStore });
+      if (setCache) {
+        await cacheStore.set(key, { body: responseText, headers: headersToStore });
+      }
       ctx.body = buf;
     } else {
-      await cacheStore.set(key, { body: ctx.body, headers: headersToStore });
+      if (setCache) {
+        await cacheStore.set(key, { body: ctx.body, headers: headersToStore });
+      }
     }
   }
 };
