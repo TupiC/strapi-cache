@@ -18,6 +18,7 @@ const middleware = async (ctx: Context, next: any) => {
   const cacheEntry = await cacheStore.get(key);
   const cacheControlHeader = ctx.request.headers['cache-control'];
   const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
+  const restApiPrefix = strapi.config.get('api.rest.prefix', '/api');
 
   const routeIsExcluded = excludeRoutes.some((route) => url.startsWith(route));
   
@@ -29,7 +30,7 @@ const middleware = async (ctx: Context, next: any) => {
 
   const routeIsCachable =
     cacheableRoutes.some((route) => url.startsWith(route)) ||
-    (cacheableRoutes.length === 0 && url.startsWith('/api'));
+    (cacheableRoutes.length === 0 && url.startsWith(restApiPrefix));
 
   const authorizationHeader = ctx.request.headers['authorization'];
 

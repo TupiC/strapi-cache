@@ -5,6 +5,7 @@ import { loggy } from './log';
 export async function invalidateCache(event: any, cacheStore: CacheProvider, strapi: Core.Strapi) {
   const { model } = event;
   const uid = model.uid;
+  const restApiPrefix = strapi.config.get('api.rest.prefix', '/api');
 
   try {
     const contentType = strapi.contentType(uid);
@@ -18,7 +19,7 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
       contentType.kind === 'singleType'
         ? contentType.info.singularName
         : contentType.info.pluralName;
-    const apiPath = `/api/${pluralName}`;
+    const apiPath = `${restApiPrefix}/${pluralName}`;
     const regex = new RegExp(`^.*:${apiPath}(/.*)?(\\?.*)?$`);
 
     await cacheStore.clearByRegexp([regex]);

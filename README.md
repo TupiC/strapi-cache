@@ -82,7 +82,7 @@ All of these routes are protected by the policies `admin::isAuthenticatedAdmin` 
 - **Packages**: Uses [lru-cache](https://github.com/isaacs/node-lru-cache) for in-memory cache. Uses [ioredis](https://github.com/redis/ioredis) for Redis caching.
 - **Automatic Invalidation**: Cache is cleared automatically when content is updated, deleted, or created. (GraphQL cache clears on any content update.)
 - **`no-cache` Header Support**: Respects the `no-cache` header, letting you skip the cache by setting `Cache-Control: no-cache` in your request.
-- **Default Cached Requests**: By default, caches all GET requests to `/api` and POST requests to `/graphql`. You can customize which content types to cache in the config (only for GET requests).
+- **Default Cached Requests**: By default, caches all GET requests to `/api` (or whatever prefix you defined) and POST requests to `/graphql`. You can customize which content types to cache in the config (only for GET requests).
 
 ## 🔮 Planned Features
 
