@@ -18,6 +18,7 @@ export default {
     cacheGetTimeoutInMs: 1000,
     autoPurgeCache: true,
     autoPurgeCacheOnStart: true,
+    disableAdminPopups: false,
   }),
   validator: (config) => {
     if (typeof config.debug !== 'boolean') {
@@ -58,7 +59,9 @@ export default {
         throw new Error(`Invalid config: redisConfig must be set when using redis provider`);
       }
       if (typeof config.redisConfig !== 'string' && typeof config.redisConfig !== 'object') {
-        throw new Error(`Invalid config: redisConfig must be a string or object when using redis provider`);
+        throw new Error(
+          `Invalid config: redisConfig must be a string or object when using redis provider`
+        );
       }
       if (
         !Array.isArray(config.redisClusterNodes) ||
@@ -98,6 +101,9 @@ export default {
     }
     if (typeof config.autoPurgeCacheOnStart !== 'boolean') {
       throw new Error(`Invalid config: autoPurgeCacheOnStart must be a boolean`);
+    }
+    if (typeof config.disableAdminPopups !== 'boolean') {
+      throw new Error(`Invalid config: disableAdminPopups must be a boolean`);
     }
   },
 };

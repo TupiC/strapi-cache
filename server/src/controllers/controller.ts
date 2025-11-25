@@ -27,6 +27,17 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     const cacheableRoutes = strapi.plugin('strapi-cache').config('cacheableRoutes');
     ctx.body = cacheableRoutes;
   },
+  async config(ctx: Context) {
+    const config = strapi.plugin('strapi-cache').config('.');
+    //delete redis sensitive info if any
+    if (config.provider === 'redis') {
+      if (typeof config.redisConfig === 'string') {
+        config.redisConfig = 'redacted';
+      } else if (typeof config.redisConfig === 'object') {
+        config.redisConfig = 'redacted';
+      }
+    ctx.body = config;
+  },
 });
 
 export default controller;

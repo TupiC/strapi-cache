@@ -47,4 +47,20 @@ export default [
       ],
     },
   },
+  {
+    method: 'GET',
+    path: '/config',
+    handler: 'controller.config',
+    config: {
+      policies: [
+        'admin::isAuthenticatedAdmin',
+        {
+          name: 'plugin::content-manager.hasPermissions',
+          config: {
+            actions: ['plugin::strapi-cache.purge-cache'],
+          },
+        },
+      ],
+    },
+  },
 ];

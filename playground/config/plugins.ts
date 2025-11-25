@@ -20,6 +20,7 @@ export default ({ env }) => ({
       cacheAuthorizedRequests: false,
       autoPurgeCache: true, // Automatically purge cache on content CRUD operations
       autoPurgeCacheOnStart: true, // Automatically purge cache on Strapi startup
+      disableAdminPopups: false, // Disable popups in the admin panel
     },
   },
 });
@@ -45,6 +46,7 @@ export default ({ env }) => ({
 //       cacheHeadersAllowList: ['content-type', 'content-security-policy'], // Headers to include in the cache (must be lowercase, if empty array, all headers are cached, cacheHeaders must be true),
 //       cacheAuthorizedRequests: false,
 //       autoPurgeCache: true, // Automatically purge cache on content CRUD operations
+//       disableAdminPopups: false, // Disable popups in the admin panel
 //     },
 //   },
 // });
@@ -79,6 +81,7 @@ export default ({ env }) => ({
 //       cacheHeadersAllowList: ['content-type', 'content-security-policy'], // Headers to include in the cache (must be lowercase, if empty array, all headers are cached, cacheHeaders must be true),
 //       cacheAuthorizedRequests: false,
 //       autoPurgeCache: true, // Automatically purge cache on content CRUD operations
+//       disableAdminPopups: false, // Disable popups in the admin panel
 //     },
 //   },
 // });
