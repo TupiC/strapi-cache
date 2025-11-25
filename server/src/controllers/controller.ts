@@ -2,6 +2,11 @@ import type { Core } from '@strapi/strapi';
 import { Context } from 'koa';
 import { CacheService } from 'src/types/cache.types';
 
+interface PluginConfig {
+  cacheableRoutes: string[];
+  disableAdminPopups: boolean;
+}
+
 const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   async purgeCache(ctx: Context) {
     const service = strapi.plugin('strapi-cache').service('service') as CacheService;
@@ -23,20 +28,20 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
       message: `Cache purged successfully for key: ${key}`,
     };
   },
-  async cacheableRoutes(ctx: Context) {
-    const cacheableRoutes = strapi.plugin('strapi-cache').config('cacheableRoutes');
-    ctx.body = cacheableRoutes;
-  },
   async config(ctx: Context) {
-    const config = strapi.plugin('strapi-cache').config('.');
-    //delete redis sensitive info if any
-    if (config.provider === 'redis') {
-      if (typeof config.redisConfig === 'string') {
-        config.redisConfig = 'redacted';
-      } else if (typeof config.redisConfig === 'object') {
-        config.redisConfig = 'redacted';
-      }
-    ctx.body = config;
+    try {
+      // construct config object with only the properties needed by admin
+      const config: PluginConfig = {
+        cacheableRoutes: strapi.plugin('strapi-cache').config('cacheableRoutes') ?? [],
+        disableAdminPopups: strapi.plugin('strapi-cache').config('disableAdminPopups') ?? false,
+      };
+
+      ctx.body = config;
+    } catch (error) {
+      console.error('Error constructing config:', error);
+      ctx.status = 500;
+      ctx.body = { error: 'Configuration not available' };
+    }
   },
 });
 

@@ -8,6 +8,11 @@ import { useFetchClient } from '@strapi/strapi/admin';
 import { useEffect, useState } from 'react';
 import PurgeButton from './PurgeButton';
 
+type Config = {
+  cacheableRoutes: string[];
+  disableAdminPopups: boolean;
+};
+
 export type PurgeProps = {
   buttonText: string;
   buttonWidth?: string;
@@ -20,37 +25,43 @@ function PurgeModal({ buttonText, keyToUse, buttonWidth, contentTypeName }: Purg
   const formatMessage = useIntl().formatMessage;
   const { post, get } = useFetchClient();
   const { toggleNotification } = useNotification();
-  const [cacheableRoutes, setCacheableRoutes] = useState<string[]>();
+  const [config, setConfig] = useState<Config>();
 
   useEffect(() => {
     if (!allowedActions.canPurgeCache) {
       return;
     }
-    const fetchCacheableRoutes = async () => {
+    const fetchConfig = async () => {
       try {
-        const { data } = await get('/strapi-cache/cacheable-routes');
+        const { data } = await get('/strapi-cache/config');
         return data;
-      } catch (error) {
-        toggleNotification({
-          type: 'warning',
-          message: formatMessage({
-            id: 'strapi-cache.cache.routes.fetch-error',
-            defaultMessage: 'Unable to fetch cacheable routes. Cache purge may not work correctly.',
-          }),
-        });
+      } catch (error: any) {
+        // only show error notification if its not a permissions error and popups are not disabled
+        const isPermissionError =
+          error?.response?.status === 403 || error?.response?.status === 401;
+        if (!isPermissionError && !config?.disableAdminPopups) {
+          toggleNotification({
+            type: 'warning',
+            message: formatMessage({
+              id: 'strapi-cache.cache.routes.fetch-error',
+              defaultMessage: 'Unable to fetch cache config. Cache purge may not work correctly.',
+            }),
+          });
+        }
         return undefined;
       }
     };
-    fetchCacheableRoutes().then((data) => {
-      setCacheableRoutes(data);
+    fetchConfig().then((data) => {
+      setConfig(data);
     });
   }, [allowedActions.canPurgeCache]);
 
   const isCacheableRoute = () => {
-    if (!keyToUse || !cacheableRoutes) {
+    if (!keyToUse || !config) {
       return false;
     }
 
+    const { cacheableRoutes } = config;
     return (
       cacheableRoutes.length === 0 ||
       cacheableRoutes.some((route) => {
@@ -60,7 +71,7 @@ function PurgeModal({ buttonText, keyToUse, buttonWidth, contentTypeName }: Purg
   };
 
   const clearCache = () => {
-    if (!keyToUse) {
+    if (!keyToUse && !config?.disableAdminPopups) {
       toggleNotification({
         type: 'warning',
         message: formatMessage({
@@ -77,32 +88,36 @@ function PurgeModal({ buttonText, keyToUse, buttonWidth, contentTypeName }: Purg
       },
     })
       .then(() => {
-        toggleNotification({
-          type: 'success',
-          message: formatMessage(
-            {
-              id: 'strapi-cache.cache.purge.success',
-              defaultMessage: 'Cache purged successfully',
-            },
-            {
-              key: `"${keyToUse}"`,
-            }
-          ),
-        });
+        if (!config?.disableAdminPopups) {
+          toggleNotification({
+            type: 'success',
+            message: formatMessage(
+              {
+                id: 'strapi-cache.cache.purge.success',
+                defaultMessage: 'Cache purged successfully',
+              },
+              {
+                key: `"${keyToUse}"`,
+              }
+            ),
+          });
+        }
       })
       .catch(() => {
-        toggleNotification({
-          type: 'danger',
-          message: formatMessage(
-            {
-              id: 'strapi-cache.cache.purge.error',
-              defaultMessage: 'Error purging cache',
-            },
-            {
-              key: `"${keyToUse}"`,
-            }
-          ),
-        });
+        if (!config?.disableAdminPopups) {
+          toggleNotification({
+            type: 'danger',
+            message: formatMessage(
+              {
+                id: 'strapi-cache.cache.purge.error',
+                defaultMessage: 'Error purging cache',
+              },
+              {
+                key: `"${keyToUse}"`,
+              }
+            ),
+          });
+        }
       });
   };
 

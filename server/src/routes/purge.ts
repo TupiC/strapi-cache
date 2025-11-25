@@ -33,22 +33,6 @@ export default [
   },
   {
     method: 'GET',
-    path: '/cacheable-routes',
-    handler: 'controller.cacheableRoutes',
-    config: {
-      policies: [
-        'admin::isAuthenticatedAdmin',
-        {
-          name: 'plugin::content-manager.hasPermissions',
-          config: {
-            actions: ['plugin::strapi-cache.purge-cache'],
-          },
-        },
-      ],
-    },
-  },
-  {
-    method: 'GET',
     path: '/config',
     handler: 'controller.config',
     config: {
