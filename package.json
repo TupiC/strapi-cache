@@ -1,5 +1,5 @@
 {
-  "version": "1.6.0",
+  "version": "1.6.1",
   "keywords": [
     "strapi cache",
     "strapi rest cache",
@@ -42,8 +42,7 @@
     "ioredis": "^5.6.1",
     "lru-cache": "^11.1.0",
     "raw-body": "^3.0.0",
-    "react-intl": "^7.1.10",
-    "strapi-cache": "file:.yalc/strapi-cache"
+    "react-intl": "^7.1.10"
   },
   "devDependencies": {
     "@strapi/sdk-plugin": "^5.3.2",
