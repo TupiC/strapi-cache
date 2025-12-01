@@ -33,8 +33,8 @@ export default [
   },
   {
     method: 'GET',
-    path: '/cacheable-routes',
-    handler: 'controller.cacheableRoutes',
+    path: '/config',
+    handler: 'controller.config',
     config: {
       policies: [
         'admin::isAuthenticatedAdmin',

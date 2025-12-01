@@ -1,12 +1,14 @@
 import { useIntl } from 'react-intl';
 import { Archive } from '@strapi/icons';
 import { Button, Modal } from '@strapi/design-system';
-import { useNotification, useRBAC } from '@strapi/strapi/admin';
-import { pluginPermissions } from '../../permission';
 import { Typography } from '@strapi/design-system';
-import { useFetchClient } from '@strapi/strapi/admin';
-import { useEffect, useState } from 'react';
-import PurgeButton from './PurgeButton';
+import { useEffect } from 'react';
+import {
+  useCacheConfig,
+  useCachePermissions,
+  useCacheOperations,
+  useCacheNotifications,
+} from '../../hooks';
 
 export type PurgeProps = {
   buttonText: string;
@@ -16,97 +18,35 @@ export type PurgeProps = {
 };
 
 function PurgeModal({ buttonText, keyToUse, buttonWidth, contentTypeName }: PurgeProps) {
-  const { allowedActions } = useRBAC(pluginPermissions);
+  const { canPurgeCache } = useCachePermissions();
+  const { config, error: configError } = useCacheConfig(canPurgeCache);
+  const { isCacheableRoute, clearCache } = useCacheOperations();
+  const { showConfigFetchError, showPurgeSuccess, showPurgeError, showNoContentTypeWarning } =
+    useCacheNotifications(config);
   const formatMessage = useIntl().formatMessage;
-  const { post, get } = useFetchClient();
-  const { toggleNotification } = useNotification();
-  const [cacheableRoutes, setCacheableRoutes] = useState<string[]>();
 
   useEffect(() => {
-    if (!allowedActions.canPurgeCache) {
-      return;
+    if (configError) {
+      showConfigFetchError(configError);
     }
-    const fetchCacheableRoutes = async () => {
-      try {
-        const { data } = await get('/strapi-cache/cacheable-routes');
-        return data;
-      } catch (error) {
-        toggleNotification({
-          type: 'warning',
-          message: formatMessage({
-            id: 'strapi-cache.cache.routes.fetch-error',
-            defaultMessage: 'Unable to fetch cacheable routes. Cache purge may not work correctly.',
-          }),
-        });
-        return undefined;
-      }
-    };
-    fetchCacheableRoutes().then((data) => {
-      setCacheableRoutes(data);
-    });
-  }, [allowedActions.canPurgeCache]);
+  }, [configError, showConfigFetchError]);
 
-  const isCacheableRoute = () => {
-    if (!keyToUse || !cacheableRoutes) {
-      return false;
-    }
-
-    return (
-      cacheableRoutes.length === 0 ||
-      cacheableRoutes.some((route) => {
-        return route.includes(keyToUse) || (contentTypeName && route.includes(contentTypeName));
-      })
-    );
-  };
-
-  const clearCache = () => {
+  const handleClearCache = async () => {
     if (!keyToUse) {
-      toggleNotification({
-        type: 'warning',
-        message: formatMessage({
-          id: 'strapi-cache.cache.purge.no-content-type',
-          defaultMessage: 'No content type found',
-        }),
-      });
+      showNoContentTypeWarning();
       return;
     }
 
-    post(`/strapi-cache/purge-cache/${keyToUse}`, undefined, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(() => {
-        toggleNotification({
-          type: 'success',
-          message: formatMessage(
-            {
-              id: 'strapi-cache.cache.purge.success',
-              defaultMessage: 'Cache purged successfully',
-            },
-            {
-              key: `"${keyToUse}"`,
-            }
-          ),
-        });
-      })
-      .catch(() => {
-        toggleNotification({
-          type: 'danger',
-          message: formatMessage(
-            {
-              id: 'strapi-cache.cache.purge.error',
-              defaultMessage: 'Error purging cache',
-            },
-            {
-              key: `"${keyToUse}"`,
-            }
-          ),
-        });
-      });
+    const result = await clearCache(keyToUse);
+
+    if (result.success) {
+      showPurgeSuccess(keyToUse);
+    } else {
+      showPurgeError(keyToUse);
+    }
   };
 
-  if (!allowedActions.canPurgeCache || !isCacheableRoute()) {
+  if (!canPurgeCache || !isCacheableRoute(keyToUse, contentTypeName, config)) {
     return null;
   }
 
@@ -142,7 +82,12 @@ function PurgeModal({ buttonText, keyToUse, buttonWidth, contentTypeName }: Purg
             </Button>
           </Modal.Close>
           <Modal.Close>
-            <PurgeButton onClick={clearCache}></PurgeButton>
+            <Button onClick={handleClearCache}>
+              {formatMessage({
+                id: 'strapi-cache.cache.confirm',
+                defaultMessage: 'Yes, confirm',
+              })}
+            </Button>
           </Modal.Close>
         </Modal.Footer>
       </Modal.Content>

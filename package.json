@@ -1,5 +1,5 @@
 {
-  "version": "1.5.9",
+  "version": "1.6.0-rc.1",
   "keywords": [
     "strapi cache",
     "strapi rest cache",
@@ -42,7 +42,8 @@
     "ioredis": "^5.6.1",
     "lru-cache": "^11.1.0",
     "raw-body": "^3.0.0",
-    "react-intl": "^7.1.10"
+    "react-intl": "^7.1.10",
+    "strapi-cache": "file:.yalc/strapi-cache"
   },
   "devDependencies": {
     "@strapi/sdk-plugin": "^5.3.2",
@@ -71,10 +72,10 @@
     "kind": "plugin",
     "name": "strapi-cache",
     "displayName": "Strapi Cache",
-    "description": "A LRU-Cache plugin for strapi v5"
+    "description": "An LRU-Cache plugin for strapi v5"
   },
   "name": "strapi-cache",
-  "description": "A LRU-Cache plugin for strapi v5",
+  "description": "An LRU-Cache plugin for strapi v5",
   "license": "MIT",
   "author": "TupiC <christoph.tupi@gmail.com>",
   "repository": {
