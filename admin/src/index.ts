@@ -21,6 +21,28 @@ export default {
       name: PurgeEntityButton,
       Component: PurgeEntityButton,
     });
+
+    app.createSettingSection(
+      {
+        id: PLUGIN_ID,
+        intlLabel: {
+          id: 'strapi-cache.settings.link',
+          defaultMessage: 'Strapi Cache',
+        },
+      },
+      [
+        {
+          intlLabel: {
+            id: 'strapi-cache.settings.link',
+            defaultMessage: 'Strapi Cache',
+          },
+          id: 'settings',
+          to: `${PLUGIN_ID}/settings`,
+          Component: () => import('./components/SettingsPage'),
+          permissions: [],
+        },
+      ]
+    );
   },
 
   async registerTrads({ locales }: { locales: string[] }) {
