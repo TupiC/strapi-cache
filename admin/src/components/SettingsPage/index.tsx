@@ -47,7 +47,7 @@ const SettingsPage = () => {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setKeyToUse(e.target.value)}
           />
         </div>
-        <PurgeModal buttonText="Purge Cache" keyToUse={keyToUse} />
+        <PurgeModal buttonText="Purge Cache" keyToUse={keyToUse} isSettingsPage />
       </div>
     </div>
   );

@@ -15,9 +15,16 @@ export type PurgeProps = {
   buttonWidth?: string;
   keyToUse?: string;
   contentTypeName?: string;
+  isSettingsPage?: boolean;
 };
 
-function PurgeModal({ buttonText, keyToUse, buttonWidth, contentTypeName }: PurgeProps) {
+function PurgeModal({
+  buttonText,
+  keyToUse,
+  buttonWidth,
+  contentTypeName,
+  isSettingsPage,
+}: PurgeProps) {
   const { canPurgeCache } = useCachePermissions();
   const { config, error: configError } = useCacheConfig(canPurgeCache);
   const { isCacheableRoute, clearCache } = useCacheOperations();
@@ -46,14 +53,14 @@ function PurgeModal({ buttonText, keyToUse, buttonWidth, contentTypeName }: Purg
     }
   };
 
-  if (!canPurgeCache || !isCacheableRoute(keyToUse, contentTypeName, config)) {
+  if (!canPurgeCache || (!isSettingsPage && !isCacheableRoute(keyToUse, contentTypeName, config))) {
     return null;
   }
 
   return (
     <Modal.Root>
       <Modal.Trigger>
-        <Button width={buttonWidth} startIcon={<Archive />} variant="danger">
+        <Button width={buttonWidth} disabled={!keyToUse} startIcon={<Archive />} variant="danger">
           {buttonText}
         </Button>
       </Modal.Trigger>
