@@ -16,6 +16,7 @@ export type PurgeProps = {
   keyToUse?: string;
   contentTypeName?: string;
   isSettingsPage?: boolean;
+  isPurgeAll?: boolean;
 };
 
 function PurgeModal({
@@ -24,10 +25,11 @@ function PurgeModal({
   buttonWidth,
   contentTypeName,
   isSettingsPage,
+  isPurgeAll,
 }: PurgeProps) {
   const { canPurgeCache } = useCachePermissions();
   const { config, error: configError } = useCacheConfig(canPurgeCache);
-  const { isCacheableRoute, clearCache } = useCacheOperations();
+  const { isCacheableRoute, clearCache, clearAllCache } = useCacheOperations();
   const { showConfigFetchError, showPurgeSuccess, showPurgeError, showNoContentTypeWarning } =
     useCacheNotifications(config);
   const formatMessage = useIntl().formatMessage;
@@ -39,6 +41,16 @@ function PurgeModal({
   }, [configError, showConfigFetchError]);
 
   const handleClearCache = async () => {
+    if (isPurgeAll) {
+      const result = await clearAllCache();
+      if (result.success) {
+        showPurgeSuccess('all keys');
+      } else {
+        showPurgeError('all keys');
+      }
+      return;
+    }
+
     if (!keyToUse) {
       showNoContentTypeWarning();
       return;
@@ -53,14 +65,22 @@ function PurgeModal({
     }
   };
 
-  if (!canPurgeCache || (!isSettingsPage && !isCacheableRoute(keyToUse, contentTypeName, config))) {
+  if (
+    !canPurgeCache ||
+    (!isPurgeAll && !isSettingsPage && !isCacheableRoute(keyToUse, contentTypeName, config))
+  ) {
     return null;
   }
 
   return (
     <Modal.Root>
       <Modal.Trigger>
-        <Button width={buttonWidth} disabled={!keyToUse} startIcon={<Archive />} variant="danger">
+        <Button
+          width={buttonWidth}
+          disabled={!isPurgeAll && !keyToUse}
+          startIcon={<Archive />}
+          variant="danger"
+        >
           {buttonText}
         </Button>
       </Modal.Trigger>
@@ -70,13 +90,19 @@ function PurgeModal({
         </Modal.Header>
         <Modal.Body>
           <Typography variant="omega">
-            {formatMessage(
-              {
-                id: 'strapi-cache.cache.purge.confirmation',
-                defaultMessage: 'Are you sure you want to purge the cache?',
-              },
-              { key: `"${keyToUse}"` }
-            )}
+            {isPurgeAll
+              ? formatMessage({
+                  id: 'strapi-cache.cache.purge.confirmation-all',
+                  defaultMessage:
+                    'This purges all items in the cache. Are you sure you want to purge the cache?',
+                })
+              : formatMessage(
+                  {
+                    id: 'strapi-cache.cache.purge.confirmation',
+                    defaultMessage: 'Are you sure you want to purge the cache?',
+                  },
+                  { key: `"${keyToUse}"` }
+                )}
           </Typography>
         </Modal.Body>
         <Modal.Footer>
