@@ -10,7 +10,7 @@ export class RedisCacheProvider implements CacheProvider {
   private cacheGetTimeoutInMs: number;
   private keyPrefix: string;
 
-  constructor(private strapi: Core.Strapi) { }
+  constructor(private strapi: Core.Strapi) {}
 
   init(): void {
     if (this.initialized) {
@@ -20,15 +20,20 @@ export class RedisCacheProvider implements CacheProvider {
     try {
       const redisConfig =
         this.strapi.plugin('strapi-cache').config('redisConfig') || 'redis://localhost:6379';
-      const redisClusterNodes: ClusterNode[] =
-        this.strapi.plugin('strapi-cache').config('redisClusterNodes');
+      const redisClusterNodes: ClusterNode[] = this.strapi
+        .plugin('strapi-cache')
+        .config('redisClusterNodes');
       this.cacheGetTimeoutInMs = Number(
         this.strapi.plugin('strapi-cache').config('cacheGetTimeoutInMs')
       );
-      this.keyPrefix = this.strapi.plugin('strapi-cache').config('redisConfig')?.["keyPrefix"] as string | undefined ?? "";
+      this.keyPrefix =
+        (this.strapi.plugin('strapi-cache').config('redisConfig')?.['keyPrefix'] as
+          | string
+          | undefined) ?? '';
       if (redisClusterNodes.length) {
-        const redisClusterOptions: ClusterOptions =
-          this.strapi.plugin('strapi-cache').config('redisClusterOptions');
+        const redisClusterOptions: ClusterOptions = this.strapi
+          .plugin('strapi-cache')
+          .config('redisClusterOptions');
         if (!redisClusterOptions['redisOptions']) {
           redisClusterOptions.redisOptions = redisConfig;
         }
@@ -70,7 +75,7 @@ export class RedisCacheProvider implements CacheProvider {
     try {
       // plugin ttl is ms, ioredis ttl is s, so we convert here
       const ttlInMs = Number(this.strapi.plugin('strapi-cache').config('ttl'));
-      const ttlInS = Number((ttlInMs/1000).toFixed());
+      const ttlInS = Number((ttlInMs / 1000).toFixed());
       const serialized = JSON.stringify(val);
       if (ttlInS > 0) {
         await this.client.set(key, serialized, 'EX', ttlInS);
@@ -88,7 +93,7 @@ export class RedisCacheProvider implements CacheProvider {
     if (!this.ready) return null;
 
     try {
-      const relativeKey = key.slice(this.keyPrefix.length)
+      const relativeKey = key.slice(this.keyPrefix.length);
       loggy.info(`Redis PURGING KEY: ${relativeKey}`);
       await this.client.del(relativeKey);
       return true;
@@ -135,7 +140,10 @@ export class RedisCacheProvider implements CacheProvider {
 
   async clearByRegexp(regExps: RegExp[]): Promise<void> {
     const keys = await this.keys();
-    if (!keys) return;
+
+    if (!keys) {
+      return;
+    }
 
     const toDelete = keys.filter((key) => regExps.some((re) => re.test(key)));
     await Promise.all(toDelete.map((key) => this.del(key)));

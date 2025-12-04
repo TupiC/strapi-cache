@@ -17,7 +17,7 @@ export default [
   },
   {
     method: 'POST',
-    path: '/purge-cache/:key',
+    path: '/purge-cache/key',
     handler: 'controller.purgeCacheByKey',
     config: {
       policies: [

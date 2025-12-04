@@ -1,6 +1,7 @@
 import type { Core } from '@strapi/strapi';
 import { Context } from 'koa';
 import { CacheService } from 'src/types/cache.types';
+import { escapeRegExp } from 'src/utils/key';
 
 interface PluginConfig {
   cacheableRoutes: string[];
@@ -18,9 +19,18 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     };
   },
   async purgeCacheByKey(ctx: Context) {
-    const { key } = ctx.params;
+    const { key } = ctx.request.body as { key?: string };
+
+    if (!key || typeof key !== 'string' || key.trim() === '') {
+      ctx.status = 400;
+      ctx.body = {
+        error: 'Key is required and must be a non-empty string',
+      };
+      return;
+    }
+
     const service = strapi.plugin('strapi-cache').service('service') as CacheService;
-    const regex = new RegExp(`(^|\/)?${key}(\/|\\?|$)`);
+    const regex = new RegExp(escapeRegExp(key));
 
     await service.getCacheInstance().clearByRegexp([regex]);
 

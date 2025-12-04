@@ -12,3 +12,5 @@ export const generateGraphqlCacheKey = (payload: string) => {
   const hash = createHash('sha256').update(payload).digest('base64url');
   return `POST:/graphql:${hash}`;
 };
+
+export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

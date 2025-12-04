@@ -113,7 +113,12 @@ export class InMemoryCacheProvider implements CacheProvider {
   }
 
   async clearByRegexp(regExps: RegExp[]): Promise<void> {
-    const keys = (await this.keys()) || [];
+    const keys = await this.keys();
+
+    if (!keys) {
+      return;
+    }
+
     const matches = keys.filter((key) => regExps.some((re) => re.test(key)));
     await Promise.all(matches.map((key) => this.del(key)));
   }
