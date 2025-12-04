@@ -9,7 +9,9 @@ const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
   try {
     const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
     const autoPurgeCache = strapi.plugin('strapi-cache').config('autoPurgeCache') as boolean;
-    const autoPurgeCacheOnStart = strapi.plugin('strapi-cache').config('autoPurgeCacheOnStart') as boolean;
+    const autoPurgeCacheOnStart = strapi
+      .plugin('strapi-cache')
+      .config('autoPurgeCacheOnStart') as boolean;
     const cacheStore = cacheService.getCacheInstance();
 
     if (!cacheStore) {
@@ -23,25 +25,28 @@ const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
       strapi.db.lifecycles.subscribe({
         async afterCreate(event) {
           await invalidateCache(event, cacheStore, strapi);
-          await invalidateGraphqlCache(event, cacheStore, strapi);
+          await invalidateGraphqlCache(cacheStore);
         },
         async afterUpdate(event) {
           await invalidateCache(event, cacheStore, strapi);
-          await invalidateGraphqlCache(event, cacheStore, strapi);
+          await invalidateGraphqlCache(cacheStore);
         },
         async afterDelete(event) {
           await invalidateCache(event, cacheStore, strapi);
-          await invalidateGraphqlCache(event, cacheStore, strapi);
+          await invalidateGraphqlCache(cacheStore);
         },
       });
     }
 
     if (autoPurgeCacheOnStart) {
-      cacheStore.reset().then(() => {
-        loggy.info('Cache purged successfully');
-      }).catch((error) => {
-        loggy.error(`Error purging cache on start: ${error.message}`);
-      })
+      cacheStore
+        .reset()
+        .then(() => {
+          loggy.info('Cache purged successfully');
+        })
+        .catch((error) => {
+          loggy.error(`Error purging cache on start: ${error.message}`);
+        });
     }
   } catch (error) {
     loggy.error('Plugin could not be initialized');

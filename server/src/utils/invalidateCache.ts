@@ -30,11 +30,7 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
   }
 }
 
-export async function invalidateGraphqlCache(
-  event: any,
-  cacheStore: CacheProvider,
-  strapi: Core.Strapi
-) {
+export async function invalidateGraphqlCache(cacheStore: CacheProvider) {
   try {
     const graphqlRegex = new RegExp(`^POST:\/graphql(:.*)?$`);
 
