@@ -1,7 +1,7 @@
 import type { Core } from '@strapi/strapi';
 import { Context } from 'koa';
 import { CacheService } from 'src/types/cache.types';
-import { escapeRegExp } from 'src/utils/key';
+import { escapeRegExp } from '../utils/key';
 
 interface PluginConfig {
   cacheableRoutes: string[];
