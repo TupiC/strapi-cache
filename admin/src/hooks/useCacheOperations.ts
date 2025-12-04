@@ -37,11 +37,15 @@ export const useCacheOperations = () => {
     }
 
     try {
-      await post(`/strapi-cache/purge-cache/${keyToUse}`, undefined, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await post(
+        `/strapi-cache/purge-cache/key`,
+        { key: keyToUse },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       return {
         success: true,

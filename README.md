@@ -72,7 +72,7 @@ In your Strapi project, navigate to `config/plugins.js` and add the following co
 The plugin creates three new routes
 
 - `POST /strapi-cache/purge-cache` (purges the whole cache)
-- `POST /strapi-cache/purge-cache/:key` (purges cache entries that have the key in the cache key)
+- `POST /strapi-cache/purge-cache/key` (purges cache entries that have the key in the cache key, expects JSON body with `key` field)
 - `GET /strapi-cache/cacheable-routes` (returns the cacheable routes defined in the config)
 - `GET /strapi-cache/config` (returns the current plugin config)
 
