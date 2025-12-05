@@ -95,6 +95,8 @@ All of these routes are protected by the policies `admin::isAuthenticatedAdmin` 
 - [x] **Route/Content-Type Specific Caching**: Allow users to define which routes should be cached based.
 - [x] **Switchable Cache Providers**: Explore support for other caching providers like Redis for distributed caching.
 
+If you have any feature requests or suggestions, please open a dedicated issue.
+
 ## 🛑 Problems
 
 If you encounter any issues, please feel free to open an issue on the [GitHub repo](https://github.com/TupiC/strapi-cache/issues/new).
