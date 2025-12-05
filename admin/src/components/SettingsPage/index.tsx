@@ -16,7 +16,7 @@ const SettingsPage = () => {
         })}
       </Typography>
 
-      <div style={{ marginTop: '16px', marginBottom: '24px' }}>
+      <div style={{ marginTop: '16px', marginBottom: '16px' }}>
         <Typography variant="omega">
           {formatMessage({
             id: 'strapi-cache.settings.description',
@@ -33,6 +33,7 @@ const SettingsPage = () => {
           alignItems: 'center',
           gap: '12px',
           maxWidth: '400px',
+          marginBottom: '16px',
         }}
       >
         <div style={{ flex: 1 }}>
@@ -49,6 +50,7 @@ const SettingsPage = () => {
         </div>
         <PurgeModal buttonText="Purge Cache" keyToUse={keyToUse} isSettingsPage />
       </div>
+      <PurgeModal buttonText="Purge All" isPurgeAll isSettingsPage />
     </div>
   );
 };

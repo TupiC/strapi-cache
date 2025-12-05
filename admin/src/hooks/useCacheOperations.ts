@@ -60,8 +60,34 @@ export const useCacheOperations = () => {
     }
   };
 
+  const clearAllCache = async (): Promise<CacheOperationResult> => {
+    try {
+      await post(
+        `/strapi-cache/purge-cache`,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return {
+        success: true,
+        message: 'All cache purged successfully',
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: 'Error purging all cache',
+        error,
+      };
+    }
+  };
+
   return {
     isCacheableRoute,
     clearCache,
+    clearAllCache,
   };
 };

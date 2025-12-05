@@ -91,9 +91,11 @@ All of these routes are protected by the policies `admin::isAuthenticatedAdmin` 
 - [x] **Cache Invalidation**: Automatically invalidate cache on content updates, deletions, or creations.
 - [x] **GraphQL Caching**: Cache GraphQL queries.
 - [x] **Purge Cache Button**: Add a UI option in the Strapi admin panel to manually purge the cache for content-types.
-- [ ] **Purge Whole Cache Button**: Add a UI option in the Strapi admin settings panel to purge the whole cache.
+- [x] **Purge Whole Cache Button**: Add a UI option in the Strapi admin settings panel to purge the whole cache.
 - [x] **Route/Content-Type Specific Caching**: Allow users to define which routes should be cached based.
 - [x] **Switchable Cache Providers**: Explore support for other caching providers like Redis for distributed caching.
+
+If you have any feature requests or suggestions, please open a dedicated issue.
 
 ## 🛑 Problems
 

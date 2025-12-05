@@ -5,6 +5,7 @@
   "strapi-cache.cache.cancel": "No, cancel",
   "strapi-cache.cache.confirm": "Yes, purge",
   "strapi-cache.cache.purge.confirmation": "This purges all keys where {key} is part of the key. Are you sure you want to purge the cache?",
+  "strapi-cache.cache.purge.confirmation-all": "This purges all items in the cache. Are you sure you want to purge the cache?",
   "strapi-cache.cache.purge.success": "Cache purged successfully for {key}",
   "strapi-cache.cache.purge.error": "Error purging cache for {key}",
   "strapi-cache.cache.purge.no-content-type": "No content type found",
