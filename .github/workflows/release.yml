@@ -4,6 +4,13 @@ on:
     push:
         branches:
             - main
+    workflow_dispatch:
+        inputs:
+            publish_only:
+                description: "Skip release-please and publish directly"
+                required: false
+                type: boolean
+                default: false
 
 permissions:
     contents: write
@@ -12,6 +19,7 @@ permissions:
 jobs:
     release-please:
         runs-on: ubuntu-latest
+        if: ${{ !inputs.publish_only }}
         outputs:
             release_created: ${{ steps.release.outputs.release_created }}
             tag_name: ${{ steps.release.outputs.tag_name }}
@@ -26,7 +34,7 @@ jobs:
     publish-npm:
         runs-on: ubuntu-latest
         needs: release-please
-        if: ${{ needs.release-please.outputs.release_created }}
+        if: ${{ always() && (needs.release-please.outputs.release_created || inputs.publish_only) }}
         permissions:
             id-token: write # Required for OIDC trusted publishing
             contents: read
