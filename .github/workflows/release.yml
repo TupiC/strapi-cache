@@ -12,13 +12,12 @@ on:
                 type: boolean
                 default: false
 
-permissions:
-    contents: write
-    pull-requests: write
-
 jobs:
     release-please:
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
         if: ${{ !inputs.publish_only }}
         outputs:
             release_created: ${{ steps.release.outputs.release_created }}
