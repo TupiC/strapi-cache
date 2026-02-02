@@ -44,7 +44,7 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
 
 export async function invalidateGraphqlCache(cacheStore: CacheProvider) {
   try {
-    const graphqlRegex = new RegExp(`^POST:\/graphql(:.*)?$`);
+    const graphqlRegex = new RegExp(`^(GET|POST):\/graphql(:.*)?$`);
 
     await cacheStore.clearByRegexp([graphqlRegex]);
     loggy.info(`Invalidated cache for ${graphqlRegex}`);

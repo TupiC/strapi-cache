@@ -300,8 +300,8 @@ describe('invalidateGraphqlCache', () => {
   it('should invalidate GraphQL cache with correct regex', async () => {
     await invalidateGraphqlCache(mockCacheStore);
 
-    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^POST:\/graphql(:.*)?$/]);
-    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /^POST:\\/graphql(:.*)?$/');
+    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^(GET|POST):\/graphql(:.*)?$/]);
+    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /^(GET|POST):\\/graphql(:.*)?$/');
   });
 
   it('should handle cache store errors gracefully', async () => {
@@ -310,17 +310,18 @@ describe('invalidateGraphqlCache', () => {
 
     await invalidateGraphqlCache(mockCacheStore);
 
-    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^POST:\/graphql(:.*)?$/]);
+    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^(GET|POST):\/graphql(:.*)?$/]);
     expect(loggy.error).toHaveBeenCalledWith('Cache invalidation error:');
     expect(loggy.error).toHaveBeenCalledWith(error);
   });
 
   it('should create regex that matches GraphQL cache keys', () => {
-    const regex = /^POST:\/graphql(:.*)?$/;
+    const regex = /^(GET|POST):\/graphql(:.*)?$/;
 
     expect(regex.test('POST:/graphql:abc123')).toBe(true);
     expect(regex.test('POST:/graphql')).toBe(true);
-    expect(regex.test('GET:/graphql')).toBe(false);
+    expect(regex.test('GET:/graphql:xyz')).toBe(true);
+    expect(regex.test('GET:/graphql')).toBe(true);
     expect(regex.test('POST:/api/articles')).toBe(false);
   });
 });

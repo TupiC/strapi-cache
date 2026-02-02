@@ -8,9 +8,9 @@ export const generateCacheKey = (context: Context) => {
   return `${method}:${url}`;
 };
 
-export const generateGraphqlCacheKey = (payload: string) => {
+export const generateGraphqlCacheKey = (payload: string, method: 'GET' | 'POST' = 'POST') => {
   const hash = createHash('sha256').update(payload).digest('base64url');
-  return `POST:/graphql:${hash}`;
+  return `${method}:/graphql:${hash}`;
 };
 
 export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
