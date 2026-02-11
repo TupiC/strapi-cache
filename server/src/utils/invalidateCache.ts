@@ -6,6 +6,16 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
   const { model } = event;
   const uid = model.uid;
   const restApiPrefix = strapi.config.get('api.rest.prefix', '/api');
+  const cacheableEntities = strapi.plugin('strapi-cache').config('cacheableEntities') as string[];
+  const entityIsCacheable = cacheableEntities?.length
+    ? cacheableEntities.includes(model.tableName)
+    : true;
+
+  // do not contact cache store with not-cacheable entity
+  if (!entityIsCacheable) {
+    loggy.info(`Not invalidated. ${model.tableName} is not cacheable.`);
+    return;
+  }
 
   try {
     const contentType = strapi.contentType(uid);

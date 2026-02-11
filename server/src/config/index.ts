@@ -6,6 +6,7 @@ export default {
     size: 1024 * 1024 * 10,
     allowStale: false,
     cacheableRoutes: [],
+    cacheableEntities: [],
     provider: 'memory',
     excludeRoutes: [],
     redisConfig: env('REDIS_URL'),

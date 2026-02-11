@@ -1,5 +1,5 @@
 import { Context } from 'koa';
-import { generateCacheKey } from '../utils/key';
+import { generateCacheKey, generateEntityKey } from '../utils/key';
 import { CacheService } from '../../src/types/cache.types';
 import { loggy } from '../utils/log';
 import Stream from 'stream';
@@ -8,6 +8,7 @@ import { getCacheHeaderConfig, getHeadersToStore } from '../utils/header';
 
 const middleware = async (ctx: Context, next: any) => {
   const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
+  const cacheableEntities = strapi.plugin('strapi-cache').config('cacheableEntities') as string[];
   const cacheableRoutes = strapi.plugin('strapi-cache').config('cacheableRoutes') as string[];
   const excludeRoutes = strapi.plugin('strapi-cache').config('excludeRoutes') as string[];
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
@@ -19,18 +20,21 @@ const middleware = async (ctx: Context, next: any) => {
   const cacheControlHeader = ctx.request.headers['cache-control'];
   const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
   const restApiPrefix = strapi.config.get('api.rest.prefix', '/api');
+  const entityKey = generateEntityKey(url, restApiPrefix);
 
   const routeIsExcluded = excludeRoutes.some((route) => url.startsWith(route));
-  
+
   if (routeIsExcluded) {
     loggy.info(`Route excluded from cache: ${url}`);
     await next();
     return;
   }
 
-  const routeIsCachable =
+  const entityIsCacheable = cacheableEntities.includes(entityKey);
+  const routeIsCacheable =
     cacheableRoutes.some((route) => url.startsWith(route)) ||
     (cacheableRoutes.length === 0 && url.startsWith(restApiPrefix));
+  const isCacheable = entityIsCacheable || routeIsCacheable;
 
   const authorizationHeader = ctx.request.headers['authorization'];
 
@@ -79,7 +83,7 @@ const middleware = async (ctx: Context, next: any) => {
 
   await next();
 
-  if (ctx.method === 'GET' && ctx.status >= 200 && ctx.status < 300 && routeIsCachable) {
+  if (ctx.method === 'GET' && ctx.status >= 200 && ctx.status < 300 && isCacheable) {
     loggy.info(`MISS with key: ${key}`);
     const headersToStore = getHeadersToStore(
       ctx,

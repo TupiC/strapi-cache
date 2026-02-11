@@ -4,6 +4,7 @@ import { CacheService } from 'src/types/cache.types';
 import { escapeRegExp } from '../utils/key';
 
 interface PluginConfig {
+  cacheableEntities?: string[];
   cacheableRoutes: string[];
   disableAdminPopups: boolean;
 }
@@ -42,6 +43,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     try {
       // construct config object with only the properties needed by admin
       const config: PluginConfig = {
+        cacheableEntities: strapi.plugin('strapi-cache').config('cacheableEntities') ?? [],
         cacheableRoutes: strapi.plugin('strapi-cache').config('cacheableRoutes') ?? [],
         disableAdminPopups: strapi.plugin('strapi-cache').config('disableAdminPopups') ?? false,
       };

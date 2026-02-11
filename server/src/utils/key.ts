@@ -14,3 +14,9 @@ export const generateGraphqlCacheKey = (payload: string) => {
 };
 
 export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const generateEntityKey = (url: string, restApiPrefix: string): string => {
+  const regex = new RegExp(`${restApiPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/([^?]*)`);
+  const match = url.match(regex);
+  return match ? match[1] : '';
+}
