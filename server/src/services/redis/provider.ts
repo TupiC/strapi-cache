@@ -103,6 +103,19 @@ export class RedisCacheProvider implements CacheProvider {
     }
   }
 
+  /**
+   * Deletes all given keys in Redis pipeline.
+   * @param keys to delete from cache
+   */
+  async delAll(keys: string[]): Promise<void> {
+    const pipeline = (this.client as Redis).pipeline();
+    keys.forEach((key) => {
+      const relativeKey = key.slice(this.keyPrefix.length);
+      pipeline.del(relativeKey);
+    });
+    await pipeline.exec();
+  }
+
   async keys(): Promise<string[] | null> {
     if (!this.ready) return null;
 
@@ -146,6 +159,6 @@ export class RedisCacheProvider implements CacheProvider {
     }
 
     const toDelete = keys.filter((key) => regExps.some((re) => re.test(key)));
-    await Promise.all(toDelete.map((key) => this.del(key)));
+    await this.delAll(toDelete);
   }
 }
