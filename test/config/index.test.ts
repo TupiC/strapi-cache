@@ -138,6 +138,32 @@ describe('config', () => {
       });
     });
 
+    describe('cacheableEntities validation', () => {
+      it('should not throw when cacheableEntities is undefined', () => {
+        const configWithUndefined = { ...validConfig, cacheableEntities: undefined };
+        expect(() => config.validator(configWithUndefined)).not.toThrow();
+      });
+
+      it('should not throw for valid cacheableEntities array', () => {
+        const configWithEntities = { ...validConfig, cacheableEntities: ['articles', 'users'] };
+        expect(() => config.validator(configWithEntities)).not.toThrow();
+      });
+
+      it('should throw for non-array cacheableEntities', () => {
+        const invalidConfig = { ...validConfig, cacheableEntities: 'invalid' };
+        expect(() => config.validator(invalidConfig)).toThrow(
+          'Invalid config: cacheableEntities must be a string array'
+        );
+      });
+
+      it('should throw for array with non-string elements', () => {
+        const invalidConfig = { ...validConfig, cacheableEntities: ['articles', 123] };
+        expect(() => config.validator(invalidConfig)).toThrow(
+          'Invalid config: cacheableEntities must be a string array'
+        );
+      });
+    });
+
     describe('excludeRoutes validation', () => {
       it('should throw for non-array excludeRoutes', () => {
         const invalidConfig = { ...validConfig, excludeRoutes: 'invalid' };

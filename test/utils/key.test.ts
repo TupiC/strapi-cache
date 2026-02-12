@@ -3,6 +3,7 @@ import {
   generateCacheKey,
   generateGraphqlCacheKey,
   escapeRegExp,
+  generateEntityKey,
 } from '../../server/src/utils/key';
 import { Context } from 'koa';
 
@@ -192,5 +193,38 @@ describe('escapeRegExp', () => {
     const input = 'test\\path';
     const result = escapeRegExp(input);
     expect(result).toBe('test\\\\path');
+  });
+});
+
+describe('generateEntityKey', () => {
+  it('should extract entity name from URLs', () => {
+    const restApiPrefix = '/api';
+
+    expect(generateEntityKey('/api/articles', restApiPrefix)).toBe('articles');
+    expect(generateEntityKey('/api/articles/123', restApiPrefix)).toBe('articles');
+    expect(generateEntityKey('/api/users', restApiPrefix)).toBe('users');
+  });
+
+  it('should ignore query parameters', () => {
+    const restApiPrefix = '/api';
+
+    expect(generateEntityKey('/api/articles?populate=*&sort=title', restApiPrefix)).toBe('articles');
+    expect(generateEntityKey('/api/articles/123?populate=author', restApiPrefix)).toBe('articles');
+  });
+
+  it('should handle custom REST API prefix', () => {
+    expect(generateEntityKey('/custom-api/users', '/custom-api')).toBe('users');
+    expect(generateEntityKey('/v2/api/products', '/v2/api')).toBe('products');
+  });
+
+  it('should escape special regex characters in prefix', () => {
+    expect(generateEntityKey('/api.v2/articles', '/api.v2')).toBe('articles');
+  });
+
+  it('should return empty string for non-matching URLs', () => {
+    const restApiPrefix = '/api';
+
+    expect(generateEntityKey('/graphql', restApiPrefix)).toBe('');
+    expect(generateEntityKey('/other/articles', restApiPrefix)).toBe('');
   });
 });
