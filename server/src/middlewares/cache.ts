@@ -8,7 +8,9 @@ import { getCacheHeaderConfig, getHeadersToStore } from '../utils/header';
 
 const middleware = async (ctx: Context, next: any) => {
   const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
-  const cacheableEntities = strapi.plugin('strapi-cache').config('cacheableEntities') as string[];
+  const cacheableEntities = strapi.plugin('strapi-cache').config('cacheableEntities') as
+    | string[]
+    | undefined;
   const cacheableRoutes = strapi.plugin('strapi-cache').config('cacheableRoutes') as string[];
   const excludeRoutes = strapi.plugin('strapi-cache').config('excludeRoutes') as string[];
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
@@ -30,11 +32,13 @@ const middleware = async (ctx: Context, next: any) => {
     return;
   }
 
-  const entityIsCacheable = cacheableEntities.includes(entityKey);
+  const entityIsCacheable = cacheableEntities?.length
+    ? cacheableEntities.includes(entityKey)
+    : undefined;
   const routeIsCacheable =
     cacheableRoutes.some((route) => url.startsWith(route)) ||
     (cacheableRoutes.length === 0 && url.startsWith(restApiPrefix));
-  const isCacheable = entityIsCacheable || routeIsCacheable;
+  const isCacheable = entityIsCacheable ?? routeIsCacheable;
 
   const authorizationHeader = ctx.request.headers['authorization'];
 

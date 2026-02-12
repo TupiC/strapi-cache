@@ -6,7 +6,6 @@ export default {
     size: 1024 * 1024 * 10,
     allowStale: false,
     cacheableRoutes: [],
-    cacheableEntities: [],
     provider: 'memory',
     excludeRoutes: [],
     redisConfig: env('REDIS_URL'),
@@ -42,6 +41,13 @@ export default {
       config.cacheableRoutes.some((item) => typeof item !== 'string')
     ) {
       throw new Error(`Invalid config: cacheableRoutes must be an string array`);
+    }
+    if (
+      config.cacheableEntities !== undefined &&
+      (!Array.isArray(config.cacheableEntities) ||
+        config.cacheableEntities.some((item) => typeof item !== 'string'))
+    ) {
+      throw new Error(`Invalid config: cacheableEntities must be a string array`);
     }
     if (
       !Array.isArray(config.excludeRoutes) ||
