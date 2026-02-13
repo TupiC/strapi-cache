@@ -6,6 +6,7 @@ import { escapeRegExp } from '../utils/key';
 interface PluginConfig {
   cacheableRoutes: string[];
   disableAdminPopups: boolean;
+  disableAdminButtons: boolean;
 }
 
 const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
@@ -44,6 +45,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
       const config: PluginConfig = {
         cacheableRoutes: strapi.plugin('strapi-cache').config('cacheableRoutes') ?? [],
         disableAdminPopups: strapi.plugin('strapi-cache').config('disableAdminPopups') ?? false,
+        disableAdminButtons: strapi.plugin('strapi-cache').config('disableAdminButtons') ?? false,
       };
 
       ctx.body = config;

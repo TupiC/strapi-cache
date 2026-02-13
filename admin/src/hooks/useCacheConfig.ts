@@ -4,6 +4,7 @@ import { useFetchClient } from '@strapi/strapi/admin';
 export type CacheConfig = {
   cacheableRoutes: string[];
   disableAdminPopups: boolean;
+  disableAdminButtons: boolean;
 };
 
 export const useCacheConfig = (enabled: boolean = true) => {
