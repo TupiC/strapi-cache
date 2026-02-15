@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { invalidateCache, invalidateGraphqlCache } from '../../server/src/utils/invalidateCache';
+import type { CacheProvider } from '../../server/src/types/cache.types';
+import type { Core } from '@strapi/strapi';
 
 // Mock the logger
 vi.mock('../../server/src/utils/log', () => ({
@@ -14,8 +16,8 @@ vi.mock('../../server/src/utils/log', () => ({
 import { loggy } from '../../server/src/utils/log';
 
 describe('invalidateCache', () => {
-  let mockCacheStore: any;
-  let mockStrapi: any;
+  let mockCacheStore: Pick<CacheProvider, 'clearByRegexp'>;
+  let mockStrapi: Pick<Core.Strapi, 'config' | 'contentType' | 'plugin'>;
 
   beforeEach(() => {
     mockCacheStore = {
@@ -27,6 +29,9 @@ describe('invalidateCache', () => {
         get: vi.fn(),
       },
       contentType: vi.fn(),
+      plugin: vi.fn().mockReturnValue({
+        config: vi.fn().mockReturnValue([]),
+      }),
     };
 
     vi.clearAllMocks();
@@ -191,10 +196,94 @@ describe('invalidateCache', () => {
     expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
     expect(loggy.info).not.toHaveBeenCalled();
   });
+
+  it('should skip invalidation when entity is not in cacheableEntities list', async () => {
+    const event = {
+      model: {
+        uid: 'api::article.article',
+        tableName: 'articles',
+      },
+    };
+
+    const contentType = {
+      kind: 'collectionType',
+      info: {
+        pluralName: 'articles',
+      },
+    };
+
+    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.contentType.mockReturnValue(contentType);
+    mockStrapi.plugin.mockReturnValue({
+      config: vi.fn().mockReturnValue(['users', 'products']), // articles not in list
+    });
+
+    await invalidateCache(event, mockCacheStore, mockStrapi);
+
+    expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
+    expect(loggy.info).toHaveBeenCalledWith('Not invalidated. articles is not cacheable.');
+  });
+
+  it('should invalidate cache when entity is in cacheableEntities list', async () => {
+    const event = {
+      model: {
+        uid: 'api::article.article',
+        tableName: 'articles',
+      },
+    };
+
+    const contentType = {
+      kind: 'collectionType',
+      info: {
+        pluralName: 'articles',
+      },
+    };
+
+    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.contentType.mockReturnValue(contentType);
+    mockStrapi.plugin.mockReturnValue({
+      config: vi.fn().mockReturnValue(['articles', 'users']), // articles is in list
+    });
+
+    await invalidateCache(event, mockCacheStore, mockStrapi);
+    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
+      /^.*:\/api\/articles(\/.*)?(\?.*)?$/,
+    ]);
+    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /api/articles');
+  });
+
+  it('should invalidate all entities when cacheableEntities is not configured (defaults to all cacheable)', async () => {
+    const event = {
+      model: {
+        uid: 'api::article.article',
+        tableName: 'articles',
+      },
+    };
+
+    const contentType = {
+      kind: 'collectionType',
+      info: {
+        pluralName: 'articles',
+      },
+    };
+
+    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.contentType.mockReturnValue(contentType);
+    mockStrapi.plugin.mockReturnValue({
+      config: vi.fn().mockReturnValue(null), // null/falsy means all entities are cacheable
+    });
+
+    await invalidateCache(event, mockCacheStore, mockStrapi);
+
+    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
+      /^.*:\/api\/articles(\/.*)?(\?.*)?$/,
+    ]);
+    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /api/articles');
+  });
 });
 
 describe('invalidateGraphqlCache', () => {
-  let mockCacheStore: any;
+  let mockCacheStore: Pick<CacheProvider, 'clearByRegexp'>;
 
   beforeEach(() => {
     mockCacheStore = {

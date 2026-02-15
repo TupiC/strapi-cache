@@ -50,6 +50,7 @@ In your Strapi project, navigate to `config/plugins.js` and add the following co
     size: 1024 * 1024 * 1024, // Maximum size of the cache (1 GB) (only for memory cache)
     allowStale: false, // Allow stale cache items (only for memory cache)
     cacheableRoutes: ['/api/products', '/api/categories'], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
+    // cacheableEntities: ['products', 'categories'], // (Optional) Specify which entities to cache. When set, only these entities will be cached (ignores cacheableRoutes). If not set (undefined), cacheableRoutes logic is used
     excludeRoutes: ['/api/products/private'], // (NEW) Exclude routes which start with these paths from being cached (takes precedence over cacheableRoutes). **Note:** `excludeRoutes` takes precedence over `cacheableRoutes`.
     provider: 'memory', // Cache provider ('memory' or 'redis')
     redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis config takes either a string or an object see https://github.com/redis/ioredis for references to what object is available, the object or string is passed directly to ioredis client (if using Redis)
@@ -61,6 +62,7 @@ In your Strapi project, navigate to `config/plugins.js` and add the following co
     cacheAuthorizedRequests: false, // Cache requests with authorization headers (set to true if you want to cache authorized requests)
     cacheGetTimeoutInMs: 1000, // Timeout for getting cached data in milliseconds (default is 1 second)
     autoPurgeCache: true, // Automatically purge cache on content CRUD operations
+    autoPurgeGraphQL: true, // Automatically purge GraphQL cache on content CRUD operations
     autoPurgeCacheOnStart: true, // Automatically purge cache on Strapi startup
     disableAdminPopups: false, // Disable popups in the admin panel
   },
@@ -84,7 +86,7 @@ All of these routes are protected by the policies `admin::isAuthenticatedAdmin` 
 - **Packages**: Uses [lru-cache](https://github.com/isaacs/node-lru-cache) for in-memory cache. Uses [ioredis](https://github.com/redis/ioredis) for Redis caching.
 - **Automatic Invalidation**: Cache is cleared automatically when content is updated, deleted, or created. (GraphQL cache clears on any content update.)
 - **`no-cache` Header Support**: Respects the `no-cache` header, letting you skip the cache by setting `Cache-Control: no-cache` in your request.
-- **Default Cached Requests**: By default, caches all GET requests to `/api` (or whatever prefix you defined) and POST requests to `/graphql`. You can customize which content types to cache in the config (only for GET requests).
+- **Default Cached Requests**: By default, caches all GET requests to `/api` (or whatever prefix you defined) and POST requests to `/graphql`. You can customize which routes or entities to cache using `cacheableRoutes` or `cacheableEntities` config options.
 
 ## 🔮 Planned Features
 

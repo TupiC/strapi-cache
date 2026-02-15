@@ -43,6 +43,13 @@ export default {
       throw new Error(`Invalid config: cacheableRoutes must be an string array`);
     }
     if (
+      config.cacheableEntities !== undefined &&
+      (!Array.isArray(config.cacheableEntities) ||
+        config.cacheableEntities.some((item) => typeof item !== 'string'))
+    ) {
+      throw new Error(`Invalid config: cacheableEntities must be a string array`);
+    }
+    if (
       !Array.isArray(config.excludeRoutes) ||
       config.excludeRoutes.some((item) => typeof item !== 'string')
     ) {

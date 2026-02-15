@@ -8,10 +8,9 @@ const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
   loggy.info('Initializing');
   try {
     const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
-    const autoPurgeCache = strapi.plugin('strapi-cache').config('autoPurgeCache') as boolean;
-    const autoPurgeCacheOnStart = strapi
-      .plugin('strapi-cache')
-      .config('autoPurgeCacheOnStart') as boolean;
+    const autoPurgeCache = !!strapi.plugin('strapi-cache').config('autoPurgeCache');
+    const autoPurgeGraphQL = !!strapi.plugin('strapi-cache').config('autoPurgeGraphQL');
+    const autoPurgeCacheOnStart = !!strapi.plugin('strapi-cache').config('autoPurgeCacheOnStart');
     const cacheStore = cacheService.getCacheInstance();
 
     if (!cacheStore) {
@@ -25,14 +24,25 @@ const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
       strapi.db.lifecycles.subscribe({
         async afterCreate(event) {
           await invalidateCache(event, cacheStore, strapi);
-          await invalidateGraphqlCache(cacheStore);
         },
         async afterUpdate(event) {
           await invalidateCache(event, cacheStore, strapi);
-          await invalidateGraphqlCache(cacheStore);
         },
         async afterDelete(event) {
           await invalidateCache(event, cacheStore, strapi);
+        },
+      });
+    }
+
+    if (autoPurgeGraphQL) {
+      strapi.db.lifecycles.subscribe({
+        async afterCreate() {
+          await invalidateGraphqlCache(cacheStore);
+        },
+        async afterUpdate() {
+          await invalidateGraphqlCache(cacheStore);
+        },
+        async afterDelete() {
           await invalidateGraphqlCache(cacheStore);
         },
       });
