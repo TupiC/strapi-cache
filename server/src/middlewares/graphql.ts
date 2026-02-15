@@ -5,6 +5,7 @@ import { loggy } from '../utils/log';
 import { CacheService } from '../types/cache.types';
 import { decodeBufferToText, decompressBuffer, streamToBuffer } from '../utils/body';
 import { getCacheHeaderConfig, getHeadersToStore } from '../utils/header';
+import { parseGraphqlPayload, getRootFieldsFromQuery } from '../utils/graphql';
 
 const middleware = async (ctx: any, next: any) => {
   const { url, method } = ctx.request;
@@ -24,7 +25,11 @@ const middleware = async (ctx: any, next: any) => {
 
   if (isGet) {
     const { query, variables, operationName } = ctx.request.query;
-    body = JSON.stringify({ query: query ?? '', variables: variables ?? '', operationName: operationName ?? '' });
+    body = JSON.stringify({
+      query: query ?? '',
+      variables: variables ?? '',
+      operationName: operationName ?? '',
+    });
     key = generateGraphqlCacheKey(body, 'GET');
   } else {
     const originalReq = ctx.req;
@@ -47,6 +52,16 @@ const middleware = async (ctx: any, next: any) => {
 
     key = generateGraphqlCacheKey(body, 'POST');
   }
+
+  const payload = parseGraphqlPayload(body, isGet);
+  const rootFields = getRootFieldsFromQuery(payload.query);
+  loggy.info(
+    `GraphQL request: ${JSON.stringify({
+      operationName: payload.operationName,
+      variables: payload.variables,
+      rootFields: rootFields.length ? rootFields : undefined,
+    })}`
+  );
 
   const isIntrospectionQuery = body.includes('IntrospectionQuery');
   if (isIntrospectionQuery) {
