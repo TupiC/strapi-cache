@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/TupiC/strapi-cache/compare/v1.8.0...v1.8.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* regenerate package-lock.json to fix npm ci in CI ([5a31cbf](https://github.com/TupiC/strapi-cache/commit/5a31cbfa3562b9deccb8fe6252d62402b11cb21b))
+
 ## [1.8.0](https://github.com/TupiC/strapi-cache/compare/v1.7.0...v1.8.0) (2026-02-16)
 
 
