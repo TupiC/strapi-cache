@@ -15,7 +15,9 @@ export const generateGraphqlCacheKey = (
 ) => {
   const hash = createHash('sha256').update(payload).digest('base64url');
   const rootFieldsSegment =
-    rootFields.length > 0 ? [...rootFields].sort().join(',') : '_';
+    rootFields.length > 0
+      ? [...rootFields].sort((a, b) => a.localeCompare(b)).join(',')
+      : '_';
   return `${method}:/graphql:${rootFieldsSegment}:${hash}`;
 };
 
