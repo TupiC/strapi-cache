@@ -21,7 +21,6 @@ const middleware = async (ctx: any, next: any) => {
 
   const isGet = method === 'GET';
   let body: string;
-  let key: string;
 
   if (isGet) {
     const { query, variables, operationName } = ctx.request.query;
@@ -30,7 +29,6 @@ const middleware = async (ctx: any, next: any) => {
       variables: variables ?? '',
       operationName: operationName ?? '',
     });
-    key = generateGraphqlCacheKey(body, 'GET');
   } else {
     const originalReq = ctx.req;
     const bodyBuffer = await rawBody(originalReq);
@@ -49,12 +47,11 @@ const middleware = async (ctx: any, next: any) => {
 
     ctx.req = clonedReq;
     ctx.request.req = clonedReq;
-
-    key = generateGraphqlCacheKey(body, 'POST');
   }
 
   const payload = parseGraphqlPayload(body, isGet);
   const rootFields = getRootFieldsFromQuery(payload.query);
+  const key = generateGraphqlCacheKey(body, isGet ? 'GET' : 'POST', rootFields);
   loggy.info(
     `GraphQL request: ${JSON.stringify({
       operationName: payload.operationName,

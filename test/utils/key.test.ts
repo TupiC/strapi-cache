@@ -66,14 +66,35 @@ describe('generateGraphqlCacheKey', () => {
     const payload = '{ user(id: 1) { name email } }';
     const result = generateGraphqlCacheKey(payload);
 
-    expect(result).toMatch(/^POST:\/graphql:[A-Za-z0-9_-]+$/);
+    expect(result).toMatch(/^POST:\/graphql:[^:]+:[A-Za-z0-9_-]+$/);
     expect(result.startsWith('POST:/graphql:')).toBe(true);
+  });
+
+  it('should include root fields in key for collection-based purging', () => {
+    const payload = '{ articles { title content } }';
+    const result = generateGraphqlCacheKey(payload, 'POST', ['articles']);
+
+    expect(result).toMatch(/^POST:\/graphql:articles:[A-Za-z0-9_-]+$/);
+  });
+
+  it('should sort root fields for consistent keys', () => {
+    const payload = 'query { category { id } article { id } }';
+    const result = generateGraphqlCacheKey(payload, 'POST', ['category', 'article']);
+
+    expect(result).toMatch(/^POST:\/graphql:article,category:[A-Za-z0-9_-]+$/);
+  });
+
+  it('should use underscore when no root fields', () => {
+    const payload = '';
+    const result = generateGraphqlCacheKey(payload, 'POST', []);
+
+    expect(result).toMatch(/^POST:\/graphql:_:[A-Za-z0-9_-]+$/);
   });
 
   it('should generate consistent hash for same payload', () => {
     const payload = '{ articles { title content } }';
-    const result1 = generateGraphqlCacheKey(payload);
-    const result2 = generateGraphqlCacheKey(payload);
+    const result1 = generateGraphqlCacheKey(payload, 'POST', ['articles']);
+    const result2 = generateGraphqlCacheKey(payload, 'POST', ['articles']);
 
     expect(result1).toBe(result2);
   });
@@ -92,21 +113,21 @@ describe('generateGraphqlCacheKey', () => {
     const payload = '';
     const result = generateGraphqlCacheKey(payload);
 
-    expect(result).toMatch(/^POST:\/graphql:[A-Za-z0-9_-]+$/);
+    expect(result).toMatch(/^POST:\/graphql:_:[A-Za-z0-9_-]+$/);
   });
 
   it('should handle large payloads', () => {
     const payload = 'x'.repeat(10000);
     const result = generateGraphqlCacheKey(payload);
 
-    expect(result).toMatch(/^POST:\/graphql:[A-Za-z0-9_-]+$/);
+    expect(result).toMatch(/^POST:\/graphql:_:[A-Za-z0-9_-]+$/);
   });
 
   it('should handle special characters in payload', () => {
     const payload = '{ query: "test with spaces & symbols !@#$%^&*()" }';
     const result = generateGraphqlCacheKey(payload);
 
-    expect(result).toMatch(/^POST:\/graphql:[A-Za-z0-9_-]+$/);
+    expect(result).toMatch(/^POST:\/graphql:_:[A-Za-z0-9_-]+$/);
   });
 });
 

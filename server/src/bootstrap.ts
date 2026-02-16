@@ -36,14 +36,14 @@ const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
 
     if (autoPurgeGraphQL) {
       strapi.db.lifecycles.subscribe({
-        async afterCreate() {
-          await invalidateGraphqlCache(cacheStore);
+        async afterCreate(event: any) {
+          await invalidateGraphqlCache(event, cacheStore, strapi);
         },
-        async afterUpdate() {
-          await invalidateGraphqlCache(cacheStore);
+        async afterUpdate(event: any) {
+          await invalidateGraphqlCache(event, cacheStore, strapi);
         },
-        async afterDelete() {
-          await invalidateGraphqlCache(cacheStore);
+        async afterDelete(event: any) {
+          await invalidateGraphqlCache(event, cacheStore, strapi);
         },
       });
     }

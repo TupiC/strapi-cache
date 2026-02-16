@@ -8,9 +8,15 @@ export const generateCacheKey = (context: Context) => {
   return `${method}:${url}`;
 };
 
-export const generateGraphqlCacheKey = (payload: string, method: 'GET' | 'POST' = 'POST') => {
+export const generateGraphqlCacheKey = (
+  payload: string,
+  method: 'GET' | 'POST' = 'POST',
+  rootFields: string[] = []
+) => {
   const hash = createHash('sha256').update(payload).digest('base64url');
-  return `${method}:/graphql:${hash}`;
+  const rootFieldsSegment =
+    rootFields.length > 0 ? [...rootFields].sort().join(',') : '_';
+  return `${method}:/graphql:${rootFieldsSegment}:${hash}`;
 };
 
 export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

@@ -94,4 +94,35 @@ describe('GraphQL cache integration', () => {
     expect(responseArticles.body.data?.articles).toBeDefined();
     expect(responseCategories.body.data?.categories).toBeDefined();
   });
+
+  it('should invalidate GraphQL cache when content is created', async () => {
+    if (!graphqlRouteAvailable) {
+      return; // skip when /graphql is not registered
+    }
+    const server = strapi.server.httpServer;
+
+    // 1. Populate cache with initial query
+    const firstResponse = await graphqlGet(server, GRAPHQL_QUERY);
+    const secondResponse = await graphqlGet(server, GRAPHQL_QUERY);
+
+    expect(firstResponse.body).toEqual(secondResponse.body);
+    const cachedArticleCount = firstResponse.body.data?.articles?.data?.length ?? 0;
+
+    // 2. Create a new article (triggers afterCreate → invalidateGraphqlCache)
+    await strapi.documents('api::article.article').create({
+      data: { title: 'Cache invalidation test article' },
+      status: 'published',
+    });
+
+    // 3. Same query should return fresh data with the new article
+    const thirdResponse = await graphqlGet(server, GRAPHQL_QUERY);
+
+    const freshArticleCount = thirdResponse.body.data?.articles?.data?.length ?? 0;
+    expect(freshArticleCount).toBe(cachedArticleCount + 1);
+
+    const newArticle = thirdResponse.body.data?.articles?.data?.find(
+      (a: { attributes: { title?: string } }) => a.attributes?.title === 'Cache invalidation test article'
+    );
+    expect(newArticle).toBeDefined();
+  });
 });

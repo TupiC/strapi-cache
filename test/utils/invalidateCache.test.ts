@@ -284,10 +284,15 @@ describe('invalidateCache', () => {
 
 describe('invalidateGraphqlCache', () => {
   let mockCacheStore: Pick<CacheProvider, 'clearByRegexp'>;
+  let mockStrapi: Pick<Core.Strapi, 'contentType'>;
 
   beforeEach(() => {
     mockCacheStore = {
       clearByRegexp: vi.fn().mockResolvedValue(undefined),
+    };
+
+    mockStrapi = {
+      contentType: vi.fn(),
     };
 
     vi.clearAllMocks();
@@ -297,31 +302,56 @@ describe('invalidateGraphqlCache', () => {
     vi.restoreAllMocks();
   });
 
-  it('should invalidate GraphQL cache with correct regex', async () => {
-    await invalidateGraphqlCache(mockCacheStore);
+  it('should invalidate GraphQL cache for specific collection only', async () => {
+    const event = { model: { uid: 'api::article.article' } };
+    mockStrapi.contentType.mockReturnValue({
+      info: { singularName: 'article', pluralName: 'articles' },
+    });
 
-    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^(GET|POST):\/graphql(:.*)?$/]);
-    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /^(GET|POST):\\/graphql(:.*)?$/');
+    await invalidateGraphqlCache(event, mockCacheStore, mockStrapi);
+
+    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
+      /^(GET|POST):\/graphql:[^:]*\b(article|articles)\b[^:]*:/,
+    ]);
+    expect(loggy.info).toHaveBeenCalledWith(
+      'Invalidated GraphQL cache for api::article.article (article, articles)'
+    );
+  });
+
+  it('should purge all GraphQL cache when content type not found', async () => {
+    const event = { model: { uid: 'api::unknown.unknown' } };
+    mockStrapi.contentType.mockReturnValue(null);
+
+    await invalidateGraphqlCache(event, mockCacheStore, mockStrapi);
+
+    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^(GET|POST):\/graphql:.*/]);
+    expect(loggy.info).toHaveBeenCalledWith(
+      'Content type api::unknown.unknown not found, purging all GraphQL cache'
+    );
   });
 
   it('should handle cache store errors gracefully', async () => {
+    const event = { model: { uid: 'api::article.article' } };
+    mockStrapi.contentType.mockReturnValue({
+      info: { singularName: 'article', pluralName: 'articles' },
+    });
     const error = new Error('GraphQL cache store error');
     mockCacheStore.clearByRegexp.mockRejectedValue(error);
 
-    await invalidateGraphqlCache(mockCacheStore);
+    await invalidateGraphqlCache(event, mockCacheStore, mockStrapi);
 
-    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^(GET|POST):\/graphql(:.*)?$/]);
-    expect(loggy.error).toHaveBeenCalledWith('Cache invalidation error:');
+    expect(mockCacheStore.clearByRegexp).toHaveBeenCalled();
+    expect(loggy.error).toHaveBeenCalledWith('GraphQL cache invalidation error:');
     expect(loggy.error).toHaveBeenCalledWith(error);
   });
 
-  it('should create regex that matches GraphQL cache keys', () => {
-    const regex = /^(GET|POST):\/graphql(:.*)?$/;
+  it('should create regex that matches GraphQL cache keys with root fields', () => {
+    const regex = /^(GET|POST):\/graphql:[^:]*\b(article|articles)\b[^:]*:/;
 
-    expect(regex.test('POST:/graphql:abc123')).toBe(true);
-    expect(regex.test('POST:/graphql')).toBe(true);
-    expect(regex.test('GET:/graphql:xyz')).toBe(true);
-    expect(regex.test('GET:/graphql')).toBe(true);
+    expect(regex.test('POST:/graphql:article,category:abc123')).toBe(true);
+    expect(regex.test('POST:/graphql:articles:xyz')).toBe(true);
+    expect(regex.test('GET:/graphql:article:hash')).toBe(true);
+    expect(regex.test('POST:/graphql:category,author:hash')).toBe(false);
     expect(regex.test('POST:/api/articles')).toBe(false);
   });
 });

@@ -13,6 +13,17 @@ describe('parseGraphqlPayload', () => {
       operationName: null,
     });
   });
+  it('should parse the graphql payload with multiple fields', () => {
+    const payload = parseGraphqlPayload(
+      '{ "query": "query { articles { id } categories { id } }", "variables": { "limit": 10 } }',
+      false
+    );
+    expect(payload).toEqual({
+      query: 'query { articles { id } categories { id } }',
+      variables: { limit: 10 },
+      operationName: null,
+    });
+  });
 });
 
 describe('getRootFieldsFromQuery', () => {
@@ -33,16 +44,15 @@ describe('getRootFieldsFromQuery', () => {
     expect(elapsed).toBeLessThan(100); // Should complete in under 100ms
   });
 
-  //TODO
-  //   it('should get the root fields from the query with two fields', () => {
-  //     const rootFields = getRootFieldsFromQuery('query { article { id } category { id } }');
-  //     expect(rootFields).toEqual(['article', 'category']);
-  //   });
+  it('should get the root fields from the query with two fields', () => {
+    const rootFields = getRootFieldsFromQuery('query { article { id } category { id } }');
+    expect(rootFields).toEqual(['article', 'category']);
+  });
 
-  //   it('should get the root fields from the query with three or more fields', () => {
-  //     const rootFields = getRootFieldsFromQuery(
-  //       'query { article { id } category { id } author { id } }'
-  //     );
-  //     expect(rootFields).toEqual(['article', 'category', 'author']);
-  //   });
+  it('should get the root fields from the query with three or more fields', () => {
+    const rootFields = getRootFieldsFromQuery(
+      'query { article { id } category { id } author { id } }'
+    );
+    expect(rootFields).toEqual(['article', 'category', 'author']);
+  });
 });

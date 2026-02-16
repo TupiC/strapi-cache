@@ -58,7 +58,7 @@ export function getRootFieldsFromQuery(query: string): string[] {
         const match = rest.match(/^\s*(\w+)\s*([\(\{])/);
         if (match) {
           fields.push(match[1]);
-          i += match[0].length;
+          i += match[0].length - 1;
         }
       }
     } else if (query[i] === '}') {
@@ -66,10 +66,10 @@ export function getRootFieldsFromQuery(query: string): string[] {
       i++;
     } else if (depth === 1) {
       const rest = query.slice(i);
-        const match = rest.match(/^[\s,]*(\w+)\s*([\(\{])/);
+      const match = rest.match(/^[\s,]*(\w+)\s*([\(\{])/);
       if (match) {
         fields.push(match[1]);
-        i += match[0].length;
+        i += match[0].length - 1;
       } else {
         i++;
       }
