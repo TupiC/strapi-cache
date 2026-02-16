@@ -7,6 +7,7 @@ interface PluginConfig {
   cacheableEntities?: string[];
   cacheableRoutes: string[];
   disableAdminPopups: boolean;
+  disableAdminButtons: boolean;
 }
 
 const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
@@ -46,6 +47,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
         cacheableEntities: strapi.plugin('strapi-cache').config('cacheableEntities') ?? [],
         cacheableRoutes: strapi.plugin('strapi-cache').config('cacheableRoutes') ?? [],
         disableAdminPopups: strapi.plugin('strapi-cache').config('disableAdminPopups') ?? false,
+        disableAdminButtons: strapi.plugin('strapi-cache').config('disableAdminButtons') ?? false,
       };
 
       ctx.body = config;

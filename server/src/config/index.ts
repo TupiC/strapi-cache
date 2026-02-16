@@ -19,6 +19,7 @@ export default {
     autoPurgeCache: true,
     autoPurgeCacheOnStart: true,
     disableAdminPopups: false,
+    disableAdminButtons: false,
   }),
   validator: (config) => {
     if (typeof config.debug !== 'boolean') {
@@ -111,6 +112,9 @@ export default {
     }
     if (typeof config.disableAdminPopups !== 'boolean') {
       throw new Error(`Invalid config: disableAdminPopups must be a boolean`);
+    }
+    if (typeof config.disableAdminButtons !== 'boolean') {
+      throw new Error(`Invalid config: disableAdminButtons must be a boolean`);
     }
   },
 };

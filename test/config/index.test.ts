@@ -30,6 +30,7 @@ describe('config', () => {
         cacheGetTimeoutInMs: 1000,
         autoPurgeCache: true,
         autoPurgeCacheOnStart: true,
+        disableAdminButtons: false,
         disableAdminPopups: false,
       });
     });
@@ -63,6 +64,7 @@ describe('config', () => {
       cacheGetTimeoutInMs: 1000,
       autoPurgeCache: true,
       autoPurgeCacheOnStart: true,
+      disableAdminButtons: false,
       disableAdminPopups: false,
     };
 

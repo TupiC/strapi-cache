@@ -65,6 +65,7 @@ In your Strapi project, navigate to `config/plugins.js` and add the following co
     autoPurgeGraphQL: true, // Automatically purge GraphQL cache on content CRUD operations
     autoPurgeCacheOnStart: true, // Automatically purge cache on Strapi startup
     disableAdminPopups: false, // Disable popups in the admin panel
+    disableAdminButtons: false, // Disable the purge cache buttons in the admin panel (list view and edit view)
   },
 },
 ```
