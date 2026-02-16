@@ -1,6 +1,7 @@
 import { Core } from '@strapi/strapi';
 import { CacheProvider } from 'src/types/cache.types';
 import { loggy } from './log';
+import { UID } from '@strapi/strapi';
 
 export async function invalidateCache(event: any, cacheStore: CacheProvider, strapi: Core.Strapi) {
   const { model } = event;
@@ -42,14 +43,42 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
   }
 }
 
-export async function invalidateGraphqlCache(cacheStore: CacheProvider) {
+export async function invalidateGraphqlCache(
+  event: { model: { uid: string } },
+  cacheStore: CacheProvider,
+  strapi: Core.Strapi
+) {
   try {
-    const graphqlRegex = new RegExp(`^POST:\/graphql(:.*)?$`);
+    const { model } = event;
+    const contentType = strapi.contentType(model.uid as UID.ContentType);
+
+    if (!contentType || !contentType.info) {
+      loggy.info(`Content type ${model.uid} not found, purging all GraphQL cache`);
+      const graphqlRegex = new RegExp(`^(GET|POST):/graphql:.*`);
+      await cacheStore.clearByRegexp([graphqlRegex]);
+      return;
+    }
+
+    const singularName = contentType.info.singularName ?? '';
+    const pluralName = contentType.info.pluralName ?? '';
+    const fieldNames = [...new Set([singularName, pluralName].filter(Boolean))];
+
+    if (fieldNames.length === 0) {
+      loggy.info(`No field names for ${model.uid}, purging all GraphQL cache`);
+      const graphqlRegex = new RegExp(`^(GET|POST):/graphql:.*`);
+      await cacheStore.clearByRegexp([graphqlRegex]);
+      return;
+    }
+
+    const escapedNames = fieldNames
+      .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|');
+    const graphqlRegex = new RegExp(`^(GET|POST):/graphql:[^:]*\\b(${escapedNames})\\b[^:]*:`);
 
     await cacheStore.clearByRegexp([graphqlRegex]);
-    loggy.info(`Invalidated cache for ${graphqlRegex}`);
+    loggy.info(`Invalidated GraphQL cache for ${model.uid} (${fieldNames.join(', ')})`);
   } catch (error) {
-    loggy.error('Cache invalidation error:');
+    loggy.error('GraphQL cache invalidation error:');
     loggy.error(error);
   }
 }

@@ -5,31 +5,60 @@ import { loggy } from '../utils/log';
 import { CacheService } from '../types/cache.types';
 import { decodeBufferToText, decompressBuffer, streamToBuffer } from '../utils/body';
 import { getCacheHeaderConfig, getHeadersToStore } from '../utils/header';
+import { parseGraphqlPayload, getRootFieldsFromQuery } from '../utils/graphql';
 
 const middleware = async (ctx: any, next: any) => {
+  const { url, method } = ctx.request;
+  if (!url.startsWith('/graphql')) {
+    await next();
+    return;
+  }
+
   const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
     getCacheHeaderConfig();
   const cacheStore = cacheService.getCacheInstance();
-  const { url } = ctx.request;
 
-  const originalReq = ctx.req;
-  const bodyBuffer = await rawBody(originalReq);
-  const body = bodyBuffer.toString();
+  const isGet = method === 'GET';
+  let body: string;
 
-  const clonedReq = new Readable();
-  clonedReq.push(bodyBuffer);
-  clonedReq.push(null);
+  if (isGet) {
+    const { query, variables, operationName } = ctx.request.query;
+    body = JSON.stringify({
+      query: query ?? '',
+      variables: variables ?? '',
+      operationName: operationName ?? '',
+    });
+  } else {
+    const originalReq = ctx.req;
+    const bodyBuffer = await rawBody(originalReq);
+    body = bodyBuffer.toString();
 
-  (clonedReq as any).headers = { ...originalReq.headers };
-  (clonedReq as any).method = originalReq.method;
-  (clonedReq as any).url = originalReq.url;
-  (clonedReq as any).httpVersion = originalReq.httpVersion;
-  (clonedReq as any).socket = originalReq.socket;
-  (clonedReq as any).connection = originalReq.connection;
+    const clonedReq = new Readable();
+    clonedReq.push(bodyBuffer);
+    clonedReq.push(null);
 
-  ctx.req = clonedReq;
-  ctx.request.req = clonedReq;
+    (clonedReq as any).headers = { ...originalReq.headers };
+    (clonedReq as any).method = originalReq.method;
+    (clonedReq as any).url = originalReq.url;
+    (clonedReq as any).httpVersion = originalReq.httpVersion;
+    (clonedReq as any).socket = originalReq.socket;
+    (clonedReq as any).connection = originalReq.connection;
+
+    ctx.req = clonedReq;
+    ctx.request.req = clonedReq;
+  }
+
+  const payload = parseGraphqlPayload(body, isGet);
+  const rootFields = getRootFieldsFromQuery(payload.query);
+  const key = generateGraphqlCacheKey(body, isGet ? 'GET' : 'POST', rootFields);
+  loggy.info(
+    `GraphQL request: ${JSON.stringify({
+      operationName: payload.operationName,
+      variables: payload.variables,
+      rootFields: rootFields.length ? rootFields : undefined,
+    })}`
+  );
 
   const isIntrospectionQuery = body.includes('IntrospectionQuery');
   if (isIntrospectionQuery) {
@@ -37,8 +66,6 @@ const middleware = async (ctx: any, next: any) => {
     await next();
     return;
   }
-
-  const key = generateGraphqlCacheKey(body);
   const cacheEntry = await cacheStore.get(key);
   const cacheControlHeader = ctx.request.headers['cache-control'];
   const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
@@ -88,12 +115,13 @@ const middleware = async (ctx: any, next: any) => {
 
   await next();
 
-  if (
-    ctx.method === 'POST' &&
+  const shouldCache =
+    (ctx.method === 'POST' || ctx.method === 'GET') &&
     ctx.status >= 200 &&
     ctx.status < 300 &&
-    url.startsWith('/graphql')
-  ) {
+    url.startsWith('/graphql');
+
+  if (shouldCache) {
     loggy.info(`MISS with key: ${key}`);
     const headers = ctx.request.headers;
     const authorizationHeader = headers['authorization'];
