@@ -76,6 +76,10 @@
     "react-router-dom": "^6.30.0",
     "styled-components": "^6.1.17"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*",
+    "@swc/core-linux-x64-gnu": "*"
+  },
   "strapi": {
     "kind": "plugin",
     "name": "strapi-cache",
