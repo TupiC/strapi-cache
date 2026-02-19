@@ -5,4 +5,10 @@ export const actions = [
     uid: 'purge-cache',
     pluginName: 'strapi-cache',
   },
+  {
+    section: 'plugins',
+    displayName: 'View settings',
+    uid: 'view-settings',
+    pluginName: 'strapi-cache',
+  },
 ];

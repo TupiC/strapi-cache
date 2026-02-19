@@ -1,14 +1,17 @@
 import { TextInput, Typography } from '@strapi/design-system';
 import { useIntl } from 'react-intl';
+import { Page } from '@strapi/strapi/admin';
 import PurgeModal from '../PurgeModal';
 import { useState } from 'react';
+import { pluginPermissions } from '../../permission';
 
 const SettingsPage = () => {
   const { formatMessage } = useIntl();
   const [keyToUse, setKeyToUse] = useState<string>('');
 
   return (
-    <div style={{ padding: '20px' }}>
+    <Page.Protect permissions={pluginPermissions.viewSettings}>
+      <div style={{ padding: '20px' }}>
       <Typography variant="alpha" as="h1">
         {formatMessage({
           id: 'strapi-cache.name',
@@ -52,6 +55,7 @@ const SettingsPage = () => {
       </div>
       <PurgeModal buttonText="Purge All" isPurgeAll isSettingsPage />
     </div>
+    </Page.Protect>
   );
 };
 

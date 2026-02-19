@@ -41,7 +41,10 @@ export default [
         {
           name: 'plugin::content-manager.hasPermissions',
           config: {
-            actions: ['plugin::strapi-cache.purge-cache'],
+            actions: [
+              'plugin::strapi-cache.purge-cache',
+              'plugin::strapi-cache.view-settings',
+            ],
           },
         },
       ],

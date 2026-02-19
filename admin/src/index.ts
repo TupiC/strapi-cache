@@ -2,6 +2,7 @@ import { PLUGIN_ID } from './pluginId';
 import { Initializer } from './components/Initializer';
 import PurgeCacheButton from './components/PurgeCacheButton';
 import PurgeEntityButton from './components/PurgeEntityButton';
+import { pluginPermissions } from './permission';
 
 export default {
   register(app: any) {
@@ -39,7 +40,7 @@ export default {
           id: 'settings',
           to: `${PLUGIN_ID}/settings`,
           Component: () => import('./components/SettingsPage'),
-          permissions: [],
+          permissions: pluginPermissions.viewSettings,
         },
       ]
     );
