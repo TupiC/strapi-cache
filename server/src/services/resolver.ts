@@ -13,6 +13,7 @@ export const resolveCacheProvider = (strapi: Core.Strapi): CacheProvider => {
 
   switch (providerType) {
     case 'redis':
+    case 'valkey':
       instance = new RedisCacheProvider(strapi);
       break;
     default:

@@ -17,7 +17,7 @@ Boost your API performance with automatic in-memory or Redis caching for REST an
 - ♻️ **LRU (Least Recently Used) caching strategy**
 - 🔧 Simple integration with Strapi config
 - 📦 Lightweight with zero overhead
-- 🗄️ **Supports in-memory and Redis caching**
+- 🗄️ **Supports in-memory, Redis and Valkey caching**
 
 ---
 
@@ -52,9 +52,9 @@ In your Strapi project, navigate to `config/plugins.js` and add the following co
     cacheableRoutes: ['/api/products', '/api/categories'], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
     // cacheableEntities: ['products', 'categories'], // (Optional) Specify which entities to cache. When set, only these entities will be cached (ignores cacheableRoutes). If not set (undefined), cacheableRoutes logic is used
     excludeRoutes: ['/api/products/private'], // (NEW) Exclude routes which start with these paths from being cached (takes precedence over cacheableRoutes). **Note:** `excludeRoutes` takes precedence over `cacheableRoutes`.
-    provider: 'memory', // Cache provider ('memory' or 'redis')
-    redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis config takes either a string or an object see https://github.com/redis/ioredis for references to what object is available, the object or string is passed directly to ioredis client (if using Redis)
-    redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize ioredis redis cluster client. Each object must have keys 'host' and 'port'. See https://github.com/redis/ioredis for references
+    provider: 'memory', // Cache provider ('memory', 'redis' or 'valkey')
+    redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis/Valkey config: string or object. See https://github.com/redis/ioredis (Redis) or https://github.com/valkey-io/iovalkey (Valkey)
+    redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize cluster client. Each object must have keys 'host' and 'port'
     redisClusterOptions: {}, // Options for ioredis redis cluster client. redisOptions key is taken from redisConfig parameter above if not set here. See https://github.com/redis/ioredis for references
     cacheHeaders: true, // Plugin also stores response headers in the cache (set to false if you don't want to cache headers)
     cacheHeadersDenyList: ['access-control-allow-origin', 'content-encoding'], // Headers to exclude from the cache (must be lowercase, if empty array, no headers are excluded, cacheHeaders must be true)
@@ -83,8 +83,8 @@ All of these routes are protected by the policies `admin::isAuthenticatedAdmin` 
 
 ## 🗂️ How It Works
 
-- **Storage**: The plugin keeps cached data in memory or Redis, depending on the configuration.
-- **Packages**: Uses [lru-cache](https://github.com/isaacs/node-lru-cache) for in-memory cache. Uses [ioredis](https://github.com/redis/ioredis) for Redis caching.
+- **Storage**: The plugin keeps cached data in memory, Redis or Valkey, depending on the configuration.
+- **Packages**: Uses [lru-cache](https://github.com/isaacs/node-lru-cache) for in-memory cache. Uses [ioredis](https://github.com/redis/ioredis) for Redis and [iovalkey](https://github.com/valkey-io/iovalkey) for Valkey caching.
 - **Automatic Invalidation**: Cache is cleared automatically when content is updated, deleted, or created. (GraphQL cache clears on any content update.)
 - **`no-cache` Header Support**: Respects the `no-cache` header, letting you skip the cache by setting `Cache-Control: no-cache` in your request.
 - **Default Cached Requests**: By default, caches all GET requests to `/api` (or whatever prefix you defined) and POST requests to `/graphql`. You can customize which routes or entities to cache using `cacheableRoutes` or `cacheableEntities` config options.

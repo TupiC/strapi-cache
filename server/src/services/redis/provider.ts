@@ -1,12 +1,23 @@
 import type { Core } from '@strapi/strapi';
 import { Redis, Cluster, ClusterNode, ClusterOptions } from 'ioredis';
+import { Redis as Valkey, Cluster as ValkeyCluster } from 'iovalkey';
 import { withTimeout } from '../../utils/withTimeout';
 import { CacheProvider } from '../../types/cache.types';
 import { loggy } from '../../utils/log';
 
+/** Minimal client interface for Redis/Valkey - both ioredis and iovalkey implement this. */
+interface CacheClient {
+  get(key: string): Promise<string | null>;
+  set(key: string, val: string, ...args: unknown[]): Promise<unknown>;
+  del(key: string): Promise<unknown>;
+  keys(pattern: string): Promise<string[]>;
+  pipeline(): { del(key: string): unknown; exec(): Promise<unknown> };
+  flushdb(): Promise<string>;
+}
+
 export class RedisCacheProvider implements CacheProvider {
   private initialized = false;
-  private client!: Redis | Cluster;
+  private client!: CacheClient;
   private cacheGetTimeoutInMs: number;
   private keyPrefix: string;
 
@@ -18,6 +29,7 @@ export class RedisCacheProvider implements CacheProvider {
       return;
     }
     try {
+      const provider = this.strapi.plugin('strapi-cache').config('provider') || 'redis';
       const redisConfig =
         this.strapi.plugin('strapi-cache').config('redisConfig') || 'redis://localhost:6379';
       const redisClusterNodes: ClusterNode[] = this.strapi
@@ -30,20 +42,41 @@ export class RedisCacheProvider implements CacheProvider {
         (this.strapi.plugin('strapi-cache').config('redisConfig')?.['keyPrefix'] as
           | string
           | undefined) ?? '';
-      if (redisClusterNodes.length) {
-        const redisClusterOptions: ClusterOptions = this.strapi
-          .plugin('strapi-cache')
-          .config('redisClusterOptions');
-        if (!redisClusterOptions['redisOptions']) {
-          redisClusterOptions.redisOptions = redisConfig;
+
+      if (provider === 'valkey') {
+        if (redisClusterNodes.length) {
+          const redisClusterOptions =
+            (this.strapi.plugin('strapi-cache').config('redisClusterOptions') as Record<
+              string,
+              unknown
+            >) ?? {};
+          const clusterOptions = { ...redisClusterOptions };
+          if (!clusterOptions['redisOptions']) {
+            clusterOptions['redisOptions'] = redisConfig;
+          }
+          this.client = new ValkeyCluster(
+            redisClusterNodes,
+            clusterOptions as never
+          ) as unknown as CacheClient;
+        } else {
+          this.client = new Valkey(redisConfig) as unknown as CacheClient;
         }
-        this.client = new Redis.Cluster(redisClusterNodes, redisClusterOptions);
+        loggy.info('Valkey provider initialized');
       } else {
-        this.client = new Redis(redisConfig);
+        if (redisClusterNodes.length) {
+          const redisClusterOptions: ClusterOptions = this.strapi
+            .plugin('strapi-cache')
+            .config('redisClusterOptions');
+          if (!redisClusterOptions['redisOptions']) {
+            redisClusterOptions.redisOptions = redisConfig;
+          }
+          this.client = new Redis.Cluster(redisClusterNodes, redisClusterOptions);
+        } else {
+          this.client = new Redis(redisConfig);
+        }
+        loggy.info('Redis provider initialized');
       }
       this.initialized = true;
-
-      loggy.info('Redis provider initialized');
     } catch (error) {
       loggy.error(error);
     }
@@ -108,7 +141,7 @@ export class RedisCacheProvider implements CacheProvider {
    * @param keys to delete from cache
    */
   async delAll(keys: string[]): Promise<void> {
-    const pipeline = (this.client as Redis).pipeline();
+    const pipeline = this.client.pipeline();
     keys.forEach((key) => {
       const relativeKey = key.slice(this.keyPrefix.length);
       pipeline.del(relativeKey);

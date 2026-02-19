@@ -10,9 +10,9 @@ export default ({ env }) => ({
       allowStale: false, // Allow stale cache items (only for memory cache)
       cacheableRoutes: [], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
       excludeRoutes: [], // Do not cache routes which start with these paths (if empty array, no routes are excluded)
-      provider: 'memory', // Use memory for integration tests (no Redis required)
-      redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis config takes either a string or an object see https://github.com/redis/ioredis for references to what object is available, the object or string is passed directly to ioredis client (if using Redis)
-      redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize ioredis redis cluster client. Each object must have keys 'host' and 'port'. See https://github.com/redis/ioredis for references
+      provider: 'memory', // Use memory for integration tests (no Redis/Valkey required). Options: 'memory', 'redis', 'valkey'
+      redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis/Valkey config: string or object. See ioredis (Redis) or iovalkey (Valkey) docs
+      redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize cluster client. Each object must have keys 'host' and 'port'
       redisClusterOptions: {}, // Options for ioredis redis cluster client. redisOptions key is taken from redisConfig parameter above if not set here. See https://github.com/redis/ioredis for references
       cacheHeaders: true,
       cacheHeadersDenyList: ['access-control-allow-origin', 'content-encoding'], // Headers to exclude from the cache (must be lowercase, if empty array, no headers are excluded, cacheHeaders must be true)
@@ -39,7 +39,7 @@ export default ({ env }) => ({
 //       size: 1024 * 1024 * 1024, // Maximum size of the cache (1 GB) (only for memory cache)
 //       allowStale: false, // Allow stale cache items (only for memory cache)
 //       cacheableRoutes: [], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
-//       provider: 'redis', // Cache provider ('memory' or 'redis')
+//       provider: 'redis', // Cache provider ('memory', 'redis' or 'valkey')
 //       redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis config takes either a string or an object see https://github.com/redis/ioredis for references to what object is available, the object or string is passed directly to ioredis client (if using Redis)
 //       redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize ioredis redis cluster client. Each object must have keys 'host' and 'port'. See https://github.com/redis/ioredis for references
 //       redisClusterOptions: {}, // Options for ioredis redis cluster client. redisOptions key is taken from redisConfig parameter above if not set here. See https://github.com/redis/ioredis for references
@@ -65,7 +65,7 @@ export default ({ env }) => ({
 //       size: 1024 * 1024 * 1024, // Maximum size of the cache (1 GB) (only for memory cache)
 //       allowStale: false, // Allow stale cache items (only for memory cache)
 //       cacheableRoutes: [], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
-//       provider: 'redis', // Cache provider ('memory' or 'redis')
+//       provider: 'redis', // Cache provider ('memory', 'redis' or 'valkey')
 //       redisConfig: {
 //         enableAutoPipelining: true,
 //       }, // Redis config takes either a string or an object see https://github.com/redis/ioredis for references to what object is available, the object or string is passed directly to ioredis client (if using Redis)
