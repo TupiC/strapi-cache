@@ -197,7 +197,7 @@ describe('config', () => {
         const invalidConfig = { ...validConfig, provider: 'invalid' };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          "Invalid config: provider must be 'memory' or 'redis'"
+          "Invalid config: provider must be 'memory', 'redis' or 'valkey'"
         );
       });
     });
@@ -213,11 +213,20 @@ describe('config', () => {
         expect(() => config.validator(redisConfig)).not.toThrow();
       });
 
+      it('should accept valid valkey configuration', () => {
+        const valkeyConfig = {
+          ...validConfig,
+          provider: 'valkey' as const,
+          redisConfig: 'redis://localhost:6379',
+        };
+        expect(() => config.validator(valkeyConfig)).not.toThrow();
+      });
+
       it('should throw when redisConfig is not set', () => {
         const invalidConfig = { ...redisConfig, redisConfig: undefined };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: redisConfig must be set when using redis provider'
+          'Invalid config: redisConfig must be set when using redis or valkey provider'
         );
       });
 
@@ -225,7 +234,7 @@ describe('config', () => {
         const invalidConfig = { ...redisConfig, redisConfig: 123 };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: redisConfig must be a string or object when using redis provider'
+          'Invalid config: redisConfig must be a string or object when using redis or valkey provider'
         );
       });
 

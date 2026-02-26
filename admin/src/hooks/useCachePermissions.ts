@@ -6,6 +6,7 @@ export const useCachePermissions = () => {
 
   return {
     canPurgeCache: allowedActions.canPurgeCache,
+    canViewSettings: allowedActions.canViewSettings,
     allowedActions,
   };
 };
