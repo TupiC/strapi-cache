@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/TupiC/strapi-cache/compare/v1.8.1...v1.8.2) (2026-02-26)
+
+
+### Bug Fixes
+
+* allow valkey + view settings permission ([#84](https://github.com/TupiC/strapi-cache/issues/84)) ([6e2d0e3](https://github.com/TupiC/strapi-cache/commit/6e2d0e3fa9a12805cefb669bbfff1d89442e3c37))
+
 ## [1.8.1](https://github.com/TupiC/strapi-cache/compare/v1.8.0...v1.8.1) (2026-02-16)
 
 
