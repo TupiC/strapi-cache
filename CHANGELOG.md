@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.3](https://github.com/TupiC/strapi-cache/compare/v1.8.2...v1.8.3) (2026-02-26)
+
+
+### Bug Fixes
+
+* regenerate package-lock for cross-platform npm ci ([1a58238](https://github.com/TupiC/strapi-cache/commit/1a58238353e0cd11eefdbb56cccd085ba3720650))
+
 ## [1.8.2](https://github.com/TupiC/strapi-cache/compare/v1.8.1...v1.8.2) (2026-02-26)
 
 
