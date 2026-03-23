@@ -1,25 +1,15 @@
 import type { Core } from '@strapi/strapi';
 import { Redis, Cluster, ClusterNode, ClusterOptions } from 'ioredis';
-import { Redis as Valkey, Cluster as ValkeyCluster } from 'iovalkey';
 import { withTimeout } from '../../utils/withTimeout';
 import { CacheProvider } from '../../types/cache.types';
 import { loggy } from '../../utils/log';
 
-/** Minimal client interface for Redis/Valkey - both ioredis and iovalkey implement this. */
-interface CacheClient {
-  get(key: string): Promise<string | null>;
-  set(key: string, val: string, ...args: unknown[]): Promise<unknown>;
-  del(key: string): Promise<unknown>;
-  keys(pattern: string): Promise<string[]>;
-  pipeline(): { del(key: string): unknown; exec(): Promise<unknown> };
-  flushdb(): Promise<string>;
-}
-
 export class RedisCacheProvider implements CacheProvider {
   private initialized = false;
-  private client!: CacheClient;
+  private client!: Redis | Cluster;
   private cacheGetTimeoutInMs: number;
   private keyPrefix: string;
+  private redisScanDeleteCount: number;
 
   constructor(private strapi: Core.Strapi) {}
 
@@ -42,41 +32,23 @@ export class RedisCacheProvider implements CacheProvider {
         (this.strapi.plugin('strapi-cache').config('redisConfig')?.['keyPrefix'] as
           | string
           | undefined) ?? '';
-
-      if (provider === 'valkey') {
-        if (redisClusterNodes.length) {
-          const redisClusterOptions =
-            (this.strapi.plugin('strapi-cache').config('redisClusterOptions') as Record<
-              string,
-              unknown
-            >) ?? {};
-          const clusterOptions = { ...redisClusterOptions };
-          if (!clusterOptions['redisOptions']) {
-            clusterOptions['redisOptions'] = redisConfig;
-          }
-          this.client = new ValkeyCluster(
-            redisClusterNodes,
-            clusterOptions as never
-          ) as unknown as CacheClient;
-        } else {
-          this.client = new Valkey(redisConfig) as unknown as CacheClient;
+      this.redisScanDeleteCount = Number(
+        this.strapi.plugin('strapi-cache').config('redisScanDeleteCount')
+      );
+      if (redisClusterNodes.length) {
+        const redisClusterOptions: ClusterOptions = this.strapi
+          .plugin('strapi-cache')
+          .config('redisClusterOptions');
+        if (!redisClusterOptions['redisOptions']) {
+          redisClusterOptions.redisOptions = redisConfig;
         }
-        loggy.info('Valkey provider initialized');
+        this.client = new Redis.Cluster(redisClusterNodes, redisClusterOptions);
       } else {
-        if (redisClusterNodes.length) {
-          const redisClusterOptions: ClusterOptions = this.strapi
-            .plugin('strapi-cache')
-            .config('redisClusterOptions');
-          if (!redisClusterOptions['redisOptions']) {
-            redisClusterOptions.redisOptions = redisConfig;
-          }
-          this.client = new Redis.Cluster(redisClusterNodes, redisClusterOptions);
-        } else {
-          this.client = new Redis(redisConfig);
-        }
-        loggy.info('Redis provider initialized');
+        this.client = new Redis(redisConfig);
       }
       this.initialized = true;
+
+      loggy.info(`${provider === 'valkey' ? 'Valkey' : 'Redis'} provider initialized`);
     } catch (error) {
       loggy.error(error);
     }
@@ -136,19 +108,6 @@ export class RedisCacheProvider implements CacheProvider {
     }
   }
 
-  /**
-   * Deletes all given keys in Redis pipeline.
-   * @param keys to delete from cache
-   */
-  async delAll(keys: string[]): Promise<void> {
-    const pipeline = this.client.pipeline();
-    keys.forEach((key) => {
-      const relativeKey = key.slice(this.keyPrefix.length);
-      pipeline.del(relativeKey);
-    });
-    await pipeline.exec();
-  }
-
   async keys(): Promise<string[] | null> {
     if (!this.ready) return null;
 
@@ -184,14 +143,42 @@ export class RedisCacheProvider implements CacheProvider {
     }
   }
 
-  async clearByRegexp(regExps: RegExp[]): Promise<void> {
-    const keys = await this.keys();
+  private async deleteBatch(client: Redis, batch: string[], regExps: RegExp[]): Promise<void> {
+    const toDelete = batch.filter((key) => regExps.some((re) => re.test(key)));
+    if (toDelete.length === 0) return;
 
-    if (!keys) {
-      return;
+    const pipeline = client.pipeline();
+    for (const key of toDelete) {
+      const relativeKey = key.startsWith(this.keyPrefix) ? key.slice(this.keyPrefix.length) : key;
+      pipeline.del(relativeKey);
     }
+    await pipeline.exec();
+  }
 
-    const toDelete = keys.filter((key) => regExps.some((re) => re.test(key)));
-    await this.delAll(toDelete);
+  private scanAndDelete(client: Redis, regExps: RegExp[]): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const stream = client.scanStream({ match: `${this.keyPrefix}*`, count: this.redisScanDeleteCount });
+      stream.on('data', (batch: string[]) => {
+        stream.pause();
+        this.deleteBatch(client, batch, regExps)
+          .then(() => stream.resume())
+          .catch(reject);
+      });
+
+      stream.on('end', resolve);
+      stream.on('error', reject);
+    });
+  }
+
+  /**
+   * ScanStream keys and batch delete for Redis,
+   * iterates over master nodes in case of Cluster.
+   */
+  async clearByRegexp(regExps: RegExp[]): Promise<void> {
+    if (this.client instanceof Redis) {
+      return this.scanAndDelete(this.client, regExps);
+    }
+    const nodes = this.client.nodes('master');
+    await Promise.all(nodes.map((node) => this.scanAndDelete(node, regExps)));
   }
 }
