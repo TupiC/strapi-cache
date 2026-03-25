@@ -32,6 +32,7 @@ describe('config', () => {
         autoPurgeCacheOnStart: true,
         disableAdminButtons: false,
         disableAdminPopups: false,
+        redisScanDeleteCount: 100,
       });
     });
 
@@ -66,6 +67,7 @@ describe('config', () => {
       autoPurgeCacheOnStart: true,
       disableAdminButtons: false,
       disableAdminPopups: false,
+      redisScanDeleteCount: 100,
     };
 
     it('should not throw for valid configuration', () => {
@@ -379,6 +381,16 @@ describe('config', () => {
 
         expect(() => config.validator(invalidConfig)).toThrow(
           'Invalid config: disableAdminPopups must be a boolean'
+        );
+      });
+    });
+
+    describe('redisScanDeleteCount validation', () => {
+      it('should throw for non-number redisScanDeleteCount', () => {
+        const invalidConfig = { ...validConfig, redisScanDeleteCount: '100' };
+
+        expect(() => config.validator(invalidConfig)).toThrow(
+          'Invalid config: redisScanDeleteCount must be a number'
         );
       });
     });

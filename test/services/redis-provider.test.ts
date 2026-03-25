@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { EventEmitter } from 'events';
+import { Redis } from 'ioredis';
 import { RedisCacheProvider } from '../../server/src/services/redis/provider';
 import type { Core } from '@strapi/strapi';
-import type { Redis, ChainableCommander } from 'ioredis';
+import type { ChainableCommander } from 'ioredis';
 
 // Mock logger
 vi.mock('../../server/src/utils/log', () => ({
@@ -14,17 +16,13 @@ vi.mock('../../server/src/utils/log', () => ({
 
 // Mock ioredis
 vi.mock('ioredis', () => {
-  const mockPipeline = {
-    del: vi.fn().mockReturnThis(),
-    exec: vi.fn().mockResolvedValue([]),
-  };
-
   const Redis = vi.fn().mockImplementation(() => ({
     get: vi.fn(),
     set: vi.fn(),
     del: vi.fn(),
     keys: vi.fn(),
-    pipeline: vi.fn().mockReturnValue(mockPipeline),
+    pipeline: vi.fn(),
+    scanStream: vi.fn(),
     on: vi.fn(),
     quit: vi.fn(),
   }));
@@ -34,10 +32,22 @@ vi.mock('ioredis', () => {
   return { Redis, Cluster: Redis.Cluster };
 });
 
+function createMockStream() {
+  return Object.assign(new EventEmitter(), {
+    pause: vi.fn(),
+    resume: vi.fn(),
+  });
+}
+
+// Flush all pending microtasks and macrotasks
+function flushAsync() {
+  return new Promise<void>((resolve) => setTimeout(resolve, 0));
+}
+
 describe('RedisCacheProvider', () => {
   let provider: RedisCacheProvider;
   let mockStrapi: Pick<Core.Strapi, 'plugin'>;
-  let mockClient: Pick<Redis, 'get' | 'set' | 'del' | 'keys' | 'pipeline' | 'on' | 'quit'>;
+  let mockClient: InstanceType<typeof Redis>;
   let mockPipeline: Pick<ChainableCommander, 'del' | 'exec'>;
 
   beforeEach(() => {
@@ -46,15 +56,18 @@ describe('RedisCacheProvider', () => {
       exec: vi.fn().mockResolvedValue([]),
     };
 
-    mockClient = {
+    // Use Object.create to ensure instanceof Redis passes in clearByRegexp
+    mockClient = Object.create((Redis as any).prototype);
+    Object.assign(mockClient, {
       get: vi.fn(),
       set: vi.fn(),
       del: vi.fn(),
       keys: vi.fn(),
       pipeline: vi.fn().mockReturnValue(mockPipeline),
+      scanStream: vi.fn(),
       on: vi.fn(),
       quit: vi.fn(),
-    };
+    });
 
     mockStrapi = {
       plugin: vi.fn().mockReturnValue({
@@ -62,94 +75,157 @@ describe('RedisCacheProvider', () => {
           if (key === 'redisConfig') return { keyPrefix: 'test-prefix:' };
           if (key === 'cacheGetTimeoutInMs') return 1000;
           if (key === 'redisClusterNodes') return [];
+          if (key === 'redisScanDeleteCount') return 100;
           return undefined;
         }),
       }),
     };
 
-    // Create provider with mock strapi
     provider = new RedisCacheProvider(mockStrapi);
 
-    // Replace the client with mock and set initialized
     (provider as any).client = mockClient;
     (provider as any).initialized = true;
     (provider as any).keyPrefix = 'test-prefix:';
+    (provider as any).redisScanDeleteCount = 100;
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('delAll', () => {
-    it('should delete keys using Redis pipeline and strip prefixes', async () => {
-      await provider.delAll([
-        'test-prefix:key1',
-        'test-prefix:articles/123',
-        'test-prefix:GET:/api/articles?populate=*',
-      ]);
+  describe('clearByRegexp', () => {
+    it('should call scanStream with correct match and count params', async () => {
+      const stream = createMockStream();
+      (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
+
+      const promise = provider.clearByRegexp([/\/api\/articles/]);
+      stream.emit('end');
+      await promise;
+
+      expect(mockClient.scanStream).toHaveBeenCalledWith({ match: 'test-prefix:*', count: 100 });
+    });
+
+    it('should filter matching keys and delete via pipeline', async () => {
+      const stream = createMockStream();
+      (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
+
+      const promise = provider.clearByRegexp([/\/api\/articles/]);
+
+      stream.emit('data', ['test-prefix:GET:/api/articles', 'test-prefix:GET:/api/users']);
+      await flushAsync();
+      stream.emit('end');
+      await promise;
 
       expect(mockClient.pipeline).toHaveBeenCalledOnce();
-      expect(mockPipeline.del).toHaveBeenCalledTimes(3);
-      expect(mockPipeline.del).toHaveBeenCalledWith('key1');
-      expect(mockPipeline.del).toHaveBeenCalledWith('articles/123');
-      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles?populate=*');
+      expect(mockPipeline.del).toHaveBeenCalledOnce();
+      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles');
       expect(mockPipeline.exec).toHaveBeenCalledOnce();
     });
 
-    it('should handle edge cases (empty array)', async () => {
-      await provider.delAll([]);
+    it('should skip pipeline when no keys in batch match', async () => {
+      const stream = createMockStream();
+      (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
-      expect(mockClient.pipeline).toHaveBeenCalledOnce();
+      const promise = provider.clearByRegexp([/\/api\/articles/]);
+
+      stream.emit('data', ['test-prefix:GET:/api/users', 'test-prefix:GET:/api/products']);
+      await flushAsync();
+      stream.emit('end');
+      await promise;
+
+      expect(mockClient.pipeline).not.toHaveBeenCalled();
       expect(mockPipeline.del).not.toHaveBeenCalled();
-      expect(mockPipeline.exec).toHaveBeenCalledOnce();
     });
 
-    it('should handle large batches efficiently', async () => {
-      const keys = Array.from({ length: 1000 }, (_, i) => `test-prefix:key${i}`);
-      await provider.delAll(keys);
+    it('should pause and resume stream around each batch', async () => {
+      const stream = createMockStream();
+      (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
-      expect(mockClient.pipeline).toHaveBeenCalledOnce();
-      expect(mockPipeline.del).toHaveBeenCalledTimes(1000);
-      expect(mockPipeline.exec).toHaveBeenCalledOnce();
+      const promise = provider.clearByRegexp([/\/api\/articles/]);
+
+      stream.emit('data', ['test-prefix:GET:/api/articles/1']);
+      expect(stream.pause).toHaveBeenCalledTimes(1);
+      await flushAsync();
+      expect(stream.resume).toHaveBeenCalledTimes(1);
+
+      stream.emit('data', ['test-prefix:GET:/api/articles/2']);
+      expect(stream.pause).toHaveBeenCalledTimes(2);
+      await flushAsync();
+      expect(stream.resume).toHaveBeenCalledTimes(2);
+
+      stream.emit('end');
+      await promise;
+
+      expect(mockPipeline.del).toHaveBeenCalledTimes(2);
+      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles/1');
+      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles/2');
     });
 
-    it('should propagate pipeline errors', async () => {
-      mockPipeline.exec.mockRejectedValue(new Error('Pipeline failed'));
+    it('should strip keyPrefix before calling pipeline.del', async () => {
+      const stream = createMockStream();
+      (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
-      await expect(provider.delAll(['test-prefix:key1'])).rejects.toThrow('Pipeline failed');
-    });
-  });
+      const promise = provider.clearByRegexp([/some\/key/]);
 
-  describe('clearByRegexp - integration with delAll', () => {
-    it('should filter matching keys and use delAll for batch deletion', async () => {
-      provider.keys = vi.fn().mockResolvedValue([
-        'test-prefix:GET:/api/articles',
-        'test-prefix:GET:/api/articles/123',
-        'test-prefix:GET:/api/users',
-      ]);
-      const delAllSpy = vi.spyOn(provider, 'delAll');
+      stream.emit('data', ['test-prefix:some/key']);
+      await flushAsync();
+      stream.emit('end');
+      await promise;
 
-      await provider.clearByRegexp([/\/api\/articles/]);
-
-      expect(delAllSpy).toHaveBeenCalledWith([
-        'test-prefix:GET:/api/articles',
-        'test-prefix:GET:/api/articles/123',
-      ]);
-      expect(mockClient.pipeline).toHaveBeenCalled();
+      expect(mockPipeline.del).toHaveBeenCalledWith('some/key');
     });
 
-    it('should handle edge cases (no matching keys, null response)', async () => {
-      const delAllSpy = vi.spyOn(provider, 'delAll');
+    it('should pass key unchanged when it does not start with keyPrefix', async () => {
+      const stream = createMockStream();
+      (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
-      // No matching keys
-      provider.keys = vi.fn().mockResolvedValue(['test-prefix:GET:/api/users']);
-      await provider.clearByRegexp([/\/api\/articles/]);
-      expect(delAllSpy).toHaveBeenCalledWith([]);
+      const promise = provider.clearByRegexp([/bare-key/]);
 
-      // Null response
-      provider.keys = vi.fn().mockResolvedValue(null);
-      await provider.clearByRegexp([/\/api\/articles/]);
-      expect(delAllSpy).toHaveBeenCalledTimes(1); // Only called once (not twice)
+      stream.emit('data', ['bare-key']);
+      await flushAsync();
+      stream.emit('end');
+      await promise;
+
+      expect(mockPipeline.del).toHaveBeenCalledWith('bare-key');
+    });
+
+    it('should reject when stream emits an error', async () => {
+      const stream = createMockStream();
+      (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
+
+      const promise = provider.clearByRegexp([/\/api\/articles/]);
+      stream.emit('error', new Error('scan failed'));
+
+      await expect(promise).rejects.toThrow('scan failed');
+    });
+
+    it('should iterate master nodes in cluster mode', async () => {
+      const nodePipeline1 = { del: vi.fn().mockReturnThis(), exec: vi.fn().mockResolvedValue([]) };
+      const nodePipeline2 = { del: vi.fn().mockReturnThis(), exec: vi.fn().mockResolvedValue([]) };
+      const nodeStream1 = createMockStream();
+      const nodeStream2 = createMockStream();
+
+      const mockCluster = {
+        nodes: vi.fn().mockReturnValue([
+          { scanStream: vi.fn().mockReturnValue(nodeStream1), pipeline: vi.fn().mockReturnValue(nodePipeline1) },
+          { scanStream: vi.fn().mockReturnValue(nodeStream2), pipeline: vi.fn().mockReturnValue(nodePipeline2) },
+        ]),
+      };
+
+      (provider as any).client = mockCluster;
+
+      const promise = provider.clearByRegexp([/\/api\/articles/]);
+
+      nodeStream1.emit('data', ['test-prefix:GET:/api/articles/1']);
+      nodeStream2.emit('data', ['test-prefix:GET:/api/articles/2']);
+      await flushAsync();
+      nodeStream1.emit('end');
+      nodeStream2.emit('end');
+      await promise;
+
+      expect(mockCluster.nodes).toHaveBeenCalledWith('master');
+      expect(nodePipeline1.del).toHaveBeenCalledWith('GET:/api/articles/1');
+      expect(nodePipeline2.del).toHaveBeenCalledWith('GET:/api/articles/2');
     });
   });
 });

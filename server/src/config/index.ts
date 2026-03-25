@@ -20,6 +20,7 @@ export default {
     autoPurgeCacheOnStart: true,
     disableAdminPopups: false,
     disableAdminButtons: false,
+    redisScanDeleteCount: 100,
   }),
   validator: (config) => {
     if (typeof config.debug !== 'boolean') {
@@ -117,6 +118,9 @@ export default {
     }
     if (typeof config.disableAdminButtons !== 'boolean') {
       throw new Error(`Invalid config: disableAdminButtons must be a boolean`);
+    }
+    if (typeof config.redisScanDeleteCount !== 'number') {
+      throw new Error(`Invalid config: redisScanDeleteCount must be a number`);
     }
   },
 };
