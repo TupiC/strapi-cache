@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.4](https://github.com/TupiC/strapi-cache/compare/v1.8.3...v1.8.4) (2026-03-25)
+
+
+### Bug Fixes
+
+* use scanStream instead of KEYS for clearByRegexp in Redis provider ([#89](https://github.com/TupiC/strapi-cache/issues/89)) ([3d70cbc](https://github.com/TupiC/strapi-cache/commit/3d70cbca73b30971bdadff5f4236d24d778a4c2c))
+
 ## [1.8.3](https://github.com/TupiC/strapi-cache/compare/v1.8.2...v1.8.3) (2026-02-26)
 
 
