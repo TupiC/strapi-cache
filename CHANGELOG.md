@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.5](https://github.com/TupiC/strapi-cache/compare/v1.8.4...v1.8.5) (2026-05-04)
+
+
+### Bug Fixes
+
+* buffer files are not loading from the cache issue[[#98](https://github.com/TupiC/strapi-cache/issues/98)] ([#99](https://github.com/TupiC/strapi-cache/issues/99)) ([debd77e](https://github.com/TupiC/strapi-cache/commit/debd77e5af54bc132bd1db17e5ba410dbfcc687a))
+
 ## [1.8.4](https://github.com/TupiC/strapi-cache/compare/v1.8.3...v1.8.4) (2026-03-25)
 
 
