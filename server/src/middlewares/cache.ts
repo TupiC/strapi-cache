@@ -62,6 +62,9 @@ const middleware = async (ctx: Context, next: any) => {
   if (cacheEntry && !noCache) {
     loggy.info(`HIT with key: ${key}`);
     ctx.status = 200;
+    if (cacheEntry?.body?.type === 'Buffer' && Array.isArray(cacheEntry.body.data)) {
+      cacheEntry.body = Buffer.from(cacheEntry.body.data);
+    }
     ctx.body = cacheEntry.body;
 
     if (cacheHeaders) {
