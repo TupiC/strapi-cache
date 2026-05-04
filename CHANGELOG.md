@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.8](https://github.com/TupiC/strapi-cache/compare/v1.8.7...v1.8.8) (2026-05-04)
+
+
+### Bug Fixes
+
+* **ci:** use npm 11.5 for OIDC publish and optional NPM_TOKEN ([f1c22be](https://github.com/TupiC/strapi-cache/commit/f1c22be62be923a4ecfcec281f5e47858ad221db))
+
 ## [1.8.7](https://github.com/TupiC/strapi-cache/compare/v1.8.6...v1.8.7) (2026-05-04)
 
 
