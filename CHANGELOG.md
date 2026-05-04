@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.7](https://github.com/TupiC/strapi-cache/compare/v1.8.6...v1.8.7) (2026-05-04)
+
+
+### Bug Fixes
+
+* **ci:** refresh package-lock for npm 10 npm ci peers ([377ed0a](https://github.com/TupiC/strapi-cache/commit/377ed0ae1897e60673e218a3e047edb5246858b8))
+
 ## [1.8.6](https://github.com/TupiC/strapi-cache/compare/v1.8.5...v1.8.6) (2026-05-04)
 
 
