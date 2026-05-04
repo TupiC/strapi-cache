@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.8.8](https://github.com/TupiC/strapi-cache/compare/v1.8.7...v1.8.8) (2026-05-04)
+
+
+### Bug Fixes
+
+* **ci:** use npm 11.5 for OIDC publish and optional NPM_TOKEN ([f1c22be](https://github.com/TupiC/strapi-cache/commit/f1c22be62be923a4ecfcec281f5e47858ad221db))
+
+## [1.8.7](https://github.com/TupiC/strapi-cache/compare/v1.8.6...v1.8.7) (2026-05-04)
+
+
+### Bug Fixes
+
+* **ci:** refresh package-lock for npm 10 npm ci peers ([377ed0a](https://github.com/TupiC/strapi-cache/commit/377ed0ae1897e60673e218a3e047edb5246858b8))
+
+## [1.8.6](https://github.com/TupiC/strapi-cache/compare/v1.8.5...v1.8.6) (2026-05-04)
+
+
+### Bug Fixes
+
+* **release:** pin global npm to 10.9.2 in publish job ([d90d29c](https://github.com/TupiC/strapi-cache/commit/d90d29c1709d4948a16c2f527d5bf31e230d6d4c))
+
+## [1.8.5](https://github.com/TupiC/strapi-cache/compare/v1.8.4...v1.8.5) (2026-05-04)
+
+
+### Bug Fixes
+
+* buffer files are not loading from the cache issue[[#98](https://github.com/TupiC/strapi-cache/issues/98)] ([#99](https://github.com/TupiC/strapi-cache/issues/99)) ([debd77e](https://github.com/TupiC/strapi-cache/commit/debd77e5af54bc132bd1db17e5ba410dbfcc687a))
+
 ## [1.8.4](https://github.com/TupiC/strapi-cache/compare/v1.8.3...v1.8.4) (2026-03-25)
 
 
