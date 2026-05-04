@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.6](https://github.com/TupiC/strapi-cache/compare/v1.8.5...v1.8.6) (2026-05-04)
+
+
+### Bug Fixes
+
+* **release:** pin global npm to 10.9.2 in publish job ([d90d29c](https://github.com/TupiC/strapi-cache/commit/d90d29c1709d4948a16c2f527d5bf31e230d6d4c))
+
 ## [1.8.5](https://github.com/TupiC/strapi-cache/compare/v1.8.4...v1.8.5) (2026-05-04)
 
 
