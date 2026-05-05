@@ -139,7 +139,7 @@ All of these routes are protected by the policies `admin::isAuthenticatedAdmin` 
 - **Packages**: Uses [lru-cache](https://github.com/isaacs/node-lru-cache) for in-memory cache. Uses [ioredis](https://github.com/redis/ioredis) for Redis and [iovalkey](https://github.com/valkey-io/iovalkey) for Valkey caching.
 - **Automatic Invalidation**: When `autoPurgeCache` is enabled (default), relevant REST cache entries are invalidated on content create, update, or delete. When `autoPurgeGraphQL` is enabled, GraphQL cache is invalidated the same way (it is off unless you set it in config).
 - **`no-cache` Header Support**: Respects the `no-cache` header, letting you skip the cache by setting `Cache-Control: no-cache` in your request.
-- **Default Cached Requests**: By default, caches all GET requests to `/api` (or whatever prefix you defined) and POST requests to `/graphql`. You can customize which routes or entities to cache using `cacheableRoutes` or `cacheableEntities` config options.
+- **Default Cached Requests**: By default, caches all GET requests to `/api` (or whatever prefix you defined) and POST requests to `/graphql` or predefined graphql route from graphql plugin config. You can customize which routes or entities to cache using `cacheableRoutes` or `cacheableEntities` config options.
 
 ## 🔮 Planned Features
 

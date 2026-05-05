@@ -284,7 +284,7 @@ describe('invalidateCache', () => {
 
 describe('invalidateGraphqlCache', () => {
   let mockCacheStore: Pick<CacheProvider, 'clearByRegexp'>;
-  let mockStrapi: Pick<Core.Strapi, 'contentType'>;
+  let mockStrapi: Pick<Core.Strapi, 'contentType' | 'plugin'>;
 
   beforeEach(() => {
     mockCacheStore = {
@@ -293,6 +293,9 @@ describe('invalidateGraphqlCache', () => {
 
     mockStrapi = {
       contentType: vi.fn(),
+      plugin: vi.fn().mockReturnValue({
+        config: vi.fn().mockReturnValue('/graphql'),
+      }),
     };
 
     vi.clearAllMocks();

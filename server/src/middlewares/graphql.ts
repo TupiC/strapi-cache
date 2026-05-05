@@ -9,7 +9,7 @@ import { parseGraphqlPayload, getRootFieldsFromQuery } from '../utils/graphql';
 
 const middleware = async (ctx: any, next: any) => {
   const { url, method } = ctx.request;
-  if (!url.startsWith('/graphql')) {
+  if (!url.startsWith(strapi.plugin('graphql')?.config('endpoint', '/graphql'))) {
     await next();
     return;
   }
@@ -51,7 +51,7 @@ const middleware = async (ctx: any, next: any) => {
 
   const payload = parseGraphqlPayload(body, isGet);
   const rootFields = getRootFieldsFromQuery(payload.query);
-  const key = generateGraphqlCacheKey(body, isGet ? 'GET' : 'POST', rootFields);
+  const key = generateGraphqlCacheKey(body, isGet ? 'GET' : 'POST', rootFields, strapi);
   loggy.info(
     `GraphQL request: ${JSON.stringify({
       operationName: payload.operationName,
@@ -119,7 +119,7 @@ const middleware = async (ctx: any, next: any) => {
     (ctx.method === 'POST' || ctx.method === 'GET') &&
     ctx.status >= 200 &&
     ctx.status < 300 &&
-    url.startsWith('/graphql');
+    url.startsWith(strapi.plugin('graphql')?.config('endpoint', '/graphql'));
 
   if (shouldCache) {
     loggy.info(`MISS with key: ${key}`);

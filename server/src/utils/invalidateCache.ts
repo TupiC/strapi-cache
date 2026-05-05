@@ -54,7 +54,7 @@ export async function invalidateGraphqlCache(
 
     if (!contentType || !contentType.info) {
       loggy.info(`Content type ${model.uid} not found, purging all GraphQL cache`);
-      const graphqlRegex = new RegExp(`^(GET|POST):/graphql:.*`);
+      const graphqlRegex = new RegExp(`^(GET|POST):${strapi.plugin('graphql')?.config('endpoint', '/graphql') ?? '/graphql'}:.*`);
       await cacheStore.clearByRegexp([graphqlRegex]);
       return;
     }
@@ -65,7 +65,7 @@ export async function invalidateGraphqlCache(
 
     if (fieldNames.length === 0) {
       loggy.info(`No field names for ${model.uid}, purging all GraphQL cache`);
-      const graphqlRegex = new RegExp(`^(GET|POST):/graphql:.*`);
+      const graphqlRegex = new RegExp(`^(GET|POST):${strapi.plugin('graphql')?.config('endpoint', '/graphql') ?? '/graphql'}:.*`);
       await cacheStore.clearByRegexp([graphqlRegex]);
       return;
     }
@@ -73,7 +73,7 @@ export async function invalidateGraphqlCache(
     const escapedNames = fieldNames
       .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       .join('|');
-    const graphqlRegex = new RegExp(`^(GET|POST):/graphql:[^:]*\\b(${escapedNames})\\b[^:]*:`);
+    const graphqlRegex = new RegExp(`^(GET|POST):${strapi.plugin('graphql')?.config('endpoint', '/graphql') ?? '/graphql'}:[^:]*\\b(${escapedNames})\\b[^:]*:`);
 
     await cacheStore.clearByRegexp([graphqlRegex]);
     loggy.info(`Invalidated GraphQL cache for ${model.uid} (${fieldNames.join(', ')})`);
