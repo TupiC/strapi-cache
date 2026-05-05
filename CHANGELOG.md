@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/TupiC/strapi-cache/compare/v1.8.8...v1.9.0) (2026-05-05)
+
+
+### Features
+
+* allow dynamic graphql routes from graphql plugin config ([#105](https://github.com/TupiC/strapi-cache/issues/105)) ([8945993](https://github.com/TupiC/strapi-cache/commit/8945993a33e42ada1088cf246548b3b0dc23dd20))
+
 ## [1.8.8](https://github.com/TupiC/strapi-cache/compare/v1.8.7...v1.8.8) (2026-05-04)
 
 
