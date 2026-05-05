@@ -51,7 +51,7 @@ const middleware = async (ctx: any, next: any) => {
 
   const payload = parseGraphqlPayload(body, isGet);
   const rootFields = getRootFieldsFromQuery(payload.query);
-  const key = generateGraphqlCacheKey(body, isGet ? 'GET' : 'POST', rootFields);
+  const key = generateGraphqlCacheKey(body, isGet ? 'GET' : 'POST', rootFields, strapi);
   loggy.info(
     `GraphQL request: ${JSON.stringify({
       operationName: payload.operationName,
