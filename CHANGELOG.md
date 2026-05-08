@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/TupiC/strapi-cache/compare/v1.9.0...v1.10.0) (2026-05-08)
+
+
+### Features
+
+* **cache:** add optional keyGenerator for REST cache keys ([#107](https://github.com/TupiC/strapi-cache/issues/107)) ([ab538e4](https://github.com/TupiC/strapi-cache/commit/ab538e4ceaef8148efd81f038d90b90facaba6f7))
+
 ## [1.9.0](https://github.com/TupiC/strapi-cache/compare/v1.8.8...v1.9.0) (2026-05-05)
 
 
