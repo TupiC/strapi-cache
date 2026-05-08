@@ -2,6 +2,7 @@
 export default ({ env }) => ({
   'strapi-cache': {
     enabled: true,
+    resolve: '.yalc/strapi-cache',
     config: {
       debug: true, // Enable debug logs
       max: 1000, // Maximum number of items in the cache (only for memory cache)
