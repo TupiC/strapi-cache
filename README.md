@@ -72,6 +72,7 @@ Full configuration example:
     size: 1024 * 1024 * 1024, // Maximum size of the cache (1 GB) (only for memory cache)
     allowStale: false, // Allow stale cache items (only for memory cache)
     cacheableRoutes: ['/api/products', '/api/categories'], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
+    keyGenerator: (ctx) => `${ctx.request.method}:${ctx.request.url}`, // Optional custom cache key for REST requests; receives koa ctx
     // cacheableEntities: ['products', 'categories'], // (Optional) Specify which entities to cache. When set, only these entities will be cached (ignores cacheableRoutes). If not set (undefined), cacheableRoutes logic is used
     excludeRoutes: ['/api/products/private'], // Exclude routes which start with these paths from being cached (takes precedence over cacheableRoutes). **Note:** `excludeRoutes` takes precedence over `cacheableRoutes`.
     provider: 'memory', // Cache provider ('memory', 'redis' or 'valkey')
@@ -109,6 +110,7 @@ Possible configuration keys are listed below; omitted keys keep the plugin defau
 | `size`                    | Approximate max total size in bytes (in-memory provider only)                                                                 | Positive integer (default: `10485760`, i.e. 10 MB)                                                                            |
 | `allowStale`              | Whether stale entries may be returned (in-memory provider only)                                                               | `true` or `false` (default: `false`)                                                                                          |
 | `cacheableRoutes`         | Only URLs starting with one of these paths are cached; if empty, every URL under the REST API prefix matches                  | Array of path prefix strings (default: `[]` meaning “all API routes”)                                                         |
+| `keyGenerator`            | Custom function to build REST cache keys; receives Koa `ctx`; when omitted, default key is `${method}:${url}`                 | Function `(ctx) => string` (default: unset)                                                                                   |
 | `cacheableEntities`       | If non-empty, only these API “entity” segments are cached; **when set, this drives eligibility instead of** `cacheableRoutes` | Array of strings (e.g. collection/table names), or omit / leave empty to use `cacheableRoutes`                                |
 | `excludeRoutes`           | URLs starting with any of these prefixes are **never** cached; evaluated before `cacheableRoutes` / entities                  | Array of path prefix strings (default: `[]`)                                                                                  |
 | `cacheHeaders`            | Store and replay response headers with the body                                                                               | `true` or `false` (default: `true`)                                                                                           |

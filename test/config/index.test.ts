@@ -18,6 +18,7 @@ describe('config', () => {
         size: 1024 * 1024 * 10,
         allowStale: false,
         cacheableRoutes: [],
+        keyGenerator: undefined,
         provider: 'memory',
         excludeRoutes: [],
         redisConfig: 'redis://localhost:6379',
@@ -53,6 +54,7 @@ describe('config', () => {
       size: 1024 * 1024 * 10,
       allowStale: false,
       cacheableRoutes: [],
+      keyGenerator: undefined,
       provider: 'memory',
       excludeRoutes: [],
       redisConfig: undefined,
@@ -138,6 +140,28 @@ describe('config', () => {
 
         expect(() => config.validator(invalidConfig)).toThrow(
           'Invalid config: cacheableRoutes must be an string array'
+        );
+      });
+    });
+
+    describe('keyGenerator validation', () => {
+      it('should not throw when keyGenerator is undefined', () => {
+        const configWithUndefined = { ...validConfig, keyGenerator: undefined };
+        expect(() => config.validator(configWithUndefined)).not.toThrow();
+      });
+
+      it('should not throw for valid keyGenerator function', () => {
+        const configWithFunction = {
+          ...validConfig,
+          keyGenerator: () => 'custom-key',
+        };
+        expect(() => config.validator(configWithFunction)).not.toThrow();
+      });
+
+      it('should throw for non-function keyGenerator', () => {
+        const invalidConfig = { ...validConfig, keyGenerator: 'invalid' };
+        expect(() => config.validator(invalidConfig)).toThrow(
+          'Invalid config: keyGenerator must be a function'
         );
       });
     });

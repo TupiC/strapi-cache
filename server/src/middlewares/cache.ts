@@ -1,5 +1,5 @@
 import { Context } from 'koa';
-import { generateCacheKey, generateEntityKey } from '../utils/key';
+import { CacheKeyGenerator, generateCacheKey, generateEntityKey } from '../utils/key';
 import { CacheService } from '../../src/types/cache.types';
 import { loggy } from '../utils/log';
 import Stream from 'stream';
@@ -13,11 +13,14 @@ const middleware = async (ctx: Context, next: any) => {
     | undefined;
   const cacheableRoutes = strapi.plugin('strapi-cache').config('cacheableRoutes') as string[];
   const excludeRoutes = strapi.plugin('strapi-cache').config('excludeRoutes') as string[];
+  const keyGenerator = strapi.plugin('strapi-cache').config('keyGenerator') as
+    | CacheKeyGenerator
+    | undefined;
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
     getCacheHeaderConfig();
   const cacheStore = cacheService.getCacheInstance();
   const { url } = ctx.request;
-  const key = generateCacheKey(ctx);
+  const key = generateCacheKey(ctx, keyGenerator);
   const cacheEntry = await cacheStore.get(key);
   const cacheControlHeader = ctx.request.headers['cache-control'];
   const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');

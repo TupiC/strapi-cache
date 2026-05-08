@@ -59,6 +59,30 @@ describe('generateCacheKey', () => {
     const result = generateCacheKey(mockContext);
     expect(result).toBe('GET:/api/articles/123?title=test&category=news&tags[]=tech&tags[]=web');
   });
+
+  it('should use custom key generator when provided', () => {
+    const mockContext = {
+      request: {
+        url: '/api/articles',
+        method: 'GET',
+      },
+    } as Context;
+
+    const result = generateCacheKey(mockContext, (ctx) => `custom:${ctx.request.url}`);
+    expect(result).toBe('custom:/api/articles');
+  });
+
+  it('should fallback to default key when custom key generator returns non-string', () => {
+    const mockContext = {
+      request: {
+        url: '/api/articles',
+        method: 'GET',
+      },
+    } as Context;
+
+    const result = generateCacheKey(mockContext, () => 123 as unknown as string);
+    expect(result).toBe('GET:/api/articles');
+  });
 });
 
 describe('generateGraphqlCacheKey', () => {

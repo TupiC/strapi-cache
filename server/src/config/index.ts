@@ -6,6 +6,7 @@ export default {
     size: 1024 * 1024 * 10,
     allowStale: false,
     cacheableRoutes: [],
+    keyGenerator: undefined,
     provider: 'memory',
     excludeRoutes: [],
     redisConfig: env('REDIS_URL'),
@@ -43,6 +44,9 @@ export default {
       config.cacheableRoutes.some((item) => typeof item !== 'string')
     ) {
       throw new Error(`Invalid config: cacheableRoutes must be an string array`);
+    }
+    if (config.keyGenerator !== undefined && typeof config.keyGenerator !== 'function') {
+      throw new Error(`Invalid config: keyGenerator must be a function`);
     }
     if (
       config.cacheableEntities !== undefined &&
