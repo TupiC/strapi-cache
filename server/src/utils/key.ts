@@ -2,7 +2,16 @@ import { Core } from '@strapi/strapi';
 import { createHash } from 'crypto';
 import { Context } from 'koa';
 
-export const generateCacheKey = (context: Context) => {
+export type CacheKeyGenerator = (context: Context) => string;
+
+export const generateCacheKey = (context: Context, keyGenerator?: CacheKeyGenerator) => {
+  if (typeof keyGenerator === 'function') {
+    const customKey = keyGenerator(context);
+    if (typeof customKey === 'string') {
+      return customKey;
+    }
+  }
+
   const { url } = context.request;
   const { method } = context.request;
 
@@ -17,9 +26,7 @@ export const generateGraphqlCacheKey = (
 ) => {
   const hash = createHash('sha256').update(payload).digest('base64url');
   const rootFieldsSegment =
-    rootFields.length > 0
-      ? [...rootFields].sort((a, b) => a.localeCompare(b)).join(',')
-      : '_';
+    rootFields.length > 0 ? [...rootFields].sort((a, b) => a.localeCompare(b)).join(',') : '_';
   return `${method}:${strapi?.plugin('graphql')?.config('endpoint', '/graphql') ?? '/graphql'}:${rootFieldsSegment}:${hash}`;
 };
 
@@ -29,4 +36,4 @@ export const generateEntityKey = (url: string, restApiPrefix: string): string =>
   const regex = new RegExp(`${restApiPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/([^/?]*)`);
   const match = url.match(regex);
   return match ? match[1] : '';
-}
+};

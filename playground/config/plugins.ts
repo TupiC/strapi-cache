@@ -8,6 +8,7 @@ export default ({ env }) => ({
       ttl: 1000 * 60 * 60, // Time to live for cache items (1 hour)
       size: 1024 * 1024 * 1024, // Maximum size of the cache (1 GB) (only for memory cache)
       allowStale: false, // Allow stale cache items (only for memory cache)
+      keyGenerator: (ctx) => `${ctx.request.method}:${ctx.request.url}`, // Optional custom cache key for REST requests; receives koa ctx
       cacheableRoutes: [], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
       excludeRoutes: [], // Do not cache routes which start with these paths (if empty array, no routes are excluded)
       provider: 'memory', // Use memory for integration tests (no Redis/Valkey required). Options: 'memory', 'redis', 'valkey'
