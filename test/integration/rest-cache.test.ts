@@ -8,6 +8,12 @@ declare global {
 }
 
 describe('REST cache integration', () => {
+  const getCacheStore = () =>
+    strapi.plugin('strapi-cache').services.service.getCacheInstance() as {
+      keys: () => Promise<string[] | null>;
+      reset: () => Promise<any | null>;
+    };
+
   beforeAll(async () => {
     const instance = await setupStrapi();
     (global as any).strapi = instance;
@@ -37,5 +43,18 @@ describe('REST cache integration', () => {
 
     expect(responseA.body).toBeDefined();
     expect(responseB.body).toBeDefined();
+  });
+
+  it('should use configured keyGenerator format for REST keys', async () => {
+    const cacheStore = getCacheStore();
+    await cacheStore.reset();
+
+    const server = strapi.server.httpServer;
+    const path = '/api/cache-test?kg=rest-key-format';
+
+    await request(server).get(path).expect(200);
+
+    const keys = (await cacheStore.keys()) ?? [];
+    expect(keys).toContain(`my-prefix::GET:${path}:undefined:undefined`);
   });
 });

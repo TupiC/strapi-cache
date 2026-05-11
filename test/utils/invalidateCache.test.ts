@@ -327,7 +327,7 @@ describe('invalidateGraphqlCache', () => {
 
     await invalidateGraphqlCache(event, mockCacheStore, mockStrapi);
 
-    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^(GET|POST):\/graphql:.*/]);
+    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^(GET|POST):\/graphql.*/]);
     expect(loggy.info).toHaveBeenCalledWith(
       'Content type api::unknown.unknown not found, purging all GraphQL cache'
     );

@@ -29,8 +29,23 @@ function graphqlGet(server: any, query: string) {
   return request(server).get(`/graphql?query=${encoded}`).expect(200);
 }
 
+function graphqlGetWithOperationName(server: any, query: string, operationName: string) {
+  const encoded = encodeURIComponent(query.replace(/\s+/g, ' ').trim());
+  const encodedOperationName = encodeURIComponent(operationName);
+  const path = `/graphql?query=${encoded}&operationName=${encodedOperationName}`;
+  return {
+    path,
+    request: request(server).get(path).expect(200),
+  };
+}
+
 describe('GraphQL cache integration', () => {
   let graphqlRouteAvailable = false;
+  const getCacheStore = () =>
+    strapi.plugin('strapi-cache').services.service.getCacheInstance() as {
+      keys: () => Promise<string[] | null>;
+      reset: () => Promise<any | null>;
+    };
 
   beforeAll(async () => {
     const instance = await setupStrapi();
@@ -124,5 +139,32 @@ describe('GraphQL cache integration', () => {
       (a: { attributes: { title?: string } }) => a.attributes?.title === 'Cache invalidation test article'
     );
     expect(newArticle).toBeDefined();
+  });
+
+  it('should use configured keyGenerator format for GraphQL keys', async () => {
+    if (!graphqlRouteAvailable) {
+      return; // skip when /graphql is not registered
+    }
+
+    const cacheStore = getCacheStore();
+    await cacheStore.reset();
+
+    const server = strapi.server.httpServer;
+    const operationName = 'ArticlesKeyGenOp';
+    const query = `
+      query ArticlesKeyGenOp {
+        articles {
+          data {
+            id
+          }
+        }
+      }
+    `;
+    const { path, request: gqlRequest } = graphqlGetWithOperationName(server, query, operationName);
+
+    await gqlRequest;
+
+    const keys = (await cacheStore.keys()) ?? [];
+    expect(keys).toContain(`my-prefix::GET:${path}:articles:${operationName}`);
   });
 });

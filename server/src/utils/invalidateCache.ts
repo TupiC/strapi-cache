@@ -3,6 +3,12 @@ import { CacheProvider } from 'src/types/cache.types';
 import { loggy } from './log';
 import { UID } from '@strapi/strapi';
 
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const getGraphqlEndpoint = (strapi: Core.Strapi) =>
+  strapi.plugin('graphql')?.config('endpoint', '/graphql') ?? '/graphql';
+const getGraphqlAllKeysRegex = (strapi: Core.Strapi) =>
+  new RegExp(`^(GET|POST):${escapeRegex(getGraphqlEndpoint(strapi))}.*`);
+
 export async function invalidateCache(event: any, cacheStore: CacheProvider, strapi: Core.Strapi) {
   const { model } = event;
   const uid = model.uid;
@@ -54,7 +60,7 @@ export async function invalidateGraphqlCache(
 
     if (!contentType || !contentType.info) {
       loggy.info(`Content type ${model.uid} not found, purging all GraphQL cache`);
-      const graphqlRegex = new RegExp(`^(GET|POST):${strapi.plugin('graphql')?.config('endpoint', '/graphql') ?? '/graphql'}:.*`);
+      const graphqlRegex = getGraphqlAllKeysRegex(strapi);
       await cacheStore.clearByRegexp([graphqlRegex]);
       return;
     }
@@ -65,15 +71,15 @@ export async function invalidateGraphqlCache(
 
     if (fieldNames.length === 0) {
       loggy.info(`No field names for ${model.uid}, purging all GraphQL cache`);
-      const graphqlRegex = new RegExp(`^(GET|POST):${strapi.plugin('graphql')?.config('endpoint', '/graphql') ?? '/graphql'}:.*`);
+      const graphqlRegex = getGraphqlAllKeysRegex(strapi);
       await cacheStore.clearByRegexp([graphqlRegex]);
       return;
     }
 
-    const escapedNames = fieldNames
-      .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-      .join('|');
-    const graphqlRegex = new RegExp(`^(GET|POST):${strapi.plugin('graphql')?.config('endpoint', '/graphql') ?? '/graphql'}:[^:]*\\b(${escapedNames})\\b[^:]*:`);
+    const escapedNames = fieldNames.map((name) => escapeRegex(name)).join('|');
+    const graphqlRegex = new RegExp(
+      `^(GET|POST):${escapeRegex(getGraphqlEndpoint(strapi))}:[^:]*\\b(${escapedNames})\\b[^:]*:`
+    );
 
     await cacheStore.clearByRegexp([graphqlRegex]);
     loggy.info(`Invalidated GraphQL cache for ${model.uid} (${fieldNames.join(', ')})`);

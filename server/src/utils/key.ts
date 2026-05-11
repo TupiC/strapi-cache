@@ -4,12 +4,29 @@ import { Context } from 'koa';
 
 export type CacheKeyGenerator = (context: Context) => string;
 
+export const getCustomCacheKey = (context: Context, keyGenerator?: CacheKeyGenerator) => {
+  if (typeof keyGenerator !== 'function') {
+    return undefined;
+  }
+
+  const customKey = keyGenerator(context);
+  if (typeof customKey === 'string') {
+    return customKey;
+  }
+
+  return undefined;
+};
+
+export const resolveGraphqlCacheKey = (
+  context: Context,
+  fallbackKey: string,
+  keyGenerator?: CacheKeyGenerator
+) => getCustomCacheKey(context, keyGenerator) ?? fallbackKey;
+
 export const generateCacheKey = (context: Context, keyGenerator?: CacheKeyGenerator) => {
-  if (typeof keyGenerator === 'function') {
-    const customKey = keyGenerator(context);
-    if (typeof customKey === 'string') {
-      return customKey;
-    }
+  const customKey = getCustomCacheKey(context, keyGenerator);
+  if (customKey !== undefined) {
+    return customKey;
   }
 
   const { url } = context.request;

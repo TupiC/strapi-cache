@@ -1,5 +1,5 @@
 import rawBody from 'raw-body';
-import { generateGraphqlCacheKey } from '../utils/key';
+import { CacheKeyGenerator, generateGraphqlCacheKey, resolveGraphqlCacheKey } from '../utils/key';
 import Stream, { Readable } from 'stream';
 import { loggy } from '../utils/log';
 import { CacheService } from '../types/cache.types';
@@ -15,6 +15,9 @@ const middleware = async (ctx: any, next: any) => {
   }
 
   const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
+  const keyGenerator = strapi.plugin('strapi-cache').config('keyGenerator') as
+    | CacheKeyGenerator
+    | undefined;
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
     getCacheHeaderConfig();
   const cacheStore = cacheService.getCacheInstance();
@@ -51,7 +54,10 @@ const middleware = async (ctx: any, next: any) => {
 
   const payload = parseGraphqlPayload(body, isGet);
   const rootFields = getRootFieldsFromQuery(payload.query);
-  const key = generateGraphqlCacheKey(body, isGet ? 'GET' : 'POST', rootFields, strapi);
+  const graphqlKey = generateGraphqlCacheKey(body, isGet ? 'GET' : 'POST', rootFields, strapi);
+  ctx.rootFields = rootFields.length ? rootFields : undefined;
+  ctx.operationName = payload.operationName;
+  const key = resolveGraphqlCacheKey(ctx, graphqlKey, keyGenerator);
   loggy.info(
     `GraphQL request: ${JSON.stringify({
       operationName: payload.operationName,
@@ -67,6 +73,7 @@ const middleware = async (ctx: any, next: any) => {
     return;
   }
   const cacheEntry = await cacheStore.get(key);
+
   const cacheControlHeader = ctx.request.headers['cache-control'];
   const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
   const authorizationHeader = ctx.request.headers['authorization'];

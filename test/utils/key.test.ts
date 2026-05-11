@@ -1,11 +1,51 @@
 import { describe, it, expect } from 'vitest';
 import {
+  getCustomCacheKey,
   generateCacheKey,
   generateGraphqlCacheKey,
   escapeRegExp,
   generateEntityKey,
+  resolveGraphqlCacheKey,
 } from '../../server/src/utils/key';
 import { Context } from 'koa';
+
+describe('getCustomCacheKey', () => {
+  it('should return custom key when generator returns a string', () => {
+    const mockContext = {
+      request: {
+        url: '/api/articles',
+        method: 'GET',
+      },
+    } as Context;
+
+    const result = getCustomCacheKey(mockContext, () => 'custom-key');
+    expect(result).toBe('custom-key');
+  });
+
+  it('should return undefined when generator is not provided', () => {
+    const mockContext = {
+      request: {
+        url: '/api/articles',
+        method: 'GET',
+      },
+    } as Context;
+
+    const result = getCustomCacheKey(mockContext);
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined when generator returns non-string', () => {
+    const mockContext = {
+      request: {
+        url: '/api/articles',
+        method: 'GET',
+      },
+    } as Context;
+
+    const result = getCustomCacheKey(mockContext, () => 123 as unknown as string);
+    expect(result).toBeUndefined();
+  });
+});
 
 describe('generateCacheKey', () => {
   it('should generate cache key from context method and url', () => {
@@ -82,6 +122,40 @@ describe('generateCacheKey', () => {
 
     const result = generateCacheKey(mockContext, () => 123 as unknown as string);
     expect(result).toBe('GET:/api/articles');
+  });
+});
+
+describe('resolveGraphqlCacheKey', () => {
+  it('should use custom key when generator returns a string', () => {
+    const mockContext = {
+      request: {
+        url: '/graphql',
+        method: 'POST',
+      },
+    } as Context;
+
+    const result = resolveGraphqlCacheKey(mockContext, 'POST:/graphql:articles:hash', () => {
+      return 'custom:graphql:key';
+    });
+
+    expect(result).toBe('custom:graphql:key');
+  });
+
+  it('should fallback to generated GraphQL key when generator returns non-string', () => {
+    const mockContext = {
+      request: {
+        url: '/graphql',
+        method: 'POST',
+      },
+    } as Context;
+
+    const result = resolveGraphqlCacheKey(
+      mockContext,
+      'POST:/graphql:articles:hash',
+      () => null as unknown as string
+    );
+
+    expect(result).toBe('POST:/graphql:articles:hash');
   });
 });
 
