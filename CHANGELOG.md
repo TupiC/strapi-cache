@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/TupiC/strapi-cache/compare/v1.10.0...v1.10.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* **graphql-cache:** escape purge regex and honor keyGenerator ([#111](https://github.com/TupiC/strapi-cache/issues/111)) ([a0d19b6](https://github.com/TupiC/strapi-cache/commit/a0d19b6081ff3261291ef9955e4fd5e5220b39d8))
+
 ## [1.10.0](https://github.com/TupiC/strapi-cache/compare/v1.9.0...v1.10.0) (2026-05-08)
 
 
