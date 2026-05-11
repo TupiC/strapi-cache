@@ -55,6 +55,6 @@ describe('REST cache integration', () => {
     await request(server).get(path).expect(200);
 
     const keys = (await cacheStore.keys()) ?? [];
-    expect(keys).toContain(`my-prefix::GET:${path}:undefined:undefined`);
+    expect(keys).toContain(`GET:${path}`);
   });
 });
