@@ -7,7 +7,7 @@ interface PluginConfig {
   cacheableEntities?: string[];
   cacheableRoutes: string[];
   disableAdminPopups: boolean;
-  disableAdminButtons: boolean;
+  disableAdminButtons: boolean | string[];
 }
 
 const controller = ({ strapi }: { strapi: Core.Strapi }) => ({

@@ -88,7 +88,7 @@ Full configuration example:
     autoPurgeGraphQL: true, // Automatically purge GraphQL cache on content CRUD operations
     autoPurgeCacheOnStart: true, // Automatically purge cache on Strapi startup
     disableAdminPopups: false, // Disable popups in the admin panel
-    disableAdminButtons: false, // Disable the purge cache buttons in the admin panel (list view and edit view)
+    disableAdminButtons: false, // Disable the purge cache buttons in the admin panel. Use true for all content types or an array like ['/api/products'] for specific content types
   },
 },
 ```
@@ -122,7 +122,7 @@ Possible configuration keys are listed below; omitted keys keep the plugin defau
 | `autoPurgeGraphQL`        | Invalidate GraphQL cache after content create/update/delete                                                                                                                                                                                     | `true` or `false` (default: `false` if omitted; set `true` to enable)                                                         |
 | `autoPurgeCacheOnStart`   | Clear the cache when Strapi starts                                                                                                                                                                                                              | `true` or `false` (default: `true`)                                                                                           |
 | `disableAdminPopups`      | Turn off admin UI notifications for cache actions                                                                                                                                                                                               | `true` or `false` (default: `false`)                                                                                          |
-| `disableAdminButtons`     | Hide manual purge controls in the admin (list and edit views)                                                                                                                                                                                   | `true` or `false` (default: `false`)                                                                                          |
+| `disableAdminButtons`     | Hide manual purge controls in the admin (list and edit views), either globally or for specific REST content type paths                                                                                                                          | `true`, `false`, or an array of paths such as `['/api/products', '/api/tags']` (default: `false`)                              |
 
 ## 🔍 Routes
 

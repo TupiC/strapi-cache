@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useFetchClient } from '@strapi/strapi/admin';
+import type { DisableAdminButtonsConfig } from '../utils/adminButtons';
 
 export type CacheConfig = {
   cacheableRoutes: string[];
   disableAdminPopups: boolean;
-  disableAdminButtons: boolean;
+  disableAdminButtons: DisableAdminButtonsConfig;
 };
 
 export const useCacheConfig = (enabled: boolean = true) => {
