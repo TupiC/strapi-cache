@@ -9,13 +9,19 @@ type AdminContentType = {
   };
 };
 
+const stripTrailingSlashes = (path: string) => {
+  let end = path.length;
+  while (end > 1 && path[end - 1] === '/') {
+    end--;
+  }
+  return path.slice(0, end);
+};
+
 const normalizeApiPath = (path: string) => {
   const trimmedPath = path.trim();
   const pathWithLeadingSlash = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
 
-  return pathWithLeadingSlash.length > 1
-    ? pathWithLeadingSlash.replace(/\/+$/, '')
-    : pathWithLeadingSlash;
+  return stripTrailingSlashes(pathWithLeadingSlash);
 };
 
 export const getContentTypeApiPath = (

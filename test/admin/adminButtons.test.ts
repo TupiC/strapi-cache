@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { getContentTypeApiPath, shouldDisableAdminButtons } from '../../admin/src/utils/adminButtons';
+import {
+  getContentTypeApiPath,
+  shouldDisableAdminButtons,
+} from '../../admin/src/utils/adminButtons';
 
 describe('adminButtons', () => {
   describe('getContentTypeApiPath', () => {
