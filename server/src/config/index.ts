@@ -120,8 +120,12 @@ export default {
     if (typeof config.disableAdminPopups !== 'boolean') {
       throw new Error(`Invalid config: disableAdminPopups must be a boolean`);
     }
-    if (typeof config.disableAdminButtons !== 'boolean') {
-      throw new Error(`Invalid config: disableAdminButtons must be a boolean`);
+    if (
+      typeof config.disableAdminButtons !== 'boolean' &&
+      (!Array.isArray(config.disableAdminButtons) ||
+        config.disableAdminButtons.some((item) => typeof item !== 'string'))
+    ) {
+      throw new Error(`Invalid config: disableAdminButtons must be a boolean or string array`);
     }
     if (typeof config.redisScanDeleteCount !== 'number') {
       throw new Error(`Invalid config: redisScanDeleteCount must be a number`);

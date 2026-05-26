@@ -409,6 +409,28 @@ describe('config', () => {
       });
     });
 
+    describe('disableAdminButtons validation', () => {
+      it('should not throw for boolean disableAdminButtons', () => {
+        expect(() => config.validator({ ...validConfig, disableAdminButtons: true })).not.toThrow();
+        expect(() => config.validator({ ...validConfig, disableAdminButtons: false })).not.toThrow();
+      });
+
+      it('should not throw for string array disableAdminButtons', () => {
+        expect(() =>
+          config.validator({ ...validConfig, disableAdminButtons: ['/api/products', '/api/tags'] })
+        ).not.toThrow();
+      });
+
+      it('should throw for invalid disableAdminButtons values', () => {
+        expect(() => config.validator({ ...validConfig, disableAdminButtons: 'true' })).toThrow(
+          'Invalid config: disableAdminButtons must be a boolean or string array'
+        );
+        expect(() =>
+          config.validator({ ...validConfig, disableAdminButtons: ['/api/products', 123] })
+        ).toThrow('Invalid config: disableAdminButtons must be a boolean or string array');
+      });
+    });
+
     describe('redisScanDeleteCount validation', () => {
       it('should throw for non-number redisScanDeleteCount', () => {
         const invalidConfig = { ...validConfig, redisScanDeleteCount: '100' };

@@ -2,18 +2,20 @@ import { unstable_useContentManagerContext as useContentManagerContext } from '@
 import PurgeModal from '../PurgeModal';
 import { useIntl } from 'react-intl';
 import { useCacheConfig } from '../../hooks';
+import { getContentTypeApiPath, shouldDisableAdminButtons } from '../../utils/adminButtons';
 
 function PurgeEntityButton() {
   const { formatMessage } = useIntl();
   const { id, isSingleType, contentType } = useContentManagerContext();
   const { config } = useCacheConfig();
   const apiPath = isSingleType ? contentType?.info.singularName : id;
+  const contentTypeApiPath = getContentTypeApiPath(contentType, isSingleType);
 
   if (!apiPath) {
     return null;
   }
 
-  if (config?.disableAdminButtons) {
+  if (shouldDisableAdminButtons(config?.disableAdminButtons, contentTypeApiPath)) {
     return null;
   }
 
