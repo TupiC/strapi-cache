@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/TupiC/strapi-cache/compare/v1.10.1...v1.11.0) (2026-05-26)
+
+
+### Features
+
+* **admin:** allow selective disableAdminButtons by content type path ([#114](https://github.com/TupiC/strapi-cache/issues/114)) ([5d387d5](https://github.com/TupiC/strapi-cache/commit/5d387d5c62bf252076289d68a80ecbcccde63edf))
+
 ## [1.10.1](https://github.com/TupiC/strapi-cache/compare/v1.10.0...v1.10.1) (2026-05-11)
 
 
