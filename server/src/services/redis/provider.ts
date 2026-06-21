@@ -98,7 +98,8 @@ export class RedisCacheProvider implements CacheProvider {
     if (!this.ready) return null;
 
     try {
-      const relativeKey = key.slice(this.keyPrefix.length);
+      const relativeKey =
+        this.keyPrefix && key.startsWith(this.keyPrefix) ? key.slice(this.keyPrefix.length) : key;
       loggy.info(`Redis PURGING KEY: ${relativeKey}`);
       await this.client.del(relativeKey);
       return true;
@@ -144,20 +145,39 @@ export class RedisCacheProvider implements CacheProvider {
   }
 
   private async deleteBatch(client: Redis, batch: string[], regExps: RegExp[]): Promise<void> {
-    const toDelete = batch.filter((key) => regExps.some((re) => re.test(key)));
+    const toDelete = batch.filter((key) => {
+      if (!this.hasConfiguredPrefix(key)) {
+        return false;
+      }
+
+      const relativeKey = this.toRelativeKey(key);
+      return regExps.some((re) => re.test(key) || re.test(relativeKey));
+    });
     if (toDelete.length === 0) return;
 
     const pipeline = client.pipeline();
     for (const key of toDelete) {
-      const relativeKey = key.startsWith(this.keyPrefix) ? key.slice(this.keyPrefix.length) : key;
-      pipeline.del(relativeKey);
+      pipeline.del(this.toRelativeKey(key));
     }
     await pipeline.exec();
   }
 
+  private hasConfiguredPrefix(key: string): boolean {
+    return !this.keyPrefix || key.startsWith(this.keyPrefix);
+  }
+
+  private toRelativeKey(key: string): string {
+    return this.keyPrefix && key.startsWith(this.keyPrefix)
+      ? key.slice(this.keyPrefix.length)
+      : key;
+  }
+
   private scanAndDelete(client: Redis, regExps: RegExp[]): Promise<void> {
     return new Promise((resolve, reject) => {
-      const stream = client.scanStream({ match: `${this.keyPrefix}*`, count: this.redisScanDeleteCount });
+      const stream = client.scanStream({
+        match: `${this.keyPrefix}*`,
+        count: this.redisScanDeleteCount,
+      });
       stream.on('data', (batch: string[]) => {
         stream.pause();
         this.deleteBatch(client, batch, regExps)

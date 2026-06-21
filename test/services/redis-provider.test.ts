@@ -21,6 +21,7 @@ vi.mock('ioredis', () => {
     set: vi.fn(),
     del: vi.fn(),
     keys: vi.fn(),
+    flushdb: vi.fn(),
     pipeline: vi.fn(),
     scanStream: vi.fn(),
     on: vi.fn(),
@@ -63,6 +64,7 @@ describe('RedisCacheProvider', () => {
       set: vi.fn(),
       del: vi.fn(),
       keys: vi.fn(),
+      flushdb: vi.fn(),
       pipeline: vi.fn().mockReturnValue(mockPipeline),
       scanStream: vi.fn(),
       on: vi.fn(),
@@ -175,7 +177,7 @@ describe('RedisCacheProvider', () => {
       expect(mockPipeline.del).toHaveBeenCalledWith('some/key');
     });
 
-    it('should pass key unchanged when it does not start with keyPrefix', async () => {
+    it('should ignore keys that do not start with keyPrefix', async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
@@ -186,7 +188,36 @@ describe('RedisCacheProvider', () => {
       stream.emit('end');
       await promise;
 
-      expect(mockPipeline.del).toHaveBeenCalledWith('bare-key');
+      expect(mockClient.pipeline).not.toHaveBeenCalled();
+      expect(mockPipeline.del).not.toHaveBeenCalled();
+    });
+
+    it('should match regex against keys after keyPrefix is stripped', async () => {
+      const stream = createMockStream();
+      (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
+
+      const promise = provider.clearByRegexp([/^GET:\/api\/articles$/]);
+
+      stream.emit('data', ['test-prefix:GET:/api/articles']);
+      await flushAsync();
+      stream.emit('end');
+      await promise;
+
+      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles');
+    });
+
+    it('should match regex against the full key when keyPrefix is configured', async () => {
+      const stream = createMockStream();
+      (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
+
+      const promise = provider.clearByRegexp([/^test-prefix:GET:\/api\/articles$/]);
+
+      stream.emit('data', ['test-prefix:GET:/api/articles']);
+      await flushAsync();
+      stream.emit('end');
+      await promise;
+
+      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles');
     });
 
     it('should reject when stream emits an error', async () => {
@@ -207,8 +238,14 @@ describe('RedisCacheProvider', () => {
 
       const mockCluster = {
         nodes: vi.fn().mockReturnValue([
-          { scanStream: vi.fn().mockReturnValue(nodeStream1), pipeline: vi.fn().mockReturnValue(nodePipeline1) },
-          { scanStream: vi.fn().mockReturnValue(nodeStream2), pipeline: vi.fn().mockReturnValue(nodePipeline2) },
+          {
+            scanStream: vi.fn().mockReturnValue(nodeStream1),
+            pipeline: vi.fn().mockReturnValue(nodePipeline1),
+          },
+          {
+            scanStream: vi.fn().mockReturnValue(nodeStream2),
+            pipeline: vi.fn().mockReturnValue(nodePipeline2),
+          },
         ]),
       };
 
@@ -226,6 +263,34 @@ describe('RedisCacheProvider', () => {
       expect(mockCluster.nodes).toHaveBeenCalledWith('master');
       expect(nodePipeline1.del).toHaveBeenCalledWith('GET:/api/articles/1');
       expect(nodePipeline2.del).toHaveBeenCalledWith('GET:/api/articles/2');
+    });
+  });
+
+  describe('reset', () => {
+    it('should delete only keys with keyPrefix when keyPrefix is configured', async () => {
+      (mockClient.keys as ReturnType<typeof vi.fn>).mockResolvedValue([
+        'test-prefix:GET:/api/articles',
+        'other-prefix:GET:/api/articles',
+        'plain-key',
+      ]);
+
+      await provider.reset();
+
+      expect(mockClient.keys).toHaveBeenCalledWith('test-prefix:*');
+      expect(mockClient.del).toHaveBeenCalledOnce();
+      expect(mockClient.del).toHaveBeenCalledWith('GET:/api/articles');
+      expect(mockClient.flushdb).not.toHaveBeenCalled();
+    });
+
+    it('should flush the database only when no keyPrefix is configured', async () => {
+      (provider as any).keyPrefix = '';
+      (mockClient.flushdb as ReturnType<typeof vi.fn>).mockResolvedValue('OK');
+
+      await provider.reset();
+
+      expect(mockClient.flushdb).toHaveBeenCalledOnce();
+      expect(mockClient.keys).not.toHaveBeenCalled();
+      expect(mockClient.del).not.toHaveBeenCalled();
     });
   });
 });
