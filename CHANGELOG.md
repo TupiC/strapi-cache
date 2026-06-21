@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/TupiC/strapi-cache/compare/v1.11.0...v1.11.1) (2026-06-21)
+
+
+### Bug Fixes
+
+* **redis:** only purge keys with prefix if defined ([#122](https://github.com/TupiC/strapi-cache/issues/122)) ([a346510](https://github.com/TupiC/strapi-cache/commit/a346510856db2cec7e2ebe0eb6ae452537adb071))
+
 ## [1.11.0](https://github.com/TupiC/strapi-cache/compare/v1.10.1...v1.11.0) (2026-05-26)
 
 
