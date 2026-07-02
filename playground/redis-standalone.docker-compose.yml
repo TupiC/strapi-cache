@@ -1,18 +1,31 @@
 services:
-  cache-standalone: # port 6379
-    image: docker.io/bitnami/valkey:8.1
-    environment:
-      ALLOW_EMPTY_PASSWORD: 'yes'
-    volumes:
-      - cache-standalone:/bitnami/valkey/data
-    network_mode: host
+    valkey:
+        image: valkey/valkey:9.1-alpine
+        container_name: valkey
+        command: ["valkey-server", "--appendonly", "yes"]
+        ports:
+            - "127.0.0.1:6379:6379"
+        volumes:
+            - valkey-data:/data
+        healthcheck:
+            test: ["CMD", "valkey-cli", "ping"]
+            interval: 10s
+            timeout: 3s
+            retries: 5
+        restart: unless-stopped
 
-  redis_insight: # port 5540
-    image: redis/redisinsight
-    volumes:
-      - redisinsight:/data
-    network_mode: host
+    redis-insight:
+        image: redis/redisinsight:latest
+        container_name: redis-insight
+        ports:
+            - "127.0.0.1:5540:5540"
+        volumes:
+            - redisinsight-data:/data
+        depends_on:
+            valkey:
+                condition: service_healthy
+        restart: unless-stopped
 
 volumes:
-  redisinsight:
-  cache-standalone:
+    valkey-data:
+    redisinsight-data:

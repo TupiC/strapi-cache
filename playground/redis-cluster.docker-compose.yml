@@ -1,23 +1,69 @@
 services:
-  cache-cluster-node-0: # port 6379
-    image: docker.io/bitnami/valkey-cluster:8.1
-    volumes:
-      - cache-cluster-node-0:/bitnami/valkey/data
-    environment:
-      ALLOW_EMPTY_PASSWORD: 'yes'
-      VALKEY_CLUSTER_CREATOR: 'yes'
-      VALKEY_CLUSTER_REPLICAS: '0'
-      VALKEY_NODES: 'localhost'
-      VALKEY_CLUSTER_ANNOUNCE_HOSTNAME: "localhost"
-      VALKEY_CLUSTER_PREFERRED_ENDPOINT_TYPE: "hostname"
-    network_mode: host
+    valkey-cluster:
+        image: valkey/valkey:9.1-alpine
+        container_name: valkey-cluster
+        command:
+            [
+                "valkey-server",
+                "--appendonly",
+                "yes",
+                "--protected-mode",
+                "no",
+                "--cluster-enabled",
+                "yes",
+                "--cluster-config-file",
+                "nodes.conf",
+                "--cluster-node-timeout",
+                "5000",
+                "--cluster-announce-hostname",
+                "localhost",
+                "--cluster-announce-port",
+                "6379",
+                "--cluster-announce-bus-port",
+                "16379",
+                "--cluster-preferred-endpoint-type",
+                "hostname",
+            ]
+        ports:
+            - "127.0.0.1:6379:6379"
+            - "127.0.0.1:16379:16379"
+        volumes:
+            - valkey-cluster-data:/data
+        healthcheck:
+            test: ["CMD", "valkey-cli", "-p", "6379", "ping"]
+            interval: 10s
+            timeout: 3s
+            retries: 10
+        restart: unless-stopped
 
-  redis_insight: # port 5540
-    image: redis/redisinsight
-    volumes:
-      - redisinsight:/data
-    network_mode: host
+    valkey-cluster-init:
+        image: valkey/valkey:9.1-alpine
+        depends_on:
+            valkey-cluster:
+                condition: service_healthy
+        entrypoint: ["/bin/sh", "-c"]
+        command:
+            - |
+                if valkey-cli -h valkey-cluster -p 6379 cluster info | grep -q "cluster_state:ok"; then
+                  echo "Cluster already initialized"
+                else
+                  echo "Creating single-node Valkey cluster"
+                  valkey-cli --cluster create valkey-cluster:6379 --cluster-replicas 0 --cluster-yes
+                fi
+        restart: "no"
+
+    redis-insight:
+        image: redis/redisinsight:latest
+        container_name: redis-insight
+        ports:
+            - "127.0.0.1:5540:5540"
+        volumes:
+            - redisinsight-data:/data
+        depends_on:
+            valkey-cluster-init:
+                condition: service_completed_successfully
+        restart: unless-stopped
 
 volumes:
-  redisinsight:
-  cache-cluster-node-0:
+    redisinsight-data:
+    valkey-cluster-data:

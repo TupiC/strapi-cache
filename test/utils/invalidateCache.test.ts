@@ -19,6 +19,20 @@ describe('invalidateCache', () => {
   let mockCacheStore: Pick<CacheProvider, 'clearByRegexp'>;
   let mockStrapi: Pick<Core.Strapi, 'config' | 'contentType' | 'plugin'>;
 
+  const mockPluginConfig = (values: Record<string, unknown> = {}) =>
+    vi.fn((key: string) => {
+      switch (key) {
+        case 'cacheableEntities':
+          return values.cacheableEntities;
+        case 'cacheableRoutes':
+          return values.cacheableRoutes ?? [];
+        case 'excludeRoutes':
+          return values.excludeRoutes ?? [];
+        default:
+          return undefined;
+      }
+    });
+
   beforeEach(() => {
     mockCacheStore = {
       clearByRegexp: vi.fn().mockResolvedValue(undefined),
@@ -30,7 +44,7 @@ describe('invalidateCache', () => {
       },
       contentType: vi.fn(),
       plugin: vi.fn().mockReturnValue({
-        config: vi.fn().mockReturnValue([]),
+        config: mockPluginConfig(),
       }),
     };
 
@@ -215,13 +229,13 @@ describe('invalidateCache', () => {
     mockStrapi.config.get.mockReturnValue('/api');
     mockStrapi.contentType.mockReturnValue(contentType);
     mockStrapi.plugin.mockReturnValue({
-      config: vi.fn().mockReturnValue(['users', 'products']), // articles not in list
+      config: mockPluginConfig({ cacheableEntities: ['users', 'products'] }), // articles not in list
     });
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
 
     expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
-    expect(loggy.info).toHaveBeenCalledWith('Not invalidated. articles is not cacheable.');
+    expect(loggy.info).toHaveBeenCalledWith('Not invalidated. /api/articles is not cacheable.');
   });
 
   it('should invalidate cache when entity is in cacheableEntities list', async () => {
@@ -242,7 +256,7 @@ describe('invalidateCache', () => {
     mockStrapi.config.get.mockReturnValue('/api');
     mockStrapi.contentType.mockReturnValue(contentType);
     mockStrapi.plugin.mockReturnValue({
-      config: vi.fn().mockReturnValue(['articles', 'users']), // articles is in list
+      config: mockPluginConfig({ cacheableEntities: ['articles', 'users'] }), // articles is in list
     });
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
@@ -270,7 +284,7 @@ describe('invalidateCache', () => {
     mockStrapi.config.get.mockReturnValue('/api');
     mockStrapi.contentType.mockReturnValue(contentType);
     mockStrapi.plugin.mockReturnValue({
-      config: vi.fn().mockReturnValue(null), // null/falsy means all entities are cacheable
+      config: mockPluginConfig({ cacheableEntities: null }), // null/falsy means cacheableRoutes decides
     });
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
@@ -279,6 +293,101 @@ describe('invalidateCache', () => {
       /^.*:\/api\/articles(\/.*)?(\?.*)?$/,
     ]);
     expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /api/articles');
+  });
+
+  it('should skip invalidation when route is not in cacheableRoutes', async () => {
+    const event = {
+      model: {
+        uid: 'api::accommodation.accommodation',
+        tableName: 'accommodations',
+      },
+    };
+
+    const contentType = {
+      kind: 'collectionType',
+      info: {
+        singularName: 'accommodation',
+        pluralName: 'accommodations',
+      },
+    };
+
+    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.contentType.mockReturnValue(contentType);
+    mockStrapi.plugin.mockReturnValue({
+      config: mockPluginConfig({
+        cacheableRoutes: ['/api/transversal-info', '/api/translations', '/api/footer'],
+      }),
+    });
+
+    await invalidateCache(event, mockCacheStore, mockStrapi);
+
+    expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
+    expect(loggy.info).toHaveBeenCalledWith(
+      'Not invalidated. /api/accommodations is not cacheable.'
+    );
+  });
+
+  it('should invalidate single type cache when route is in cacheableRoutes', async () => {
+    const event = {
+      model: {
+        uid: 'api::transversal-info.transversal-info',
+        tableName: 'transversal_infos',
+      },
+    };
+
+    const contentType = {
+      kind: 'singleType',
+      info: {
+        singularName: 'transversal-info',
+        pluralName: 'transversal-infos',
+      },
+    };
+
+    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.contentType.mockReturnValue(contentType);
+    mockStrapi.plugin.mockReturnValue({
+      config: mockPluginConfig({
+        cacheableRoutes: ['/api/transversal-info', '/api/translations', '/api/footer'],
+      }),
+    });
+
+    await invalidateCache(event, mockCacheStore, mockStrapi);
+
+    expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
+      /^.*:\/api\/transversal-info(\/.*)?(\?.*)?$/,
+    ]);
+    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /api/transversal-info');
+  });
+
+  it('should let excludeRoutes take precedence over cacheableEntities', async () => {
+    const event = {
+      model: {
+        uid: 'api::article.article',
+        tableName: 'articles',
+      },
+    };
+
+    const contentType = {
+      kind: 'collectionType',
+      info: {
+        singularName: 'article',
+        pluralName: 'articles',
+      },
+    };
+
+    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.contentType.mockReturnValue(contentType);
+    mockStrapi.plugin.mockReturnValue({
+      config: mockPluginConfig({
+        cacheableEntities: ['articles'],
+        excludeRoutes: ['/api/articles/private', '/api/articles'],
+      }),
+    });
+
+    await invalidateCache(event, mockCacheStore, mockStrapi);
+
+    expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
+    expect(loggy.info).toHaveBeenCalledWith('Not invalidated. /api/articles is not cacheable.');
   });
 });
 

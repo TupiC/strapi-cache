@@ -4,6 +4,15 @@ import { CacheService } from './types/cache.types';
 import { loggy } from './utils/log';
 import { actions } from './permissions';
 
+const runInBackground = (label: string, task: () => Promise<void>) => {
+  void Promise.resolve()
+    .then(task)
+    .catch((error) => {
+      loggy.error(`${label} error:`);
+      loggy.error(error);
+    });
+};
+
 const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
   loggy.info('Initializing');
   try {
@@ -22,28 +31,34 @@ const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
 
     if (autoPurgeCache) {
       strapi.db.lifecycles.subscribe({
-        async afterCreate(event) {
-          await invalidateCache(event, cacheStore, strapi);
+        afterCreate(event) {
+          runInBackground('Cache invalidation', () => invalidateCache(event, cacheStore, strapi));
         },
-        async afterUpdate(event) {
-          await invalidateCache(event, cacheStore, strapi);
+        afterUpdate(event) {
+          runInBackground('Cache invalidation', () => invalidateCache(event, cacheStore, strapi));
         },
-        async afterDelete(event) {
-          await invalidateCache(event, cacheStore, strapi);
+        afterDelete(event) {
+          runInBackground('Cache invalidation', () => invalidateCache(event, cacheStore, strapi));
         },
       });
     }
 
     if (autoPurgeGraphQL) {
       strapi.db.lifecycles.subscribe({
-        async afterCreate(event: any) {
-          await invalidateGraphqlCache(event, cacheStore, strapi);
+        afterCreate(event: any) {
+          runInBackground('GraphQL cache invalidation', () =>
+            invalidateGraphqlCache(event, cacheStore, strapi)
+          );
         },
-        async afterUpdate(event: any) {
-          await invalidateGraphqlCache(event, cacheStore, strapi);
+        afterUpdate(event: any) {
+          runInBackground('GraphQL cache invalidation', () =>
+            invalidateGraphqlCache(event, cacheStore, strapi)
+          );
         },
-        async afterDelete(event: any) {
-          await invalidateGraphqlCache(event, cacheStore, strapi);
+        afterDelete(event: any) {
+          runInBackground('GraphQL cache invalidation', () =>
+            invalidateGraphqlCache(event, cacheStore, strapi)
+          );
         },
       });
     }
