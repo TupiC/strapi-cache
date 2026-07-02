@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.2](https://github.com/TupiC/strapi-cache/compare/v1.11.1...v1.11.2) (2026-07-02)
+
+
+### Bug Fixes
+
+* **cache:** defer crud invalidation and honor cacheable config ([#124](https://github.com/TupiC/strapi-cache/issues/124)) ([7a842f3](https://github.com/TupiC/strapi-cache/commit/7a842f3b96751a70f30ac7495ed7a1280fc98caa))
+
 ## [1.11.1](https://github.com/TupiC/strapi-cache/compare/v1.11.0...v1.11.1) (2026-06-21)
 
 
