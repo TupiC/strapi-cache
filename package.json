@@ -39,8 +39,8 @@
     "test:all": "npm test -- --run && npm run test:integration"
   },
   "dependencies": {
-    "@strapi/design-system": "^2.0.1",
-    "@strapi/icons": "^2.0.1",
+    "@strapi/design-system": "2.2.1",
+    "@strapi/icons": "2.2.1",
     "ioredis": "^5.6.1",
     "lru-cache": "^11.1.0",
     "raw-body": "^3.0.0",
@@ -52,8 +52,8 @@
     "@strapi/typescript-utils": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/koa": "^2.15.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.1",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
     "@types/supertest": "^6.0.3",
     "better-sqlite3": "^12.6.2",
     "jest": "^30.2.0",

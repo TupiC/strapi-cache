@@ -79,6 +79,7 @@ Full configuration example:
     redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis/Valkey config: string or object. See https://github.com/redis/ioredis (Redis) or https://github.com/valkey-io/iovalkey (Valkey)
     redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize cluster client. Each object must have keys 'host' and 'port'
     redisClusterOptions: {}, // Options for ioredis redis cluster client. redisOptions key is taken from redisConfig parameter above if not set here. See https://github.com/redis/ioredis for references
+    redisScanDeleteCount: 100, // COUNT hint for SCAN when purging keys (Redis/Valkey only)
     cacheHeaders: true, // Plugin also stores response headers in the cache (set to false if you don't want to cache headers)
     cacheHeadersDenyList: ['access-control-allow-origin', 'content-encoding'], // Headers to exclude from the cache (must be lowercase, if empty array, no headers are excluded, cacheHeaders must be true)
     cacheHeadersAllowList: ['content-type', 'content-security-policy'], // Headers to include in the cache (must be lowercase, if empty array, all headers are cached, cacheHeaders must be true)
@@ -139,7 +140,7 @@ All of these routes are protected by the policies `admin::isAuthenticatedAdmin` 
 
 - **Storage**: The plugin keeps cached data in memory, Redis or Valkey, depending on the configuration.
 - **Packages**: Uses [lru-cache](https://github.com/isaacs/node-lru-cache) for in-memory cache. Uses [ioredis](https://github.com/redis/ioredis) for Redis and [iovalkey](https://github.com/valkey-io/iovalkey) for Valkey caching.
-- **Automatic Invalidation**: When `autoPurgeCache` is enabled (default), relevant REST cache entries are invalidated on content create, update, or delete. When `autoPurgeGraphQL` is enabled, GraphQL cache is invalidated the same way (it is off unless you set it in config).
+- **Automatic Invalidation**: When `autoPurgeCache` is enabled (default), relevant REST cache entries are invalidated on content create, update, or delete. REST invalidation honors `excludeRoutes`, `cacheableEntities`, and `cacheableRoutes`, and runs in the background so content writes do not wait for cache scans to finish. When `autoPurgeGraphQL` is enabled, GraphQL cache is invalidated the same way (it is off unless you set it in config).
 - **`no-cache` Header Support**: Respects the `no-cache` header, letting you skip the cache by setting `Cache-Control: no-cache` in your request.
 - **Default Cached Requests**: By default, caches all GET requests to `/api` (or whatever prefix you defined) and POST requests to `/graphql` or predefined graphql route from graphql plugin config. You can customize which routes or entities to cache using `cacheableRoutes` or `cacheableEntities` config options.
 

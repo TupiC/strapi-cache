@@ -14,17 +14,11 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
   const uid = model.uid;
   const restApiPrefix = strapi.config.get('api.rest.prefix', '/api');
   const cacheableEntities = strapi.plugin('strapi-cache').config('cacheableEntities') as
-    | string[]
-    | undefined;
-  const entityIsCacheable = cacheableEntities?.length
-    ? cacheableEntities.includes(model.tableName)
-    : true;
-
-  // do not contact cache store with not-cacheable entity
-  if (!entityIsCacheable) {
-    loggy.info(`Not invalidated. ${model.tableName} is not cacheable.`);
-    return;
-  }
+    string[] | undefined;
+  const cacheableRoutes =
+    (strapi.plugin('strapi-cache').config('cacheableRoutes') as string[] | undefined) ?? [];
+  const excludeRoutes =
+    (strapi.plugin('strapi-cache').config('excludeRoutes') as string[] | undefined) ?? [];
 
   try {
     const contentType = strapi.contentType(uid);
@@ -39,7 +33,26 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
         ? contentType.info.singularName
         : contentType.info.pluralName;
     const apiPath = `${restApiPrefix}/${pluralName}`;
-    const regex = new RegExp(`^.*:${apiPath}(/.*)?(\\?.*)?$`);
+    const entityNames = [
+      model.tableName,
+      contentType.info.singularName,
+      contentType.info.pluralName,
+    ].filter(Boolean);
+    const entityIsCacheable = cacheableEntities?.length
+      ? entityNames.some((name) => cacheableEntities.includes(name))
+      : undefined;
+    const routeIsExcluded = excludeRoutes.some((route) => apiPath.startsWith(route));
+    const routeIsCacheable =
+      cacheableRoutes.some((route) => apiPath.startsWith(route)) ||
+      (cacheableRoutes.length === 0 && apiPath.startsWith(restApiPrefix));
+    const isCacheable = !routeIsExcluded && (entityIsCacheable ?? routeIsCacheable);
+
+    if (!isCacheable) {
+      loggy.info(`Not invalidated. ${apiPath} is not cacheable.`);
+      return;
+    }
+
+    const regex = new RegExp(`^.*:${escapeRegex(apiPath)}(/.*)?(\\?.*)?$`);
 
     await cacheStore.clearByRegexp([regex]);
     loggy.info(`Invalidated cache for ${apiPath}`);
