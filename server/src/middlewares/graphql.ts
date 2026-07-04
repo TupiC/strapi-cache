@@ -54,10 +54,18 @@ const middleware = async (ctx: any, next: any) => {
 
   const payload = parseGraphqlPayload(body, isGet);
   const rootFields = getRootFieldsFromQuery(payload.query);
-  const graphqlKey = generateGraphqlCacheKey(body, isGet ? 'GET' : 'POST', rootFields, strapi);
+  const authorizationHeader = ctx.request.headers['authorization'];
+  const withAuth = authorizationHeader && cacheAuthorizedRequests ? true : false;
+  const graphqlKey = generateGraphqlCacheKey(
+    body,
+    isGet ? 'GET' : 'POST',
+    rootFields,
+    strapi,
+    withAuth
+  );
   ctx.rootFields = rootFields.length ? rootFields : undefined;
   ctx.operationName = payload.operationName;
-  const key = resolveGraphqlCacheKey(ctx, graphqlKey, keyGenerator);
+  const key = resolveGraphqlCacheKey(ctx, graphqlKey, keyGenerator, withAuth);
   loggy.info(
     `GraphQL request: ${JSON.stringify({
       operationName: payload.operationName,
@@ -76,7 +84,6 @@ const middleware = async (ctx: any, next: any) => {
 
   const cacheControlHeader = ctx.request.headers['cache-control'];
   const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
-  const authorizationHeader = ctx.request.headers['authorization'];
 
   if (authorizationHeader && !cacheAuthorizedRequests) {
     loggy.info(`Authorized request bypassing cache: ${key}`);

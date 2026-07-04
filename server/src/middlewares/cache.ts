@@ -20,7 +20,9 @@ const middleware = async (ctx: Context, next: any) => {
     getCacheHeaderConfig();
   const cacheStore = cacheService.getCacheInstance();
   const { url } = ctx.request;
-  const key = generateCacheKey(ctx, keyGenerator);
+  const authorizationHeader = ctx.request.headers['authorization'];
+  const withAuth = authorizationHeader && cacheAuthorizedRequests ? true : false;
+  const key = generateCacheKey(ctx, keyGenerator, withAuth);
   const cacheEntry = await cacheStore.get(key);
   const cacheControlHeader = ctx.request.headers['cache-control'];
   const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
@@ -42,8 +44,6 @@ const middleware = async (ctx: Context, next: any) => {
     cacheableRoutes.some((route) => url.startsWith(route)) ||
     (cacheableRoutes.length === 0 && url.startsWith(restApiPrefix));
   const isCacheable = entityIsCacheable ?? routeIsCacheable;
-
-  const authorizationHeader = ctx.request.headers['authorization'];
 
   if (authorizationHeader && !cacheAuthorizedRequests) {
     loggy.info(`Authorized request bypassing cache: ${key}`);
