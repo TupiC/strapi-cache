@@ -92,7 +92,10 @@ describe('graphql middleware', () => {
 
     await graphqlMiddleware(ctx, next);
 
-    expect(keyGenerator).toHaveBeenCalledWith(ctx);
+    expect(keyGenerator).toHaveBeenCalledWith(
+      ctx,
+      expect.stringMatching(/^GET:\/graphql:articles:[A-Za-z0-9_-]+$/)
+    );
     expect(mockCacheStore.get).toHaveBeenCalledWith(
       'custom:GET:/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D'
     );
