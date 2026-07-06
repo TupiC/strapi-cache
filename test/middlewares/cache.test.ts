@@ -89,7 +89,7 @@ describe('cache middleware', () => {
 
     await cacheMiddleware(ctx, next);
 
-    expect(keyGenerator).toHaveBeenCalledWith(ctx);
+    expect(keyGenerator).toHaveBeenCalledWith(ctx, 'GET:/api/articles?populate=*');
     expect(mockCacheStore.get).toHaveBeenCalledWith('custom:GET:/api/articles?populate=*');
     expect(next).not.toHaveBeenCalled();
   });

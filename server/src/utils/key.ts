@@ -2,14 +2,18 @@ import { Core } from '@strapi/strapi';
 import { createHash } from 'crypto';
 import { Context } from 'koa';
 
-export type CacheKeyGenerator = (context: Context) => string;
+export type CacheKeyGenerator = (context: Context, defaultKey?: string) => string;
 
-export const getCustomCacheKey = (context: Context, keyGenerator?: CacheKeyGenerator) => {
+export const getCustomCacheKey = (
+  context: Context,
+  keyGenerator?: CacheKeyGenerator,
+  fallbackKey?: string
+) => {
   if (typeof keyGenerator !== 'function') {
     return undefined;
   }
 
-  const customKey = keyGenerator(context);
+  const customKey = keyGenerator(context, fallbackKey);
   if (typeof customKey === 'string') {
     return customKey;
   }
@@ -21,16 +25,16 @@ export const resolveGraphqlCacheKey = (
   context: Context,
   fallbackKey: string,
   keyGenerator?: CacheKeyGenerator
-) => getCustomCacheKey(context, keyGenerator) ?? fallbackKey;
+) => getCustomCacheKey(context, keyGenerator, fallbackKey) ?? fallbackKey;
 
 export const generateCacheKey = (context: Context, keyGenerator?: CacheKeyGenerator) => {
-  const customKey = getCustomCacheKey(context, keyGenerator);
+  const { url } = context.request;
+  const { method } = context.request;
+
+  const customKey = getCustomCacheKey(context, keyGenerator, `${method}:${url}`);
   if (customKey !== undefined) {
     return customKey;
   }
-
-  const { url } = context.request;
-  const { method } = context.request;
 
   return `${method}:${url}`;
 };
