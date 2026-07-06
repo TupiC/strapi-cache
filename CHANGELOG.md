@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/TupiC/strapi-cache/compare/v1.11.2...v1.12.0) (2026-07-06)
+
+
+### Features
+
+* update key generator to accept default key for custom cache keys ([#128](https://github.com/TupiC/strapi-cache/issues/128)) ([8d2f4e5](https://github.com/TupiC/strapi-cache/commit/8d2f4e5bb87e040d16b4ca9ab1d2f4bec2b64932))
+
 ## [1.11.2](https://github.com/TupiC/strapi-cache/compare/v1.11.1...v1.11.2) (2026-07-02)
 
 
