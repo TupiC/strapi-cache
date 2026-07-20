@@ -19,6 +19,7 @@ describe('config', () => {
         allowStale: false,
         cacheableRoutes: [],
         keyGenerator: undefined,
+        cacheableEntities: undefined,
         provider: 'memory',
         excludeRoutes: [],
         redisConfig: 'redis://localhost:6379',
@@ -30,6 +31,7 @@ describe('config', () => {
         cacheAuthorizedRequests: false,
         cacheGetTimeoutInMs: 1000,
         autoPurgeCache: true,
+        autoPurgeGraphQL: false,
         autoPurgeCacheOnStart: true,
         disableAdminButtons: false,
         disableAdminPopups: false,
@@ -55,6 +57,7 @@ describe('config', () => {
       allowStale: false,
       cacheableRoutes: [],
       keyGenerator: undefined,
+      cacheableEntities: undefined,
       provider: 'memory',
       excludeRoutes: [],
       redisConfig: undefined,
@@ -66,6 +69,7 @@ describe('config', () => {
       cacheAuthorizedRequests: false,
       cacheGetTimeoutInMs: 1000,
       autoPurgeCache: true,
+      autoPurgeGraphQL: false,
       autoPurgeCacheOnStart: true,
       disableAdminButtons: false,
       disableAdminPopups: false,
@@ -385,6 +389,16 @@ describe('config', () => {
 
         expect(() => config.validator(invalidConfig)).toThrow(
           'Invalid config: autoPurgeCache must be a boolean'
+        );
+      });
+    });
+
+    describe('autoPurgeGraphQL validation', () => {
+      it('should throw for non-boolean autoPurgeGraphQL', () => {
+        const invalidConfig = { ...validConfig, autoPurgeGraphQL: 'true' };
+
+        expect(() => config.validator(invalidConfig)).toThrow(
+          'Invalid config: autoPurgeGraphQL must be a boolean'
         );
       });
     });
