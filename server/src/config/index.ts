@@ -7,6 +7,7 @@ export default {
     allowStale: false,
     cacheableRoutes: [],
     keyGenerator: undefined,
+    cacheableEntities: undefined,
     provider: 'memory',
     excludeRoutes: [],
     redisConfig: env('REDIS_URL'),
@@ -18,6 +19,7 @@ export default {
     cacheAuthorizedRequests: false,
     cacheGetTimeoutInMs: 1000,
     autoPurgeCache: true,
+    autoPurgeGraphQL: false,
     autoPurgeCacheOnStart: true,
     disableAdminPopups: false,
     disableAdminButtons: false,
@@ -113,6 +115,9 @@ export default {
     }
     if (typeof config.autoPurgeCache !== 'boolean') {
       throw new Error(`Invalid config: autoPurgeCache must be a boolean`);
+    }
+    if (typeof config.autoPurgeGraphQL !== 'boolean') {
+      throw new Error(`Invalid config: autoPurgeGraphQL must be a boolean`);
     }
     if (typeof config.autoPurgeCacheOnStart !== 'boolean') {
       throw new Error(`Invalid config: autoPurgeCacheOnStart must be a boolean`);
