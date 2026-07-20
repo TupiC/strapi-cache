@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/TupiC/strapi-cache/compare/v1.12.0...v1.12.1) (2026-07-20)
+
+
+### Bug Fixes
+
+* **config:** add missing cacheableEntities and autoPurgeGraphQL defaults ([#130](https://github.com/TupiC/strapi-cache/issues/130)) ([f97ac0f](https://github.com/TupiC/strapi-cache/commit/f97ac0fb6fe64a1d002844efa8b9ec9a5bdc5a0d))
+
 ## [1.12.0](https://github.com/TupiC/strapi-cache/compare/v1.11.2...v1.12.0) (2026-07-06)
 
 
