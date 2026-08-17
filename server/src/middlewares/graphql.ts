@@ -14,15 +14,32 @@ const middleware = async (ctx: any, next: any) => {
     return;
   }
 
-  const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
-  const keyGenerator = strapi.plugin('strapi-cache').config('keyGenerator') as
-    | CacheKeyGenerator
-    | undefined;
+  const isGet = method === 'GET';
+  if (!isGet && method !== 'POST') {
+    await next();
+    return;
+  }
+
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
     getCacheHeaderConfig();
-  const cacheStore = cacheService.getCacheInstance();
+  const authorizationHeader = ctx.request.headers['authorization'];
 
-  const isGet = method === 'GET';
+  if (authorizationHeader && !cacheAuthorizedRequests) {
+    loggy.info('Authorized request bypassing GraphQL cache');
+    await next();
+    return;
+  }
+
+  const cacheControlHeader = ctx.request.headers['cache-control'];
+  const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
+
+  if (noCache) {
+    await next();
+    return;
+  }
+
+  const keyGenerator = strapi.plugin('strapi-cache').config('keyGenerator') as
+    CacheKeyGenerator | undefined;
   let body: string;
 
   if (isGet) {
@@ -72,17 +89,9 @@ const middleware = async (ctx: any, next: any) => {
     await next();
     return;
   }
+  const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
+  const cacheStore = cacheService.getCacheInstance();
   const cacheEntry = await cacheStore.get(key);
-
-  const cacheControlHeader = ctx.request.headers['cache-control'];
-  const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
-  const authorizationHeader = ctx.request.headers['authorization'];
-
-  if (authorizationHeader && !cacheAuthorizedRequests) {
-    loggy.info(`Authorized request bypassing cache: ${key}`);
-    await next();
-    return;
-  }
 
   const middlewaresConfig = strapi.config.get('middlewares') as any[];
   const corsMiddleware = middlewaresConfig.find((mw: any) => mw.name === 'strapi::cors');

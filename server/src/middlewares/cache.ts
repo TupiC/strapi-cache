@@ -7,34 +7,25 @@ import { decodeBufferToText, decompressBuffer, streamToBuffer } from '../utils/b
 import { getCacheHeaderConfig, getHeadersToStore } from '../utils/header';
 
 const middleware = async (ctx: Context, next: any) => {
-  const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
+  const { url, method } = ctx.request;
+
+  if (method !== 'GET') {
+    return next();
+  }
+
   const cacheableEntities = strapi.plugin('strapi-cache').config('cacheableEntities') as
-    | string[]
-    | undefined;
+    string[] | undefined;
   const cacheableRoutes = strapi.plugin('strapi-cache').config('cacheableRoutes') as string[];
   const excludeRoutes = strapi.plugin('strapi-cache').config('excludeRoutes') as string[];
-  const keyGenerator = strapi.plugin('strapi-cache').config('keyGenerator') as
-    | CacheKeyGenerator
-    | undefined;
-  const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
-    getCacheHeaderConfig();
-  const cacheStore = cacheService.getCacheInstance();
-  const { url } = ctx.request;
-  const key = generateCacheKey(ctx, keyGenerator);
-  const cacheEntry = await cacheStore.get(key);
-  const cacheControlHeader = ctx.request.headers['cache-control'];
-  const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
   const restApiPrefix = strapi.config.get('api.rest.prefix', '/api');
-  const entityKey = generateEntityKey(url, restApiPrefix);
-
   const routeIsExcluded = excludeRoutes.some((route) => url.startsWith(route));
 
   if (routeIsExcluded) {
     loggy.info(`Route excluded from cache: ${url}`);
-    await next();
-    return;
+    return next();
   }
 
+  const entityKey = generateEntityKey(url, restApiPrefix);
   const entityIsCacheable = cacheableEntities?.length
     ? cacheableEntities.includes(entityKey)
     : undefined;
@@ -43,13 +34,31 @@ const middleware = async (ctx: Context, next: any) => {
     (cacheableRoutes.length === 0 && url.startsWith(restApiPrefix));
   const isCacheable = entityIsCacheable ?? routeIsCacheable;
 
+  if (!isCacheable) {
+    return next();
+  }
+
+  const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
+    getCacheHeaderConfig();
+  const cacheControlHeader = ctx.request.headers['cache-control'];
+  const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
   const authorizationHeader = ctx.request.headers['authorization'];
 
   if (authorizationHeader && !cacheAuthorizedRequests) {
-    loggy.info(`Authorized request bypassing cache: ${key}`);
-    await next();
-    return;
+    loggy.info(`Authorized request bypassing cache: ${url}`);
+    return next();
   }
+
+  if (noCache) {
+    return next();
+  }
+
+  const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
+  const keyGenerator = strapi.plugin('strapi-cache').config('keyGenerator') as
+    CacheKeyGenerator | undefined;
+  const cacheStore = cacheService.getCacheInstance();
+  const key = generateCacheKey(ctx, keyGenerator);
+  const cacheEntry = await cacheStore.get(key);
 
   const middlewaresConfig = strapi.config.get('middlewares') as any[];
   const corsMiddleware = middlewaresConfig.find((mw: any) => mw.name === 'strapi::cors');
