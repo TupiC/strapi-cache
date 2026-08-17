@@ -1,6 +1,16 @@
 import { Context } from 'koa';
 import { OutgoingHttpHeaders } from 'http';
 
+const encodedBodyHeaders = new Set([
+  'content-encoding',
+  'content-length',
+  'content-md5',
+  'content-range',
+  'digest',
+  'etag',
+  'transfer-encoding',
+]);
+
 export function getHeadersToStore(
   ctx: Context,
   cacheHeaders: boolean,
@@ -28,6 +38,16 @@ export function getHeadersToStore(
   }
 
   return headersToStore;
+}
+
+export function getHeadersForUncompressedBody(
+  headers: OutgoingHttpHeaders | null
+): OutgoingHttpHeaders | null {
+  if (!headers) return null;
+
+  return Object.fromEntries(
+    Object.entries(headers).filter(([key]) => !encodedBodyHeaders.has(key.toLowerCase()))
+  );
 }
 
 export function getCacheHeaderConfig() {

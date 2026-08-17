@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Context } from 'koa';
+import { Readable } from 'stream';
+import { gzipSync } from 'zlib';
 
 const { rawBodyMock } = vi.hoisted(() => ({ rawBodyMock: vi.fn() }));
 
@@ -264,8 +266,46 @@ describe('graphql middleware', () => {
       'custom:GET:/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D'
     );
     expect(mockCacheStore.set.mock.calls[0][1]).toEqual({
-      body: { data: { articles: { data: [] } } },
+      body: JSON.stringify({ data: { articles: { data: [] } } }),
+      bodyType: 'json',
       headers: null,
     });
+    expect(ctx.body).toBe(JSON.stringify({ data: { articles: { data: [] } } }));
+  });
+
+  it('caches an encoded GraphQL stream as identity JSON bytes', async () => {
+    mockCacheStore.get.mockResolvedValueOnce(null);
+    const originalBody = Buffer.from('{"data":{"articles":[]}}');
+    const compressedBody = gzipSync(originalBody);
+    const ctx = {
+      request: {
+        url: '/graphql?query=%7Barticles%7BdocumentId%7D%7D',
+        method: 'GET',
+        query: { query: '{ articles { documentId } }' },
+        headers: {},
+      },
+      method: 'GET',
+      response: {
+        headers: {
+          'content-encoding': 'gzip',
+          'content-type': 'application/json; charset=utf-8',
+        },
+      },
+      set: vi.fn(),
+      status: 200,
+      body: undefined,
+    } as unknown as Context;
+    const next = vi.fn(async () => {
+      ctx.status = 200;
+      ctx.body = Readable.from(compressedBody);
+    });
+
+    await graphqlMiddleware(ctx, next);
+
+    expect(mockCacheStore.set).toHaveBeenCalledWith(
+      'custom:GET:/graphql?query=%7Barticles%7BdocumentId%7D%7D',
+      { body: originalBody, bodyType: 'json', headers: null }
+    );
+    expect(ctx.body).toEqual(compressedBody);
   });
 });

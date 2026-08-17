@@ -12,7 +12,7 @@ export default ({ env }) => ({
       keyGenerator: (ctx) => `${ctx.request.method}:${ctx.request.url}`, // Optional custom cache key for REST requests; receives koa ctx
       cacheableRoutes: [], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
       excludeRoutes: [], // Do not cache routes which start with these paths (if empty array, no routes are excluded)
-      provider: 'memory', // Use memory for integration tests (no Redis/Valkey required). Options: 'memory', 'redis', 'valkey'
+      provider: 'redis', // Use memory for integration tests (no Redis/Valkey required). Options: 'memory', 'redis', 'valkey'
       redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis/Valkey config: string or object. See ioredis (Redis) or iovalkey (Valkey) docs
       redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize cluster client. Each object must have keys 'host' and 'port'
       redisClusterOptions: {}, // Options for ioredis redis cluster client. redisOptions key is taken from redisConfig parameter above if not set here. See https://github.com/redis/ioredis for references

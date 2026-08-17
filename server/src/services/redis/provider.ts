@@ -1,8 +1,19 @@
 import type { Core } from '@strapi/strapi';
 import { Redis, Cluster, ClusterNode, ClusterOptions } from 'ioredis';
+import { deserialize, serialize } from 'node:v8';
 import { withTimeout } from '../../utils/withTimeout';
 import { CacheProvider } from '../../types/cache.types';
 import { loggy } from '../../utils/log';
+
+const deserializeCacheEntry = (data: Buffer): any => {
+  try {
+    return deserialize(data);
+  } catch {
+    // Entries written by released versions are JSON strings. Keep reading them in
+    // place so upgrading does not require new keys or an eager cache migration.
+    return JSON.parse(data.toString('utf8'));
+  }
+};
 
 export class RedisCacheProvider implements CacheProvider {
   private initialized = false;
@@ -30,8 +41,7 @@ export class RedisCacheProvider implements CacheProvider {
       );
       this.keyPrefix =
         (this.strapi.plugin('strapi-cache').config('redisConfig')?.['keyPrefix'] as
-          | string
-          | undefined) ?? '';
+          string | undefined) ?? '';
       this.redisScanDeleteCount = Number(
         this.strapi.plugin('strapi-cache').config('redisScanDeleteCount')
       );
@@ -66,8 +76,11 @@ export class RedisCacheProvider implements CacheProvider {
   async get(key: string): Promise<any | null> {
     if (!this.ready) return null;
 
-    return withTimeout(() => this.client.get(key), this.cacheGetTimeoutInMs)
-      .then((data) => (data ? JSON.parse(data) : null))
+    return withTimeout(() => this.client.getBuffer(key), this.cacheGetTimeoutInMs)
+      .then((data) => {
+        if (!data || data.length === 0) return null;
+        return deserializeCacheEntry(data);
+      })
       .catch((error) => {
         loggy.error(`Redis get error: ${error?.message || error}`);
         return null;
@@ -78,12 +91,10 @@ export class RedisCacheProvider implements CacheProvider {
     if (!this.ready) return null;
 
     try {
-      // plugin ttl is ms, ioredis ttl is s, so we convert here
       const ttlInMs = Number(this.strapi.plugin('strapi-cache').config('ttl'));
-      const ttlInS = Number((ttlInMs / 1000).toFixed());
-      const serialized = JSON.stringify(val);
-      if (ttlInS > 0) {
-        await this.client.set(key, serialized, 'EX', ttlInS);
+      const serialized = serialize(val);
+      if (ttlInMs > 0) {
+        await this.client.set(key, serialized, 'PX', ttlInMs);
       } else {
         await this.client.set(key, serialized);
       }
