@@ -161,4 +161,4 @@ If you encounter any issues, please feel free to open an issue on the [GitHub re
 
 ## 🛠️ Contributing
 
-Contributions are welcome! If you have suggestions or improvements, please open an issue or submit a pull request.
+Contributions are welcome! If you have suggestions or improvements, please open an issue or submit a pull request to the `dev` branch.
