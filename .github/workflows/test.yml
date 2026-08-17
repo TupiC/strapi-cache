@@ -64,5 +64,10 @@ jobs:
               run: |
                   npm ci --ignore-scripts
 
+            # Install dependencies without lifecycle scripts, then rebuild only the native
+            # packages required by the root build. The playground has its own rebuild below.
+            - name: Rebuild native dependencies
+              run: npm rebuild better-sqlite3 --foreground-scripts
+
             - name: Run integration tests
               run: npm run test:integration
