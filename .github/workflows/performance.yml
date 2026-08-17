@@ -61,11 +61,11 @@ jobs:
 
       - name: Install baseline dependencies
         working-directory: base
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Install candidate dependencies
         working-directory: candidate
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       # Always use the candidate's benchmark definitions for both revisions. This lets the
       # workflow establish its first baseline before the benchmark files exist on the base branch.
@@ -76,19 +76,18 @@ jobs:
 
       - name: Benchmark baseline
         working-directory: base
-        run: npx vitest bench benchmark --run --outputJson=benchmark-results.json
+        run: ./node_modules/.bin/vitest bench benchmark --run --outputJson=benchmark-results.json
 
       - name: Benchmark candidate
         working-directory: candidate
-        run: npx vitest bench benchmark --run --outputJson=benchmark-results.json
+        run: ./node_modules/.bin/vitest bench benchmark --run --outputJson=benchmark-results.json
 
       - name: Generate performance table
-        working-directory: candidate
         run: >-
-          node benchmark/report.mjs
-          ../base/benchmark-results.json
-          benchmark-results.json
-          performance-report.md
+          node candidate/benchmark/report.mjs
+          base/benchmark-results.json
+          candidate/benchmark-results.json
+          candidate/performance-report.md
 
       - name: Upload raw benchmark results
         uses: actions/upload-artifact@v4

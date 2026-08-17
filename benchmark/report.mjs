@@ -1,4 +1,5 @@
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 const [, , basePath, candidatePath, outputPath = 'performance-report.md'] = process.argv;
 
@@ -9,8 +10,29 @@ if (!basePath || !candidatePath) {
   process.exit(1);
 }
 
-const loadBenchmarks = (path) => {
-  const report = JSON.parse(readFileSync(path, 'utf8'));
+const workspaceRoot = resolve(process.cwd());
+
+const resolveWorkspacePath = (input, label) => {
+  if (typeof input !== 'string' || input.length === 0 || isAbsolute(input)) {
+    throw new Error(`${label} must be a relative path inside the workspace`);
+  }
+
+  const resolvedPath = resolve(workspaceRoot, input);
+  const relativePath = relative(workspaceRoot, resolvedPath);
+
+  if (relativePath === '..' || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) {
+    throw new Error(`${label} must stay inside the workspace`);
+  }
+
+  return resolvedPath;
+};
+
+const baseResultsPath = resolveWorkspacePath(basePath, 'Base results path');
+const candidateResultsPath = resolveWorkspacePath(candidatePath, 'Candidate results path');
+const reportOutputPath = resolveWorkspacePath(outputPath, 'Report output path');
+
+const loadBenchmarks = (filePath) => {
+  const report = JSON.parse(readFileSync(filePath, 'utf8'));
   const benchmarks = new Map();
 
   for (const file of report.files ?? []) {
@@ -53,8 +75,8 @@ const classify = (change) => {
   return '⚪ stable';
 };
 
-const base = loadBenchmarks(basePath);
-const candidate = loadBenchmarks(candidatePath);
+const base = loadBenchmarks(baseResultsPath);
+const candidate = loadBenchmarks(candidateResultsPath);
 const keys = [...new Set([...base.keys(), ...candidate.keys()])].sort((left, right) =>
   left.localeCompare(right)
 );
@@ -96,7 +118,7 @@ const markdown = [
   '',
 ].join('\n');
 
-writeFileSync(outputPath, markdown);
+writeFileSync(reportOutputPath, markdown);
 
 if (process.env.GITHUB_STEP_SUMMARY) {
   appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown);
