@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.2](https://github.com/TupiC/strapi-cache/compare/v1.12.1...v1.12.2) (2026-08-17)
+
+
+### Bug Fixes
+
+* **ci:** harden workflow installs and report paths ([8cd3f65](https://github.com/TupiC/strapi-cache/commit/8cd3f650c7c654ca7d6fb0a3893b0287c9e9ce08))
+
 ## [1.12.1](https://github.com/TupiC/strapi-cache/compare/v1.12.0...v1.12.1) (2026-07-20)
 
 
