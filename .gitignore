@@ -114,6 +114,8 @@ logs
 results
 node_modules
 .node_history
+benchmark-results.json
+performance-report.md
 
 
 ############################

@@ -1,0 +1,101 @@
+name: Performance
+
+on:
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Git ref to use as the benchmark baseline
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: performance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Cache benchmark report
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      BENCHMARK_REDIS_URL: redis://127.0.0.1:6379
+
+    steps:
+      - name: Checkout baseline
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || inputs.base_ref }}
+          path: base
+
+      - name: Checkout candidate
+        uses: actions/checkout@v4
+        with:
+          path: candidate
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            base/package-lock.json
+            candidate/package-lock.json
+
+      - name: Install baseline dependencies
+        working-directory: base
+        run: npm ci
+
+      - name: Install candidate dependencies
+        working-directory: candidate
+        run: npm ci
+
+      # Always use the candidate's benchmark definitions for both revisions. This lets the
+      # workflow establish its first baseline before the benchmark files exist on the base branch.
+      - name: Install benchmark harness in baseline
+        run: |
+          mkdir -p base/benchmark
+          cp candidate/benchmark/cache.bench.ts base/benchmark/cache.bench.ts
+
+      - name: Benchmark baseline
+        working-directory: base
+        run: npx vitest bench benchmark --run --outputJson=benchmark-results.json
+
+      - name: Benchmark candidate
+        working-directory: candidate
+        run: npx vitest bench benchmark --run --outputJson=benchmark-results.json
+
+      - name: Generate performance table
+        working-directory: candidate
+        run: >-
+          node benchmark/report.mjs
+          ../base/benchmark-results.json
+          benchmark-results.json
+          performance-report.md
+
+      - name: Upload raw benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: cache-performance-${{ github.run_id }}
+          path: |
+            base/benchmark-results.json
+            candidate/benchmark-results.json
+            candidate/performance-report.md
+          retention-days: 30
