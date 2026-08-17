@@ -10,8 +10,7 @@ const middleware = async (ctx: Context, next: any) => {
   const { url, method } = ctx.request;
 
   if (method !== 'GET') {
-    await next();
-    return;
+    return next();
   }
 
   const cacheableEntities = strapi.plugin('strapi-cache').config('cacheableEntities') as
@@ -23,8 +22,7 @@ const middleware = async (ctx: Context, next: any) => {
 
   if (routeIsExcluded) {
     loggy.info(`Route excluded from cache: ${url}`);
-    await next();
-    return;
+    return next();
   }
 
   const entityKey = generateEntityKey(url, restApiPrefix);
@@ -37,8 +35,7 @@ const middleware = async (ctx: Context, next: any) => {
   const isCacheable = entityIsCacheable ?? routeIsCacheable;
 
   if (!isCacheable) {
-    await next();
-    return;
+    return next();
   }
 
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
@@ -49,13 +46,11 @@ const middleware = async (ctx: Context, next: any) => {
 
   if (authorizationHeader && !cacheAuthorizedRequests) {
     loggy.info(`Authorized request bypassing cache: ${url}`);
-    await next();
-    return;
+    return next();
   }
 
   if (noCache) {
-    await next();
-    return;
+    return next();
   }
 
   const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
