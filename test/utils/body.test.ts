@@ -1,7 +1,79 @@
 import { describe, it, expect } from 'vitest';
 import { Readable } from 'stream';
 import { gzipSync, brotliCompressSync, deflateSync } from 'zlib';
-import { streamToBuffer, decompressBuffer, decodeBufferToText } from '../../server/src/utils/body';
+import {
+  streamToBuffer,
+  decompressBuffer,
+  decodeBufferToText,
+  normalizeStreamForCache,
+  restoreCachedBody,
+  toWireReadyBody,
+} from '../../server/src/utils/body';
+
+describe('toWireReadyBody', () => {
+  it('serializes JSON bodies once', async () => {
+    const body = { data: { articles: [] } };
+
+    await expect(toWireReadyBody(body)).resolves.toEqual({
+      body: JSON.stringify(body),
+      bodyType: 'json',
+    });
+  });
+
+  it('preserves stream bytes', async () => {
+    const body = Buffer.from([0x00, 0xff, 0x01]);
+
+    await expect(toWireReadyBody(Readable.from(body))).resolves.toEqual({
+      body,
+      bodyType: 'buffer',
+    });
+  });
+
+  it('uses the response content type for pre-serialized JSON strings and buffers', async () => {
+    const body = '{"data":[]}';
+
+    await expect(toWireReadyBody(body, 'application/json; charset=utf-8')).resolves.toEqual({
+      body,
+      bodyType: 'json',
+    });
+    await expect(toWireReadyBody(Buffer.from(body), 'application/problem+json')).resolves.toEqual({
+      body: Buffer.from(body),
+      bodyType: 'json',
+    });
+  });
+});
+
+describe('restoreCachedBody', () => {
+  it('restores Buffer values from legacy serialized cache entries', () => {
+    const body = [0, 255, 1];
+
+    expect(restoreCachedBody({ type: 'Buffer', data: body })).toEqual(Buffer.from(body));
+  });
+});
+
+describe('normalizeStreamForCache', () => {
+  it('decompresses a gzip JSON stream and marks its identity bytes as JSON', async () => {
+    const body = Buffer.from('{"data":[]}');
+
+    await expect(
+      normalizeStreamForCache(gzipSync(body), 'GZIP', 'application/problem+json; charset=utf-8')
+    ).resolves.toEqual({ body, bodyType: 'json' });
+  });
+
+  it('preserves an identity binary stream', async () => {
+    const body = Buffer.from([0x00, 0xff, 0x01]);
+
+    await expect(
+      normalizeStreamForCache(body, 'identity', 'application/octet-stream')
+    ).resolves.toEqual({ body, bodyType: 'buffer' });
+  });
+
+  it('refuses an unsupported content encoding', async () => {
+    await expect(
+      normalizeStreamForCache(Buffer.from('encoded'), 'zstd', 'application/json')
+    ).resolves.toBeNull();
+  });
+});
 
 describe('streamToBuffer', () => {
   it('should convert a readable stream to buffer', async () => {

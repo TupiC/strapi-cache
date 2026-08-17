@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Context } from 'koa';
-import { getHeadersToStore, getCacheHeaderConfig } from '../../server/src/utils/header';
+import {
+  getHeadersForUncompressedBody,
+  getHeadersToStore,
+  getCacheHeaderConfig,
+} from '../../server/src/utils/header';
 
 // Mock strapi global
 const mockStrapi = {
@@ -149,6 +153,28 @@ describe('getHeadersToStore', () => {
     const result = getHeadersToStore(mockContext, true, [], undefined);
 
     expect(result).toEqual(mockContext.response.headers);
+  });
+});
+
+describe('getHeadersForUncompressedBody', () => {
+  it('removes headers tied to the encoded representation', () => {
+    expect(
+      getHeadersForUncompressedBody({
+        'content-type': 'application/json',
+        'content-encoding': 'gzip',
+        'content-length': '123',
+        etag: '"compressed"',
+        digest: 'sha-256=:encoded:',
+        vary: 'Accept-Encoding',
+      })
+    ).toEqual({
+      'content-type': 'application/json',
+      vary: 'Accept-Encoding',
+    });
+  });
+
+  it('preserves a disabled header cache', () => {
+    expect(getHeadersForUncompressedBody(null)).toBeNull();
   });
 });
 

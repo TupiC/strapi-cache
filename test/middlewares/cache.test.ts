@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Context } from 'koa';
+import { Readable } from 'stream';
+import { gzipSync } from 'zlib';
 import cacheMiddleware from '../../server/src/middlewares/cache';
 
 describe('cache middleware', () => {
@@ -178,20 +180,107 @@ describe('cache middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('stores a successful cacheable response after a miss', async () => {
+  it('stores a successful cacheable response as a wire-ready JSON string', async () => {
     mockCacheStore.get.mockResolvedValueOnce(null);
     const ctx = createContext();
+    const responseBody = { data: { articles: [] } };
     const next = vi.fn(async () => {
       ctx.status = 200;
-      ctx.body = { data: { articles: [] } };
+      ctx.body = responseBody;
     });
 
     await cacheMiddleware(ctx, next);
 
     expect(next).toHaveBeenCalledOnce();
     expect(mockCacheStore.set).toHaveBeenCalledWith('custom:GET:/api/articles', {
-      body: { data: { articles: [] } },
+      body: JSON.stringify(responseBody),
+      bodyType: 'json',
       headers: null,
     });
+    expect(ctx.body).toBe(JSON.stringify(responseBody));
+  });
+
+  it('caches identity bytes while preserving compressed bytes for the miss response', async () => {
+    mockCacheStore.get.mockResolvedValueOnce(null);
+    const originalBody = Buffer.from('{"data":{"articles":[]}}');
+    const compressedBody = gzipSync(originalBody);
+    const ctx = createContext();
+    ctx.response.headers['content-encoding'] = 'gzip';
+    ctx.response.headers['content-type'] = 'application/json; charset=utf-8';
+    const next = vi.fn(async () => {
+      ctx.status = 200;
+      ctx.body = Readable.from(compressedBody);
+    });
+
+    await cacheMiddleware(ctx, next);
+
+    expect(mockCacheStore.set).toHaveBeenCalledWith('custom:GET:/api/articles', {
+      body: originalBody,
+      bodyType: 'json',
+      headers: null,
+    });
+    expect(ctx.body).toEqual(compressedBody);
+  });
+
+  it('does not cache streams with an unsupported content encoding', async () => {
+    mockCacheStore.get.mockResolvedValueOnce(null);
+    const encodedBody = Buffer.from('encoded response');
+    const ctx = createContext();
+    ctx.response.headers['content-encoding'] = 'zstd';
+    const next = vi.fn(async () => {
+      ctx.status = 200;
+      ctx.body = Readable.from(encodedBody);
+    });
+
+    await cacheMiddleware(ctx, next);
+
+    expect(mockCacheStore.set).not.toHaveBeenCalled();
+    expect(ctx.body).toEqual(encodedBody);
+  });
+
+  it('preserves the response and skips caching when declared compression is malformed', async () => {
+    mockCacheStore.get.mockResolvedValueOnce(null);
+    const malformedBody = Buffer.from('not actually gzip');
+    const ctx = createContext();
+    ctx.response.headers['content-encoding'] = 'gzip';
+    const next = vi.fn(async () => {
+      ctx.status = 200;
+      ctx.body = Readable.from(malformedBody);
+    });
+
+    await cacheMiddleware(ctx, next);
+
+    expect(mockCacheStore.set).not.toHaveBeenCalled();
+    expect(ctx.body).toEqual(malformedBody);
+  });
+
+  it('does not cache partial responses that would be replayed with the wrong status', async () => {
+    mockCacheStore.get.mockResolvedValueOnce(null);
+    const ctx = createContext();
+    const next = vi.fn(async () => {
+      ctx.status = 206;
+      ctx.body = Buffer.from('partial');
+    });
+
+    await cacheMiddleware(ctx, next);
+
+    expect(mockCacheStore.set).not.toHaveBeenCalled();
+    expect(ctx.status).toBe(206);
+  });
+
+  it('sends a wire-ready cached body without parsing it', async () => {
+    const cachedBody = Buffer.from('{"data":{"articles":[]}}');
+    mockCacheStore.get.mockResolvedValueOnce({
+      body: cachedBody,
+      bodyType: 'buffer',
+      headers: {},
+    });
+    const ctx = createContext();
+    const next = vi.fn();
+
+    await cacheMiddleware(ctx, next);
+
+    expect(ctx.body).toBe(cachedBody);
+    expect(next).not.toHaveBeenCalled();
   });
 });
