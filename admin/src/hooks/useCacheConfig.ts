@@ -24,7 +24,7 @@ export const useCacheConfig = (enabled: boolean = true) => {
       setError(null);
 
       try {
-        const { data } = await get('/strapi-cache/config');
+        const { data } = await get<CacheConfig>('/strapi-cache/config');
         setConfig(data);
       } catch (error: any) {
         setError(error);
@@ -46,7 +46,7 @@ export const useCacheConfig = (enabled: boolean = true) => {
         setError(null);
 
         try {
-          const { data } = await get('/strapi-cache/config');
+          const { data } = await get<CacheConfig>('/strapi-cache/config');
           setConfig(data);
         } catch (error: any) {
           setError(error);
