@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.12.2](https://github.com/TupiC/strapi-cache/compare/v1.12.1...v1.12.2) (2026-08-20)
+
+
+### Bug Fixes
+
+* **ci:** harden workflow installs and report paths ([8cd3f65](https://github.com/TupiC/strapi-cache/commit/8cd3f650c7c654ca7d6fb0a3893b0287c9e9ce08))
+
+
+### Performance Improvements
+
+* **cache:** gate ineligible requests before cache lookup ([#136](https://github.com/TupiC/strapi-cache/issues/136)) ([b03850d](https://github.com/TupiC/strapi-cache/commit/b03850d036e44fbb335c09dec167f7179bd37427))
+* **memory:** remove unused timeout for in-memory since reads are synchronous ([#135](https://github.com/TupiC/strapi-cache/issues/135)) ([d20ee13](https://github.com/TupiC/strapi-cache/commit/d20ee139c3c71ada2c3708940db9cfa4a019920e))
+* **redis:** preserve binary cache responses ([#137](https://github.com/TupiC/strapi-cache/issues/137)) ([119b008](https://github.com/TupiC/strapi-cache/commit/119b00830d522cd8dcfd600e5b69ddc2cfb24e2d))
+
 ## [1.12.1](https://github.com/TupiC/strapi-cache/compare/v1.12.0...v1.12.1) (2026-07-20)
 
 
