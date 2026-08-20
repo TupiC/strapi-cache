@@ -18,6 +18,7 @@ vi.mock('../../server/src/utils/log', () => ({
 vi.mock('ioredis', () => {
   const Redis = vi.fn().mockImplementation(() => ({
     get: vi.fn(),
+    getBuffer: vi.fn(),
     set: vi.fn(),
     del: vi.fn(),
     keys: vi.fn(),
@@ -50,8 +51,10 @@ describe('RedisCacheProvider', () => {
   let mockStrapi: Pick<Core.Strapi, 'plugin'>;
   let mockClient: InstanceType<typeof Redis>;
   let mockPipeline: Pick<ChainableCommander, 'del' | 'exec'>;
+  let ttl: number | undefined;
 
   beforeEach(() => {
+    ttl = undefined;
     mockPipeline = {
       del: vi.fn().mockReturnThis(),
       exec: vi.fn().mockResolvedValue([]),
@@ -61,6 +64,7 @@ describe('RedisCacheProvider', () => {
     mockClient = Object.create((Redis as any).prototype);
     Object.assign(mockClient, {
       get: vi.fn(),
+      getBuffer: vi.fn(),
       set: vi.fn(),
       del: vi.fn(),
       keys: vi.fn(),
@@ -78,6 +82,7 @@ describe('RedisCacheProvider', () => {
           if (key === 'cacheGetTimeoutInMs') return 1000;
           if (key === 'redisClusterNodes') return [];
           if (key === 'redisScanDeleteCount') return 100;
+          if (key === 'ttl') return ttl;
           return undefined;
         }),
       }),
@@ -93,6 +98,93 @@ describe('RedisCacheProvider', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe('wire-ready entries', () => {
+    it('stores and retrieves response bytes without JSON encoding or a custom prefix', async () => {
+      const body = Buffer.from([0x00, 0xff, 0x7b, 0x22, 0x7d]);
+      const entry = {
+        body,
+        bodyType: 'buffer' as const,
+        headers: { 'content-type': 'application/octet-stream' },
+      };
+
+      await provider.set('cache-key', entry);
+
+      const storedValue = (mockClient.set as ReturnType<typeof vi.fn>).mock.calls[0][1];
+      expect(Buffer.isBuffer(storedValue)).toBe(true);
+      expect(storedValue.includes(Buffer.from('strapi-cache:wire:'))).toBe(false);
+      expect(mockClient.get).not.toHaveBeenCalled();
+
+      (mockClient.getBuffer as ReturnType<typeof vi.fn>).mockResolvedValue(storedValue);
+
+      await expect(provider.get('cache-key')).resolves.toEqual(entry);
+      expect(mockClient.getBuffer).toHaveBeenCalledWith('cache-key');
+    });
+
+    it('preserves the complete serialized JSON response body', async () => {
+      const entry = {
+        body: JSON.stringify({ data: [{ id: 1, name: 'Ada' }] }),
+        bodyType: 'json' as const,
+        headers: { 'content-type': 'application/json; charset=utf-8' },
+      };
+
+      await provider.set('cache-key', entry);
+      const storedValue = (mockClient.set as ReturnType<typeof vi.fn>).mock.calls[0][1];
+      (mockClient.getBuffer as ReturnType<typeof vi.fn>).mockResolvedValue(storedValue);
+
+      const cached = await provider.get('cache-key');
+
+      expect(cached).toEqual(entry);
+      expect(cached.body).not.toBe('');
+    });
+
+    it('continues reading legacy JSON entries after an upgrade', async () => {
+      const legacyEntry = {
+        body: { type: 'Buffer', data: [0, 255, 123, 34, 125] },
+        headers: { 'content-type': 'application/octet-stream' },
+      };
+      (mockClient.getBuffer as ReturnType<typeof vi.fn>).mockResolvedValue(
+        Buffer.from(JSON.stringify(legacyEntry))
+      );
+
+      await expect(provider.get('cache-key')).resolves.toEqual(legacyEntry);
+    });
+
+    it('preserves empty and Unicode response bodies', async () => {
+      const entries = [
+        { body: '', bodyType: 'string' as const, headers: null },
+        { body: 'Grüße 🌍 你好', bodyType: 'string' as const, headers: null },
+        { body: Buffer.alloc(0), bodyType: 'buffer' as const, headers: null },
+      ];
+
+      for (const entry of entries) {
+        vi.mocked(mockClient.set).mockClear();
+        await provider.set('cache-key', entry);
+        const storedValue = vi.mocked(mockClient.set).mock.calls[0][1] as Buffer;
+        vi.mocked(mockClient.getBuffer).mockResolvedValueOnce(storedValue);
+        await expect(provider.get('cache-key')).resolves.toEqual(entry);
+      }
+    });
+
+    it('treats missing, empty, and malformed Redis values as cache misses', async () => {
+      vi.mocked(mockClient.getBuffer)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(Buffer.alloc(0))
+        .mockResolvedValueOnce(Buffer.from([0x00, 0xff, 0x01]));
+
+      await expect(provider.get('missing')).resolves.toBeNull();
+      await expect(provider.get('empty')).resolves.toBeNull();
+      await expect(provider.get('malformed')).resolves.toBeNull();
+    });
+
+    it('uses millisecond Redis expiry without rounding short TTLs to no expiry', async () => {
+      ttl = 250;
+
+      await provider.set('cache-key', { body: 'short lived', headers: null });
+
+      expect(mockClient.set).toHaveBeenCalledWith('cache-key', expect.any(Buffer), 'PX', 250);
+    });
   });
 
   describe('clearByRegexp', () => {

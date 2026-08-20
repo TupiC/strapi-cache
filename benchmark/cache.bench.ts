@@ -18,7 +18,8 @@ const largeBody = {
   })),
 };
 const largeCacheEntry = {
-  body: largeBody,
+  body: JSON.stringify(largeBody),
+  bodyType: 'json' as const,
   headers: {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'public, max-age=60',
