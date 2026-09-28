@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.3](https://github.com/TupiC/strapi-cache/compare/v1.12.2...v1.12.3) (2026-09-28)
+
+
+### Bug Fixes
+
+* **graphql:** invalidate custom queries by configured dependencies ([de6bfa2](https://github.com/TupiC/strapi-cache/commit/de6bfa2b3da074becf51c39db2bad6031917ecc6))
+
 ## [1.12.2](https://github.com/TupiC/strapi-cache/compare/v1.12.1...v1.12.2) (2026-08-20)
 
 
