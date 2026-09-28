@@ -80,7 +80,12 @@ export async function invalidateGraphqlCache(
 
     const singularName = contentType.info.singularName ?? '';
     const pluralName = contentType.info.pluralName ?? '';
-    const fieldNames = [...new Set([singularName, pluralName].filter(Boolean))];
+    const dependencies = (strapi.plugin('strapi-cache').config('graphqlDependencies') ?? {}) as
+      Record<string, string[]>;
+    const customFieldNames = Object.entries(dependencies)
+      .filter(([, uids]) => uids.includes(model.uid))
+      .map(([field]) => field);
+    const fieldNames = [...new Set([singularName, pluralName, ...customFieldNames].filter(Boolean))];
 
     if (fieldNames.length === 0) {
       loggy.info(`No field names for ${model.uid}, purging all GraphQL cache`);

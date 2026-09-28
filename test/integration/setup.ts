@@ -1,6 +1,15 @@
 import path from 'path';
-import { createStrapi } from '@strapi/strapi';
+import { createRequire } from 'node:module';
 import type { Core } from '@strapi/types';
+
+const { createStrapi } = createRequire(import.meta.url)(
+  '@strapi/strapi'
+) as typeof import('@strapi/strapi');
+
+const initialSignalListeners = {
+  SIGINT: process.listeners('SIGINT'),
+  SIGTERM: process.listeners('SIGTERM'),
+};
 
 let instance: Core.Strapi | null = null;
 
@@ -44,7 +53,28 @@ export async function cleanupStrapi(): Promise<void> {
   await instance.db.connection.destroy();
 
   if (typeof instance.destroy === 'function') {
-    await instance.destroy();
+    const removeAllListeners = process.removeAllListeners;
+    process.removeAllListeners = ((event?: string | symbol) => {
+      if (event !== undefined) {
+        return removeAllListeners.call(process, event);
+      }
+
+      return process;
+    }) as typeof process.removeAllListeners;
+
+    try {
+      await instance.destroy();
+    } finally {
+      process.removeAllListeners = removeAllListeners;
+
+      for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+        for (const listener of process.listeners(signal)) {
+          if (!initialSignalListeners[signal].includes(listener)) {
+            process.removeListener(signal, listener);
+          }
+        }
+      }
+    }
   }
 
   instance = null;

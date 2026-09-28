@@ -36,7 +36,10 @@
     "test:ts:back": "run -T tsc -p server/tsconfig.json",
     "test": "vitest run --exclude 'test/integration/**'",
     "benchmark": "vitest bench benchmark --run",
-    "test:integration": "npm run build && rm -rf playground/.cache playground/node_modules playground/.yalc && mkdir -p playground/.yalc/strapi-cache && cp -r dist package.json LICENSE README.md playground/.yalc/strapi-cache/ && node -e \"const fs=require('fs');const p='playground/.yalc/strapi-cache/package.json';const pkg=JSON.parse(fs.readFileSync(p,'utf8'));delete pkg.devDependencies;delete pkg.optionalDependencies;delete pkg.scripts;fs.writeFileSync(p,JSON.stringify(pkg,null,2));\" && cd playground && npm ci --ignore-scripts && npm rebuild better-sqlite3 @swc/core sharp --foreground-scripts --ignore-scripts=false && npm run build && cd .. && npm rebuild better-sqlite3 --foreground-scripts --ignore-scripts=false && NODE_ENV=test jest --watchman=false --config jest.integration.config.js --runInBand --forceExit --detectOpenHandles",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "test:integration": "npm run build && rm -rf playground/.cache playground/node_modules playground/.yalc && mkdir -p playground/.yalc/strapi-cache && cp -r dist package.json LICENSE README.md playground/.yalc/strapi-cache/ && node -e \"const fs=require('fs');const p='playground/.yalc/strapi-cache/package.json';const pkg=JSON.parse(fs.readFileSync(p,'utf8'));delete pkg.devDependencies;delete pkg.optionalDependencies;delete pkg.scripts;fs.writeFileSync(p,JSON.stringify(pkg,null,2));\" && cd playground && npm ci --ignore-scripts && npm rebuild better-sqlite3 @swc/core sharp --foreground-scripts --ignore-scripts=false && npm run build && cd .. && npm rebuild better-sqlite3 --foreground-scripts --ignore-scripts=false && NODE_ENV=test vitest run --config vitest.integration.config.ts",
     "test:all": "npm test -- --run && npm run test:integration"
   },
   "dependencies": {
@@ -51,20 +54,18 @@
     "@strapi/sdk-plugin": "^5.3.2",
     "@strapi/strapi": "^5.0.0",
     "@strapi/typescript-utils": "^5.0.0",
-    "@types/jest": "^30.0.0",
     "@types/koa": "^2.15.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@types/supertest": "^6.0.3",
     "better-sqlite3": "^12.6.2",
-    "jest": "^30.2.0",
-    "prettier": "^3.5.3",
+    "oxfmt": "^0.67.0",
+    "oxlint": "^1.82.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.0",
     "styled-components": "^6.1.17",
     "supertest": "^7.2.2",
-    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vitest": "^3.1.1"
@@ -82,16 +83,8 @@
     "@swc/core-linux-x64-gnu": "*"
   },
   "overrides": {
-    "@ai-sdk/gateway": "3.0.131",
-    "@ai-sdk/provider-utils": "4.0.29",
-    "@ai-sdk/react": "3.0.207",
-    "@vitejs/plugin-react-swc": "3.11.0",
-    "ai": "6.0.205",
-    "ajv": "8.20.0",
-    "esbuild": "0.28.1",
-    "esbuild-loader": "4.5.0",
-    "lodash": "4.18.1",
-    "vite": "6.4.3"
+    "nodemailer": "9.1.1",
+    "sharp": "0.35.4"
   },
   "strapi": {
     "kind": "plugin",

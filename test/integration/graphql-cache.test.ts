@@ -1,9 +1,9 @@
 import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { setupStrapi, cleanupStrapi } from './setup';
 import type { Core } from '@strapi/types';
 
 declare global {
-  // eslint-disable-next-line no-var
   var strapi: Core.Strapi;
 }
 

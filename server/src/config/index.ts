@@ -20,6 +20,7 @@ export default {
     cacheGetTimeoutInMs: 1000,
     autoPurgeCache: true,
     autoPurgeGraphQL: false,
+    graphqlDependencies: {},
     autoPurgeCacheOnStart: true,
     disableAdminPopups: false,
     disableAdminButtons: false,
@@ -118,6 +119,19 @@ export default {
     }
     if (typeof config.autoPurgeGraphQL !== 'boolean') {
       throw new Error(`Invalid config: autoPurgeGraphQL must be a boolean`);
+    }
+    if (
+      config.graphqlDependencies !== undefined &&
+      (config.graphqlDependencies === null ||
+        typeof config.graphqlDependencies !== 'object' ||
+        Array.isArray(config.graphqlDependencies) ||
+        Object.values(config.graphqlDependencies).some(
+          (uids) => !Array.isArray(uids) || uids.some((uid) => typeof uid !== 'string')
+        ))
+    ) {
+      throw new Error(
+        `Invalid config: graphqlDependencies must map root field names to string arrays`
+      );
     }
     if (typeof config.autoPurgeCacheOnStart !== 'boolean') {
       throw new Error(`Invalid config: autoPurgeCacheOnStart must be a boolean`);
