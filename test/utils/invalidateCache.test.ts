@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { invalidateCache, invalidateGraphqlCache } from '../../server/src/utils/invalidateCache';
 import type { CacheProvider } from '../../server/src/types/cache.types';
 import type { Core } from '@strapi/strapi';
+import { InMemoryCacheProvider } from '../../server/src/services/memory/provider';
+import { generateGraphqlCacheKey } from '../../server/src/utils/key';
 
 // Mock the logger
 vi.mock('../../server/src/utils/log', () => ({
@@ -402,9 +404,9 @@ describe('invalidateGraphqlCache', () => {
 
     mockStrapi = {
       contentType: vi.fn(),
-      plugin: vi.fn().mockReturnValue({
-        config: vi.fn().mockReturnValue('/graphql'),
-      }),
+      plugin: vi.fn((name: string) => ({
+        config: vi.fn(() => (name === 'graphql' ? '/graphql' : undefined)),
+      })),
     };
 
     vi.clearAllMocks();
@@ -412,6 +414,76 @@ describe('invalidateGraphqlCache', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('purges mapped custom resolvers on dependency changes while preserving unrelated queries', async () => {
+    const config: Record<string, unknown> = {
+      max: 100,
+      ttl: 3_600_000,
+      size: 1024,
+      allowStale: false,
+      graphqlDependencies: {
+        eventByUUID: ['api::event.event', 'api::event-start-date.event-start-date'],
+      },
+    };
+    const strapi = {
+      contentType: vi.fn((uid: string) => ({
+        info:
+          uid === 'api::event.event'
+            ? { singularName: 'event', pluralName: 'events' }
+            : uid === 'api::event-start-date.event-start-date'
+              ? { singularName: 'event-start-date', pluralName: 'event-start-dates' }
+              : { singularName: 'article', pluralName: 'articles' },
+      })),
+      plugin: vi.fn((name: string) => ({
+        config: vi.fn((key: string, fallback?: unknown) =>
+          name === 'graphql' ? '/graphql' : config[key] ?? fallback
+        ),
+      })),
+    } as unknown as Core.Strapi;
+    const cacheStore = new InMemoryCacheProvider(strapi);
+    cacheStore.init();
+    const cachedResponse = { data: { blockingText: 'Lieber Ehrengast,' } };
+    const graphqlKeys = (['GET', 'POST'] as const).map((method) =>
+      generateGraphqlCacheKey(
+        JSON.stringify({ query: '{ eventByUUID(uuid: "test-uuid") { blockingText } }' }),
+        method,
+        ['eventByUUID'],
+        strapi
+      )
+    );
+    const unrelatedKey = generateGraphqlCacheKey(
+      '{ guestRegistration { title } }',
+      'POST',
+      ['guestRegistration'],
+      strapi
+    );
+    const restKey = 'GET:/api/events/test-uuid';
+    await cacheStore.set(unrelatedKey, cachedResponse);
+    await cacheStore.set(restKey, cachedResponse);
+
+    for (const uid of [
+      'api::event.event',
+      'api::event-start-date.event-start-date',
+      'api::article.article',
+    ]) {
+      for (const key of graphqlKeys) {
+        await cacheStore.set(key, cachedResponse);
+        expect(await cacheStore.get(key)).toEqual(cachedResponse);
+      }
+
+      await invalidateGraphqlCache({ model: { uid } }, cacheStore, strapi);
+
+      for (const key of graphqlKeys) {
+        if (uid === 'api::article.article') {
+          expect(await cacheStore.get(key)).toEqual(cachedResponse);
+        } else {
+          expect(await cacheStore.get(key)).toBeUndefined();
+        }
+      }
+      expect(await cacheStore.get(unrelatedKey)).toEqual(cachedResponse);
+      expect(await cacheStore.get(restKey)).toEqual(cachedResponse);
+    }
   });
 
   it('should invalidate GraphQL cache for specific collection only', async () => {

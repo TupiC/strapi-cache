@@ -32,6 +32,7 @@ describe('config', () => {
         cacheGetTimeoutInMs: 1000,
         autoPurgeCache: true,
         autoPurgeGraphQL: false,
+        graphqlDependencies: {},
         autoPurgeCacheOnStart: true,
         disableAdminButtons: false,
         disableAdminPopups: false,
@@ -70,6 +71,7 @@ describe('config', () => {
       cacheGetTimeoutInMs: 1000,
       autoPurgeCache: true,
       autoPurgeGraphQL: false,
+      graphqlDependencies: {},
       autoPurgeCacheOnStart: true,
       disableAdminButtons: false,
       disableAdminPopups: false,
@@ -401,6 +403,32 @@ describe('config', () => {
           'Invalid config: autoPurgeGraphQL must be a boolean'
         );
       });
+    });
+
+    it('validates graphqlDependencies as a mapping of root fields to content-type UID arrays', () => {
+      expect(() =>
+        config.validator({
+          ...validConfig,
+          graphqlDependencies: {
+            eventByUUID: ['api::event.event', 'api::event-start-date.event-start-date'],
+          },
+        })
+      ).not.toThrow();
+      expect(() =>
+        config.validator({ ...validConfig, graphqlDependencies: undefined })
+      ).not.toThrow();
+
+      for (const graphqlDependencies of [
+        null,
+        [],
+        'eventByUUID',
+        { eventByUUID: 'api::event.event' },
+        { eventByUUID: [123] },
+      ]) {
+        expect(() => config.validator({ ...validConfig, graphqlDependencies })).toThrow(
+          'Invalid config: graphqlDependencies must map root field names to string arrays'
+        );
+      }
     });
 
     describe('autoPurgeCacheOnStart validation', () => {
