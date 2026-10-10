@@ -1,24 +1,25 @@
-import { Core } from '@strapi/strapi';
-import { CacheProvider } from 'src/types/cache.types';
-import { loggy } from './log';
-import { UID } from '@strapi/strapi';
+import { Core } from "@strapi/strapi";
+import { CacheProvider } from "src/types/cache.types";
+import { loggy } from "./log";
+import { UID } from "@strapi/strapi";
 
-const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const getGraphqlEndpoint = (strapi: Core.Strapi) =>
-  strapi.plugin('graphql')?.config('endpoint', '/graphql') ?? '/graphql';
+  strapi.plugin("graphql")?.config("endpoint", "/graphql") ?? "/graphql";
 const getGraphqlAllKeysRegex = (strapi: Core.Strapi) =>
   new RegExp(`^(GET|POST):${escapeRegex(getGraphqlEndpoint(strapi))}.*`);
 
 export async function invalidateCache(event: any, cacheStore: CacheProvider, strapi: Core.Strapi) {
   const { model } = event;
   const uid = model.uid;
-  const restApiPrefix = strapi.config.get('api.rest.prefix', '/api');
-  const cacheableEntities = strapi.plugin('strapi-cache').config('cacheableEntities') as
-    string[] | undefined;
+  const restApiPrefix = strapi.config.get("api.rest.prefix", "/api");
+  const cacheableEntities = strapi.plugin("strapi-cache").config("cacheableEntities") as
+    | string[]
+    | undefined;
   const cacheableRoutes =
-    (strapi.plugin('strapi-cache').config('cacheableRoutes') as string[] | undefined) ?? [];
+    (strapi.plugin("strapi-cache").config("cacheableRoutes") as string[] | undefined) ?? [];
   const excludeRoutes =
-    (strapi.plugin('strapi-cache').config('excludeRoutes') as string[] | undefined) ?? [];
+    (strapi.plugin("strapi-cache").config("excludeRoutes") as string[] | undefined) ?? [];
 
   try {
     const contentType = strapi.contentType(uid);
@@ -29,7 +30,7 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
     }
 
     const pluralName =
-      contentType.kind === 'singleType'
+      contentType.kind === "singleType"
         ? contentType.info.singularName
         : contentType.info.pluralName;
     const apiPath = `${restApiPrefix}/${pluralName}`;
@@ -57,7 +58,7 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
     await cacheStore.clearByRegexp([regex]);
     loggy.info(`Invalidated cache for ${apiPath}`);
   } catch (error) {
-    loggy.error('Cache invalidation error:');
+    loggy.error("Cache invalidation error:");
     loggy.error(error);
   }
 }
@@ -65,7 +66,7 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
 export async function invalidateGraphqlCache(
   event: { model: { uid: string } },
   cacheStore: CacheProvider,
-  strapi: Core.Strapi
+  strapi: Core.Strapi,
 ) {
   try {
     const { model } = event;
@@ -78,14 +79,16 @@ export async function invalidateGraphqlCache(
       return;
     }
 
-    const singularName = contentType.info.singularName ?? '';
-    const pluralName = contentType.info.pluralName ?? '';
-    const dependencies = (strapi.plugin('strapi-cache').config('graphqlDependencies') ?? {}) as
-      Record<string, string[]>;
+    const singularName = contentType.info.singularName ?? "";
+    const pluralName = contentType.info.pluralName ?? "";
+    const dependencies = (strapi.plugin("strapi-cache").config("graphqlDependencies") ??
+      {}) as Record<string, string[]>;
     const customFieldNames = Object.entries(dependencies)
       .filter(([, uids]) => uids.includes(model.uid))
       .map(([field]) => field);
-    const fieldNames = [...new Set([singularName, pluralName, ...customFieldNames].filter(Boolean))];
+    const fieldNames = [
+      ...new Set([singularName, pluralName, ...customFieldNames].filter(Boolean)),
+    ];
 
     if (fieldNames.length === 0) {
       loggy.info(`No field names for ${model.uid}, purging all GraphQL cache`);
@@ -94,15 +97,15 @@ export async function invalidateGraphqlCache(
       return;
     }
 
-    const escapedNames = fieldNames.map((name) => escapeRegex(name)).join('|');
+    const escapedNames = fieldNames.map((name) => escapeRegex(name)).join("|");
     const graphqlRegex = new RegExp(
-      `^(GET|POST):${escapeRegex(getGraphqlEndpoint(strapi))}:[^:]*\\b(${escapedNames})\\b[^:]*:`
+      `^(GET|POST):${escapeRegex(getGraphqlEndpoint(strapi))}:[^:]*\\b(${escapedNames})\\b[^:]*:`,
     );
 
     await cacheStore.clearByRegexp([graphqlRegex]);
-    loggy.info(`Invalidated GraphQL cache for ${model.uid} (${fieldNames.join(', ')})`);
+    loggy.info(`Invalidated GraphQL cache for ${model.uid} (${fieldNames.join(", ")})`);
   } catch (error) {
-    loggy.error('GraphQL cache invalidation error:');
+    loggy.error("GraphQL cache invalidation error:");
     loggy.error(error);
   }
 }

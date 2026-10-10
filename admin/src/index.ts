@@ -1,8 +1,8 @@
-import { PLUGIN_ID } from './pluginId';
-import { Initializer } from './components/Initializer';
-import PurgeCacheButton from './components/PurgeCacheButton';
-import PurgeEntityButton from './components/PurgeEntityButton';
-import { pluginPermissions } from './permission';
+import { PLUGIN_ID } from "./pluginId";
+import { Initializer } from "./components/Initializer";
+import PurgeCacheButton from "./components/PurgeCacheButton";
+import PurgeEntityButton from "./components/PurgeEntityButton";
+import { pluginPermissions } from "./permission";
 
 export default {
   register(app: any) {
@@ -13,12 +13,12 @@ export default {
       name: PLUGIN_ID,
     });
 
-    app.getPlugin('content-manager').injectComponent('listView', 'actions', {
+    app.getPlugin("content-manager").injectComponent("listView", "actions", {
       name: PurgeCacheButton,
       Component: PurgeCacheButton,
     });
 
-    app.getPlugin('content-manager').injectComponent('editView', 'right-links', {
+    app.getPlugin("content-manager").injectComponent("editView", "right-links", {
       name: PurgeEntityButton,
       Component: PurgeEntityButton,
     });
@@ -27,22 +27,22 @@ export default {
       {
         id: PLUGIN_ID,
         intlLabel: {
-          id: 'strapi-cache.settings.link',
-          defaultMessage: 'Strapi Cache',
+          id: "strapi-cache.settings.link",
+          defaultMessage: "Strapi Cache",
         },
       },
       [
         {
           intlLabel: {
-            id: 'strapi-cache.settings.link',
-            defaultMessage: 'Strapi Cache',
+            id: "strapi-cache.settings.link",
+            defaultMessage: "Strapi Cache",
           },
-          id: 'settings',
+          id: "settings",
           to: `${PLUGIN_ID}/settings`,
-          Component: () => import('./components/SettingsPage'),
+          Component: () => import("./components/SettingsPage"),
           permissions: pluginPermissions.viewSettings,
         },
-      ]
+      ],
     );
   },
 
@@ -56,7 +56,7 @@ export default {
         } catch {
           return { data: {}, locale };
         }
-      })
+      }),
     );
   },
 };

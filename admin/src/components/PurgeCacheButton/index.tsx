@@ -1,8 +1,8 @@
-import { unstable_useContentManagerContext as useContentManagerContext } from '@strapi/strapi/admin';
-import PurgeModal from '../PurgeModal';
-import { useIntl } from 'react-intl';
-import { useCacheConfig } from '../../hooks';
-import { getContentTypeApiPath, shouldDisableAdminButtons } from '../../utils/adminButtons';
+import { unstable_useContentManagerContext as useContentManagerContext } from "@strapi/strapi/admin";
+import PurgeModal from "../PurgeModal";
+import { useIntl } from "react-intl";
+import { useCacheConfig } from "../../hooks";
+import { getContentTypeApiPath, shouldDisableAdminButtons } from "../../utils/adminButtons";
 
 function PurgeCacheButton() {
   const { contentType } = useContentManagerContext();
@@ -18,8 +18,8 @@ function PurgeCacheButton() {
   return (
     <PurgeModal
       buttonText={formatMessage({
-        id: 'strapi-cache.cache.purge',
-        defaultMessage: 'Purge Cache',
+        id: "strapi-cache.cache.purge",
+        defaultMessage: "Purge Cache",
       })}
       keyToUse={keyToUse}
     ></PurgeModal>

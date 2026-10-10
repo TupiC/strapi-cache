@@ -1,15 +1,15 @@
-import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { setupStrapi, cleanupStrapi } from './setup';
-import type { Core } from '@strapi/types';
+import request from "supertest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { setupStrapi, cleanupStrapi } from "./setup";
+import type { Core } from "@strapi/types";
 
 declare global {
   var strapi: Core.Strapi;
 }
 
-describe('REST cache integration', () => {
+describe("REST cache integration", () => {
   const getCacheStore = () =>
-    strapi.plugin('strapi-cache').services.service.getCacheInstance() as {
+    strapi.plugin("strapi-cache").services.service.getCacheInstance() as {
       keys: () => Promise<string[] | null>;
       reset: () => Promise<any | null>;
     };
@@ -23,34 +23,34 @@ describe('REST cache integration', () => {
     await cleanupStrapi();
   }, 10000);
 
-  it('should cache GET /api/cache-test on first request and return cached response on second request', async () => {
+  it("should cache GET /api/cache-test on first request and return cached response on second request", async () => {
     const server = strapi.server.httpServer;
 
-    const firstResponse = await request(server).get('/api/cache-test').expect(200);
+    const firstResponse = await request(server).get("/api/cache-test").expect(200);
 
-    const secondResponse = await request(server).get('/api/cache-test').expect(200);
+    const secondResponse = await request(server).get("/api/cache-test").expect(200);
 
     expect(firstResponse.body).toEqual(secondResponse.body);
-    expect(firstResponse.body.data).toBe('cached');
+    expect(firstResponse.body.data).toBe("cached");
   });
 
-  it('should use different cache keys for different query parameters', async () => {
+  it("should use different cache keys for different query parameters", async () => {
     const server = strapi.server.httpServer;
 
-    const responseA = await request(server).get('/api/cache-test').expect(200);
+    const responseA = await request(server).get("/api/cache-test").expect(200);
 
-    const responseB = await request(server).get('/api/cache-test?foo=bar').expect(200);
+    const responseB = await request(server).get("/api/cache-test?foo=bar").expect(200);
 
     expect(responseA.body).toBeDefined();
     expect(responseB.body).toBeDefined();
   });
 
-  it('should use configured keyGenerator format for REST keys', async () => {
+  it("should use configured keyGenerator format for REST keys", async () => {
     const cacheStore = getCacheStore();
     await cacheStore.reset();
 
     const server = strapi.server.httpServer;
-    const path = '/api/cache-test?kg=rest-key-format';
+    const path = "/api/cache-test?kg=rest-key-format";
 
     await request(server).get(path).expect(200);
 

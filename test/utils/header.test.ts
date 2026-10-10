@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Context } from 'koa';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Context } from "koa";
 import {
   getHeadersForUncompressedBody,
   getHeadersToStore,
   getCacheHeaderConfig,
-} from '../../server/src/utils/header';
+} from "../../server/src/utils/header";
 
 // Mock strapi global
 const mockStrapi = {
@@ -13,21 +13,21 @@ const mockStrapi = {
 };
 
 // Set up global strapi mock
-vi.stubGlobal('strapi', mockStrapi);
+vi.stubGlobal("strapi", mockStrapi);
 
-describe('getHeadersToStore', () => {
+describe("getHeadersToStore", () => {
   let mockContext: Context;
 
   beforeEach(() => {
     mockContext = {
       response: {
         headers: {
-          'content-type': 'application/json',
-          'content-length': '1234',
-          'cache-control': 'max-age=3600',
-          'x-custom-header': 'custom-value',
-          authorization: 'Bearer token',
-          'set-cookie': 'session=abc123',
+          "content-type": "application/json",
+          "content-length": "1234",
+          "cache-control": "max-age=3600",
+          "x-custom-header": "custom-value",
+          authorization: "Bearer token",
+          "set-cookie": "session=abc123",
         },
       },
     } as any;
@@ -37,55 +37,55 @@ describe('getHeadersToStore', () => {
     vi.clearAllMocks();
   });
 
-  it('should return null when cacheHeaders is false', () => {
+  it("should return null when cacheHeaders is false", () => {
     const result = getHeadersToStore(mockContext, false);
 
     expect(result).toBeNull();
   });
 
-  it('should return all headers when cacheHeaders is true and no lists provided', () => {
+  it("should return all headers when cacheHeaders is true and no lists provided", () => {
     const result = getHeadersToStore(mockContext, true);
 
     expect(result).toEqual(mockContext.response.headers);
   });
 
-  it('should filter headers using allow list (case insensitive)', () => {
-    const allowList = ['content-type', 'cache-control'];
+  it("should filter headers using allow list (case insensitive)", () => {
+    const allowList = ["content-type", "cache-control"];
 
     const result = getHeadersToStore(mockContext, true, allowList);
 
     expect(result).toEqual({
-      'content-type': 'application/json',
-      'cache-control': 'max-age=3600',
+      "content-type": "application/json",
+      "cache-control": "max-age=3600",
     });
   });
 
-  it('should filter headers using deny list (case insensitive)', () => {
-    const denyList = ['authorization', 'set-cookie'];
+  it("should filter headers using deny list (case insensitive)", () => {
+    const denyList = ["authorization", "set-cookie"];
 
     const result = getHeadersToStore(mockContext, true, [], denyList);
 
     expect(result).toEqual({
-      'content-type': 'application/json',
-      'content-length': '1234',
-      'cache-control': 'max-age=3600',
-      'x-custom-header': 'custom-value',
+      "content-type": "application/json",
+      "content-length": "1234",
+      "cache-control": "max-age=3600",
+      "x-custom-header": "custom-value",
     });
   });
 
-  it('should combine allow and deny lists (allow takes precedence)', () => {
-    const allowList = ['content-type', 'cache-control', 'authorization'];
-    const denyList = ['cache-control'];
+  it("should combine allow and deny lists (allow takes precedence)", () => {
+    const allowList = ["content-type", "cache-control", "authorization"];
+    const denyList = ["cache-control"];
 
     const result = getHeadersToStore(mockContext, true, allowList, denyList);
 
     expect(result).toEqual({
-      'content-type': 'application/json',
-      authorization: 'Bearer token',
+      "content-type": "application/json",
+      authorization: "Bearer token",
     });
   });
 
-  it('should handle empty allow list', () => {
+  it("should handle empty allow list", () => {
     const allowList: string[] = [];
 
     const result = getHeadersToStore(mockContext, true, allowList);
@@ -93,7 +93,7 @@ describe('getHeadersToStore', () => {
     expect(result).toEqual(mockContext.response.headers);
   });
 
-  it('should handle empty deny list', () => {
+  it("should handle empty deny list", () => {
     const denyList: string[] = [];
 
     const result = getHeadersToStore(mockContext, true, [], denyList);
@@ -101,37 +101,37 @@ describe('getHeadersToStore', () => {
     expect(result).toEqual(mockContext.response.headers);
   });
 
-  it('should handle both empty lists', () => {
+  it("should handle both empty lists", () => {
     const result = getHeadersToStore(mockContext, true, [], []);
 
     expect(result).toEqual(mockContext.response.headers);
   });
 
-  it('should handle case insensitive header matching in allow list', () => {
-    const allowList = ['content-type', 'cache-control'];
+  it("should handle case insensitive header matching in allow list", () => {
+    const allowList = ["content-type", "cache-control"];
 
     const result = getHeadersToStore(mockContext, true, allowList);
 
     expect(result).toEqual({
-      'content-type': 'application/json',
-      'cache-control': 'max-age=3600',
+      "content-type": "application/json",
+      "cache-control": "max-age=3600",
     });
   });
 
-  it('should handle case insensitive header matching in deny list', () => {
-    const denyList = ['content-type', 'cache-control'];
+  it("should handle case insensitive header matching in deny list", () => {
+    const denyList = ["content-type", "cache-control"];
 
     const result = getHeadersToStore(mockContext, true, [], denyList);
 
     expect(result).toEqual({
-      'content-length': '1234',
-      'x-custom-header': 'custom-value',
-      authorization: 'Bearer token',
-      'set-cookie': 'session=abc123',
+      "content-length": "1234",
+      "x-custom-header": "custom-value",
+      authorization: "Bearer token",
+      "set-cookie": "session=abc123",
     });
   });
 
-  it('should handle context with no response headers', () => {
+  it("should handle context with no response headers", () => {
     const contextWithoutHeaders = {
       response: {
         headers: {},
@@ -143,42 +143,42 @@ describe('getHeadersToStore', () => {
     expect(result).toEqual({});
   });
 
-  it('should handle undefined allow list', () => {
+  it("should handle undefined allow list", () => {
     const result = getHeadersToStore(mockContext, true, undefined, []);
 
     expect(result).toEqual(mockContext.response.headers);
   });
 
-  it('should handle undefined deny list', () => {
+  it("should handle undefined deny list", () => {
     const result = getHeadersToStore(mockContext, true, [], undefined);
 
     expect(result).toEqual(mockContext.response.headers);
   });
 });
 
-describe('getHeadersForUncompressedBody', () => {
-  it('removes headers tied to the encoded representation', () => {
+describe("getHeadersForUncompressedBody", () => {
+  it("removes headers tied to the encoded representation", () => {
     expect(
       getHeadersForUncompressedBody({
-        'content-type': 'application/json',
-        'content-encoding': 'gzip',
-        'content-length': '123',
+        "content-type": "application/json",
+        "content-encoding": "gzip",
+        "content-length": "123",
         etag: '"compressed"',
-        digest: 'sha-256=:encoded:',
-        vary: 'Accept-Encoding',
-      })
+        digest: "sha-256=:encoded:",
+        vary: "Accept-Encoding",
+      }),
     ).toEqual({
-      'content-type': 'application/json',
-      vary: 'Accept-Encoding',
+      "content-type": "application/json",
+      vary: "Accept-Encoding",
     });
   });
 
-  it('preserves a disabled header cache', () => {
+  it("preserves a disabled header cache", () => {
     expect(getHeadersForUncompressedBody(null)).toBeNull();
   });
 });
 
-describe('getCacheHeaderConfig', () => {
+describe("getCacheHeaderConfig", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -192,18 +192,18 @@ describe('getCacheHeaderConfig', () => {
     vi.clearAllMocks();
   });
 
-  it('should return correct config structure', () => {
+  it("should return correct config structure", () => {
     const mockConfig = mockStrapi.plugin().config;
 
     mockConfig.mockImplementation((key: string) => {
       switch (key) {
-        case 'cacheHeaders':
+        case "cacheHeaders":
           return true;
-        case 'cacheHeadersDenyList':
-          return ['authorization', 'set-cookie'];
-        case 'cacheHeadersAllowList':
-          return ['content-type', 'cache-control'];
-        case 'cacheAuthorizedRequests':
+        case "cacheHeadersDenyList":
+          return ["authorization", "set-cookie"];
+        case "cacheHeadersAllowList":
+          return ["content-type", "cache-control"];
+        case "cacheAuthorizedRequests":
           return false;
         default:
           return undefined;
@@ -214,13 +214,13 @@ describe('getCacheHeaderConfig', () => {
 
     expect(result).toEqual({
       cacheHeaders: true,
-      cacheHeadersDenyList: ['authorization', 'set-cookie'],
-      cacheHeadersAllowList: ['content-type', 'cache-control'],
+      cacheHeadersDenyList: ["authorization", "set-cookie"],
+      cacheHeadersAllowList: ["content-type", "cache-control"],
       cacheAuthorizedRequests: false,
     });
   });
 
-  it('should handle false cacheHeaders', () => {
+  it("should handle false cacheHeaders", () => {
     const mockConfig = mockStrapi.plugin().config;
     mockConfig.mockReturnValue(false);
 
@@ -229,18 +229,18 @@ describe('getCacheHeaderConfig', () => {
     expect(result.cacheHeaders).toBe(false);
   });
 
-  it('should handle empty arrays for lists', () => {
+  it("should handle empty arrays for lists", () => {
     const mockConfig = mockStrapi.plugin().config;
 
     mockConfig.mockImplementation((key: string) => {
       switch (key) {
-        case 'cacheHeaders':
+        case "cacheHeaders":
           return true;
-        case 'cacheHeadersDenyList':
+        case "cacheHeadersDenyList":
           return [];
-        case 'cacheHeadersAllowList':
+        case "cacheHeadersAllowList":
           return [];
-        case 'cacheAuthorizedRequests':
+        case "cacheAuthorizedRequests":
           return true;
         default:
           return undefined;
@@ -257,20 +257,20 @@ describe('getCacheHeaderConfig', () => {
     });
   });
 
-  it('should call strapi.plugin with correct plugin name', () => {
+  it("should call strapi.plugin with correct plugin name", () => {
     getCacheHeaderConfig();
 
-    expect(mockStrapi.plugin).toHaveBeenCalledWith('strapi-cache');
+    expect(mockStrapi.plugin).toHaveBeenCalledWith("strapi-cache");
   });
 
-  it('should call config method for all required keys', () => {
+  it("should call config method for all required keys", () => {
     const mockConfig = mockStrapi.plugin().config;
 
     getCacheHeaderConfig();
 
-    expect(mockConfig).toHaveBeenCalledWith('cacheHeaders');
-    expect(mockConfig).toHaveBeenCalledWith('cacheHeadersDenyList');
-    expect(mockConfig).toHaveBeenCalledWith('cacheHeadersAllowList');
-    expect(mockConfig).toHaveBeenCalledWith('cacheAuthorizedRequests');
+    expect(mockConfig).toHaveBeenCalledWith("cacheHeaders");
+    expect(mockConfig).toHaveBeenCalledWith("cacheHeadersDenyList");
+    expect(mockConfig).toHaveBeenCalledWith("cacheHeadersAllowList");
+    expect(mockConfig).toHaveBeenCalledWith("cacheAuthorizedRequests");
   });
 });

@@ -1,9 +1,9 @@
-import type { Core } from '@strapi/strapi';
-import { Redis, Cluster, ClusterNode, ClusterOptions } from 'ioredis';
-import { deserialize, serialize } from 'node:v8';
-import { withTimeout } from '../../utils/withTimeout';
-import { CacheProvider } from '../../types/cache.types';
-import { loggy } from '../../utils/log';
+import type { Core } from "@strapi/strapi";
+import { Redis, Cluster, ClusterNode, ClusterOptions } from "ioredis";
+import { deserialize, serialize } from "node:v8";
+import { withTimeout } from "../../utils/withTimeout";
+import { CacheProvider } from "../../types/cache.types";
+import { loggy } from "../../utils/log";
 
 const deserializeCacheEntry = (data: Buffer): any => {
   try {
@@ -11,7 +11,7 @@ const deserializeCacheEntry = (data: Buffer): any => {
   } catch {
     // Entries written by released versions are JSON strings. Keep reading them in
     // place so upgrading does not require new keys or an eager cache migration.
-    return JSON.parse(data.toString('utf8'));
+    return JSON.parse(data.toString("utf8"));
   }
 };
 
@@ -26,30 +26,31 @@ export class RedisCacheProvider implements CacheProvider {
 
   init(): void {
     if (this.initialized) {
-      loggy.error('Redis provider already initialized');
+      loggy.error("Redis provider already initialized");
       return;
     }
     try {
-      const provider = this.strapi.plugin('strapi-cache').config('provider') || 'redis';
+      const provider = this.strapi.plugin("strapi-cache").config("provider") || "redis";
       const redisConfig =
-        this.strapi.plugin('strapi-cache').config('redisConfig') || 'redis://localhost:6379';
+        this.strapi.plugin("strapi-cache").config("redisConfig") || "redis://localhost:6379";
       const redisClusterNodes: ClusterNode[] = this.strapi
-        .plugin('strapi-cache')
-        .config('redisClusterNodes');
+        .plugin("strapi-cache")
+        .config("redisClusterNodes");
       this.cacheGetTimeoutInMs = Number(
-        this.strapi.plugin('strapi-cache').config('cacheGetTimeoutInMs')
+        this.strapi.plugin("strapi-cache").config("cacheGetTimeoutInMs"),
       );
       this.keyPrefix =
-        (this.strapi.plugin('strapi-cache').config('redisConfig')?.['keyPrefix'] as
-          string | undefined) ?? '';
+        (this.strapi.plugin("strapi-cache").config("redisConfig")?.["keyPrefix"] as
+          | string
+          | undefined) ?? "";
       this.redisScanDeleteCount = Number(
-        this.strapi.plugin('strapi-cache').config('redisScanDeleteCount')
+        this.strapi.plugin("strapi-cache").config("redisScanDeleteCount"),
       );
       if (redisClusterNodes.length) {
         const redisClusterOptions: ClusterOptions = this.strapi
-          .plugin('strapi-cache')
-          .config('redisClusterOptions');
-        if (!redisClusterOptions['redisOptions']) {
+          .plugin("strapi-cache")
+          .config("redisClusterOptions");
+        if (!redisClusterOptions["redisOptions"]) {
           redisClusterOptions.redisOptions = redisConfig;
         }
         this.client = new Redis.Cluster(redisClusterNodes, redisClusterOptions);
@@ -58,7 +59,7 @@ export class RedisCacheProvider implements CacheProvider {
       }
       this.initialized = true;
 
-      loggy.info(`${provider === 'valkey' ? 'Valkey' : 'Redis'} provider initialized`);
+      loggy.info(`${provider === "valkey" ? "Valkey" : "Redis"} provider initialized`);
     } catch (error) {
       loggy.error(error);
     }
@@ -66,7 +67,7 @@ export class RedisCacheProvider implements CacheProvider {
 
   get ready(): boolean {
     if (!this.initialized) {
-      loggy.info('Redis provider not initialized');
+      loggy.info("Redis provider not initialized");
       return false;
     }
 
@@ -91,10 +92,10 @@ export class RedisCacheProvider implements CacheProvider {
     if (!this.ready) return null;
 
     try {
-      const ttlInMs = Number(this.strapi.plugin('strapi-cache').config('ttl'));
+      const ttlInMs = Number(this.strapi.plugin("strapi-cache").config("ttl"));
       const serialized = serialize(val);
       if (ttlInMs > 0) {
-        await this.client.set(key, serialized, 'PX', ttlInMs);
+        await this.client.set(key, serialized, "PX", ttlInMs);
       } else {
         await this.client.set(key, serialized);
       }
@@ -189,15 +190,15 @@ export class RedisCacheProvider implements CacheProvider {
         match: `${this.keyPrefix}*`,
         count: this.redisScanDeleteCount,
       });
-      stream.on('data', (batch: string[]) => {
+      stream.on("data", (batch: string[]) => {
         stream.pause();
         this.deleteBatch(client, batch, regExps)
           .then(() => stream.resume())
           .catch(reject);
       });
 
-      stream.on('end', resolve);
-      stream.on('error', reject);
+      stream.on("end", resolve);
+      stream.on("error", reject);
     });
   }
 
@@ -209,7 +210,7 @@ export class RedisCacheProvider implements CacheProvider {
     if (this.client instanceof Redis) {
       return this.scanAndDelete(this.client, regExps);
     }
-    const nodes = this.client.nodes('master');
+    const nodes = this.client.nodes("master");
     await Promise.all(nodes.map((node) => this.scanAndDelete(node, regExps)));
   }
 }

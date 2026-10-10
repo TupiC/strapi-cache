@@ -1,5 +1,5 @@
-import { useFetchClient } from '@strapi/strapi/admin';
-import { CacheConfig } from './useCacheConfig';
+import { useFetchClient } from "@strapi/strapi/admin";
+import { CacheConfig } from "./useCacheConfig";
 
 export type CacheOperationResult = {
   success: boolean;
@@ -13,7 +13,7 @@ export const useCacheOperations = () => {
   const isCacheableRoute = (
     keyToUse?: string,
     contentTypeName?: string,
-    config?: CacheConfig
+    config?: CacheConfig,
   ): boolean => {
     if (!keyToUse || !config) {
       return false;
@@ -32,7 +32,7 @@ export const useCacheOperations = () => {
     if (!keyToUse) {
       return {
         success: false,
-        message: 'No content type found',
+        message: "No content type found",
       };
     }
 
@@ -42,9 +42,9 @@ export const useCacheOperations = () => {
         { key: keyToUse },
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       return {
@@ -67,19 +67,19 @@ export const useCacheOperations = () => {
         {},
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       return {
         success: true,
-        message: 'All cache purged successfully',
+        message: "All cache purged successfully",
       };
     } catch (error: any) {
       return {
         success: false,
-        message: 'Error purging all cache',
+        message: "Error purging all cache",
         error,
       };
     }

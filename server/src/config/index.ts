@@ -8,9 +8,9 @@ export default {
     cacheableRoutes: [],
     keyGenerator: undefined,
     cacheableEntities: undefined,
-    provider: 'memory',
+    provider: "memory",
     excludeRoutes: [],
-    redisConfig: env('REDIS_URL'),
+    redisConfig: env("REDIS_URL"),
     redisClusterNodes: [],
     redisClusterOptions: {},
     cacheHeaders: true,
@@ -27,126 +27,130 @@ export default {
     redisScanDeleteCount: 100,
   }),
   validator: (config) => {
-    if (typeof config.debug !== 'boolean') {
+    if (typeof config.debug !== "boolean") {
       throw new Error(`Invalid config: debug must be a boolean`);
     }
-    if (typeof config.max !== 'number') {
+    if (typeof config.max !== "number") {
       throw new Error(`Invalid config: max must be a number`);
     }
-    if (typeof config.ttl !== 'number') {
+    if (typeof config.ttl !== "number") {
       throw new Error(`Invalid config: ttl must be a number`);
     }
-    if (typeof config.size !== 'number') {
+    if (typeof config.size !== "number") {
       throw new Error(`Invalid config: size must be a number`);
     }
-    if (typeof config.allowStale !== 'boolean') {
+    if (typeof config.allowStale !== "boolean") {
       throw new Error(`Invalid config: allowStale must be a boolean`);
     }
     if (
       !Array.isArray(config.cacheableRoutes) ||
-      config.cacheableRoutes.some((item) => typeof item !== 'string')
+      config.cacheableRoutes.some((item) => typeof item !== "string")
     ) {
       throw new Error(`Invalid config: cacheableRoutes must be an string array`);
     }
-    if (config.keyGenerator !== undefined && typeof config.keyGenerator !== 'function') {
+    if (config.keyGenerator !== undefined && typeof config.keyGenerator !== "function") {
       throw new Error(`Invalid config: keyGenerator must be a function`);
     }
     if (
       config.cacheableEntities !== undefined &&
       (!Array.isArray(config.cacheableEntities) ||
-        config.cacheableEntities.some((item) => typeof item !== 'string'))
+        config.cacheableEntities.some((item) => typeof item !== "string"))
     ) {
       throw new Error(`Invalid config: cacheableEntities must be a string array`);
     }
     if (
       !Array.isArray(config.excludeRoutes) ||
-      config.excludeRoutes.some((item) => typeof item !== 'string')
+      config.excludeRoutes.some((item) => typeof item !== "string")
     ) {
       throw new Error(`Invalid config: excludeRoutes must be a string array`);
     }
-    if (typeof config.provider !== 'string') {
+    if (typeof config.provider !== "string") {
       throw new Error(`Invalid config: provider must be a string`);
     }
-    if (config.provider !== 'memory' && config.provider !== 'redis' && config.provider !== 'valkey') {
+    if (
+      config.provider !== "memory" &&
+      config.provider !== "redis" &&
+      config.provider !== "valkey"
+    ) {
       throw new Error(`Invalid config: provider must be 'memory', 'redis' or 'valkey'`);
     }
-    if (config.provider === 'redis' || config.provider === 'valkey') {
+    if (config.provider === "redis" || config.provider === "valkey") {
       if (!config.redisConfig) {
         throw new Error(
-          `Invalid config: redisConfig must be set when using redis or valkey provider`
+          `Invalid config: redisConfig must be set when using redis or valkey provider`,
         );
       }
-      if (typeof config.redisConfig !== 'string' && typeof config.redisConfig !== 'object') {
+      if (typeof config.redisConfig !== "string" && typeof config.redisConfig !== "object") {
         throw new Error(
-          `Invalid config: redisConfig must be a string or object when using redis or valkey provider`
+          `Invalid config: redisConfig must be a string or object when using redis or valkey provider`,
         );
       }
       if (
         !Array.isArray(config.redisClusterNodes) ||
-        config.redisClusterNodes.some((item) => !('host' in item && 'port' in item))
+        config.redisClusterNodes.some((item) => !("host" in item && "port" in item))
       ) {
         throw new Error(
-          `Invalid config: redisClusterNodes must be as a list of objects with keys 'host' and 'port'`
+          `Invalid config: redisClusterNodes must be as a list of objects with keys 'host' and 'port'`,
         );
       }
-      if (typeof config.redisClusterOptions !== 'object') {
+      if (typeof config.redisClusterOptions !== "object") {
         throw new Error(`Invalid config: redisClusterOptions must be an object`);
       }
     }
-    if (typeof config.cacheHeaders !== 'boolean') {
+    if (typeof config.cacheHeaders !== "boolean") {
       throw new Error(`Invalid config: cacheHeaders must be a boolean`);
     }
     if (
       !Array.isArray(config.cacheHeadersDenyList) ||
-      config.cacheHeadersDenyList.some((item) => typeof item !== 'string')
+      config.cacheHeadersDenyList.some((item) => typeof item !== "string")
     ) {
       throw new Error(`Invalid config: cacheHeadersDenyList must be an string array`);
     }
     if (
       !Array.isArray(config.cacheHeadersAllowList) ||
-      config.cacheHeadersAllowList.some((item) => typeof item !== 'string')
+      config.cacheHeadersAllowList.some((item) => typeof item !== "string")
     ) {
       throw new Error(`Invalid config: cacheHeadersAllowList must be an string array`);
     }
-    if (typeof config.cacheAuthorizedRequests !== 'boolean') {
+    if (typeof config.cacheAuthorizedRequests !== "boolean") {
       throw new Error(`Invalid config: cacheAuthorizedRequests must be a boolean`);
     }
-    if (typeof config.cacheGetTimeoutInMs !== 'number') {
+    if (typeof config.cacheGetTimeoutInMs !== "number") {
       throw new Error(`Invalid config: cacheGetTimeoutInMs must be a number`);
     }
-    if (typeof config.autoPurgeCache !== 'boolean') {
+    if (typeof config.autoPurgeCache !== "boolean") {
       throw new Error(`Invalid config: autoPurgeCache must be a boolean`);
     }
-    if (typeof config.autoPurgeGraphQL !== 'boolean') {
+    if (typeof config.autoPurgeGraphQL !== "boolean") {
       throw new Error(`Invalid config: autoPurgeGraphQL must be a boolean`);
     }
     if (
       config.graphqlDependencies !== undefined &&
       (config.graphqlDependencies === null ||
-        typeof config.graphqlDependencies !== 'object' ||
+        typeof config.graphqlDependencies !== "object" ||
         Array.isArray(config.graphqlDependencies) ||
         Object.values(config.graphqlDependencies).some(
-          (uids) => !Array.isArray(uids) || uids.some((uid) => typeof uid !== 'string')
+          (uids) => !Array.isArray(uids) || uids.some((uid) => typeof uid !== "string"),
         ))
     ) {
       throw new Error(
-        `Invalid config: graphqlDependencies must map root field names to string arrays`
+        `Invalid config: graphqlDependencies must map root field names to string arrays`,
       );
     }
-    if (typeof config.autoPurgeCacheOnStart !== 'boolean') {
+    if (typeof config.autoPurgeCacheOnStart !== "boolean") {
       throw new Error(`Invalid config: autoPurgeCacheOnStart must be a boolean`);
     }
-    if (typeof config.disableAdminPopups !== 'boolean') {
+    if (typeof config.disableAdminPopups !== "boolean") {
       throw new Error(`Invalid config: disableAdminPopups must be a boolean`);
     }
     if (
-      typeof config.disableAdminButtons !== 'boolean' &&
+      typeof config.disableAdminButtons !== "boolean" &&
       (!Array.isArray(config.disableAdminButtons) ||
-        config.disableAdminButtons.some((item) => typeof item !== 'string'))
+        config.disableAdminButtons.some((item) => typeof item !== "string"))
     ) {
       throw new Error(`Invalid config: disableAdminButtons must be a boolean or string array`);
     }
-    if (typeof config.redisScanDeleteCount !== 'number') {
+    if (typeof config.redisScanDeleteCount !== "number") {
       throw new Error(`Invalid config: redisScanDeleteCount must be a number`);
     }
   },

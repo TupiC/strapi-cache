@@ -1,1 +1,1 @@
-export const PLUGIN_ID = 'strapi-cache';
+export const PLUGIN_ID = "strapi-cache";

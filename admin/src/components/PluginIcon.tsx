@@ -1,4 +1,4 @@
-import { Database } from '@strapi/icons';
+import { Database } from "@strapi/icons";
 
 const PluginIcon = () => <Database />;
 

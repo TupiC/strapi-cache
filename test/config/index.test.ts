@@ -1,11 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
-import config from '../../server/src/config/index';
+import { describe, it, expect, vi } from "vitest";
+import config from "../../server/src/config/index";
 
-describe('config', () => {
-  describe('default', () => {
-    it('should return default configuration with env function', () => {
+describe("config", () => {
+  describe("default", () => {
+    it("should return default configuration with env function", () => {
       const mockEnv = vi.fn((key: string) => {
-        if (key === 'REDIS_URL') return 'redis://localhost:6379';
+        if (key === "REDIS_URL") return "redis://localhost:6379";
         return undefined;
       });
 
@@ -20,9 +20,9 @@ describe('config', () => {
         cacheableRoutes: [],
         keyGenerator: undefined,
         cacheableEntities: undefined,
-        provider: 'memory',
+        provider: "memory",
         excludeRoutes: [],
-        redisConfig: 'redis://localhost:6379',
+        redisConfig: "redis://localhost:6379",
         redisClusterNodes: [],
         redisClusterOptions: {},
         cacheHeaders: true,
@@ -40,7 +40,7 @@ describe('config', () => {
       });
     });
 
-    it('should handle undefined REDIS_URL', () => {
+    it("should handle undefined REDIS_URL", () => {
       const mockEnv = vi.fn(() => undefined);
 
       const result = config.default({ env: mockEnv });
@@ -49,7 +49,7 @@ describe('config', () => {
     });
   });
 
-  describe('validator', () => {
+  describe("validator", () => {
     const validConfig = {
       debug: false,
       max: 1000,
@@ -59,7 +59,7 @@ describe('config', () => {
       cacheableRoutes: [],
       keyGenerator: undefined,
       cacheableEntities: undefined,
-      provider: 'memory',
+      provider: "memory",
       excludeRoutes: [],
       redisConfig: undefined,
       redisClusterNodes: [],
@@ -78,407 +78,409 @@ describe('config', () => {
       redisScanDeleteCount: 100,
     };
 
-    it('should not throw for valid configuration', () => {
+    it("should not throw for valid configuration", () => {
       expect(() => config.validator(validConfig)).not.toThrow();
     });
 
-    describe('debug validation', () => {
-      it('should throw for non-boolean debug', () => {
-        const invalidConfig = { ...validConfig, debug: 'true' };
+    describe("debug validation", () => {
+      it("should throw for non-boolean debug", () => {
+        const invalidConfig = { ...validConfig, debug: "true" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: debug must be a boolean'
+          "Invalid config: debug must be a boolean",
         );
       });
     });
 
-    describe('max validation', () => {
-      it('should throw for non-number max', () => {
-        const invalidConfig = { ...validConfig, max: '1000' };
+    describe("max validation", () => {
+      it("should throw for non-number max", () => {
+        const invalidConfig = { ...validConfig, max: "1000" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: max must be a number'
+          "Invalid config: max must be a number",
         );
       });
     });
 
-    describe('ttl validation', () => {
-      it('should throw for non-number ttl', () => {
-        const invalidConfig = { ...validConfig, ttl: '3600000' };
+    describe("ttl validation", () => {
+      it("should throw for non-number ttl", () => {
+        const invalidConfig = { ...validConfig, ttl: "3600000" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: ttl must be a number'
+          "Invalid config: ttl must be a number",
         );
       });
     });
 
-    describe('size validation', () => {
-      it('should throw for non-number size', () => {
-        const invalidConfig = { ...validConfig, size: '10485760' };
+    describe("size validation", () => {
+      it("should throw for non-number size", () => {
+        const invalidConfig = { ...validConfig, size: "10485760" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: size must be a number'
+          "Invalid config: size must be a number",
         );
       });
     });
 
-    describe('allowStale validation', () => {
-      it('should throw for non-boolean allowStale', () => {
-        const invalidConfig = { ...validConfig, allowStale: 'false' };
+    describe("allowStale validation", () => {
+      it("should throw for non-boolean allowStale", () => {
+        const invalidConfig = { ...validConfig, allowStale: "false" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: allowStale must be a boolean'
+          "Invalid config: allowStale must be a boolean",
         );
       });
     });
 
-    describe('cacheableRoutes validation', () => {
-      it('should throw for non-array cacheableRoutes', () => {
-        const invalidConfig = { ...validConfig, cacheableRoutes: 'invalid' };
+    describe("cacheableRoutes validation", () => {
+      it("should throw for non-array cacheableRoutes", () => {
+        const invalidConfig = { ...validConfig, cacheableRoutes: "invalid" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheableRoutes must be an string array'
+          "Invalid config: cacheableRoutes must be an string array",
         );
       });
 
-      it('should throw for array with non-string elements', () => {
-        const invalidConfig = { ...validConfig, cacheableRoutes: ['/api', 123] };
+      it("should throw for array with non-string elements", () => {
+        const invalidConfig = { ...validConfig, cacheableRoutes: ["/api", 123] };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheableRoutes must be an string array'
+          "Invalid config: cacheableRoutes must be an string array",
         );
       });
     });
 
-    describe('keyGenerator validation', () => {
-      it('should not throw when keyGenerator is undefined', () => {
+    describe("keyGenerator validation", () => {
+      it("should not throw when keyGenerator is undefined", () => {
         const configWithUndefined = { ...validConfig, keyGenerator: undefined };
         expect(() => config.validator(configWithUndefined)).not.toThrow();
       });
 
-      it('should not throw for valid keyGenerator function', () => {
+      it("should not throw for valid keyGenerator function", () => {
         const configWithFunction = {
           ...validConfig,
-          keyGenerator: () => 'custom-key',
+          keyGenerator: () => "custom-key",
         };
         expect(() => config.validator(configWithFunction)).not.toThrow();
       });
 
-      it('should throw for non-function keyGenerator', () => {
-        const invalidConfig = { ...validConfig, keyGenerator: 'invalid' };
+      it("should throw for non-function keyGenerator", () => {
+        const invalidConfig = { ...validConfig, keyGenerator: "invalid" };
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: keyGenerator must be a function'
+          "Invalid config: keyGenerator must be a function",
         );
       });
     });
 
-    describe('cacheableEntities validation', () => {
-      it('should not throw when cacheableEntities is undefined', () => {
+    describe("cacheableEntities validation", () => {
+      it("should not throw when cacheableEntities is undefined", () => {
         const configWithUndefined = { ...validConfig, cacheableEntities: undefined };
         expect(() => config.validator(configWithUndefined)).not.toThrow();
       });
 
-      it('should not throw for valid cacheableEntities array', () => {
-        const configWithEntities = { ...validConfig, cacheableEntities: ['articles', 'users'] };
+      it("should not throw for valid cacheableEntities array", () => {
+        const configWithEntities = { ...validConfig, cacheableEntities: ["articles", "users"] };
         expect(() => config.validator(configWithEntities)).not.toThrow();
       });
 
-      it('should throw for non-array cacheableEntities', () => {
-        const invalidConfig = { ...validConfig, cacheableEntities: 'invalid' };
+      it("should throw for non-array cacheableEntities", () => {
+        const invalidConfig = { ...validConfig, cacheableEntities: "invalid" };
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheableEntities must be a string array'
+          "Invalid config: cacheableEntities must be a string array",
         );
       });
 
-      it('should throw for array with non-string elements', () => {
-        const invalidConfig = { ...validConfig, cacheableEntities: ['articles', 123] };
+      it("should throw for array with non-string elements", () => {
+        const invalidConfig = { ...validConfig, cacheableEntities: ["articles", 123] };
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheableEntities must be a string array'
-        );
-      });
-    });
-
-    describe('excludeRoutes validation', () => {
-      it('should throw for non-array excludeRoutes', () => {
-        const invalidConfig = { ...validConfig, excludeRoutes: 'invalid' };
-
-        expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: excludeRoutes must be a string array'
-        );
-      });
-
-      it('should throw for array with non-string elements', () => {
-        const invalidConfig = { ...validConfig, excludeRoutes: ['/admin', true] };
-
-        expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: excludeRoutes must be a string array'
+          "Invalid config: cacheableEntities must be a string array",
         );
       });
     });
 
-    describe('provider validation', () => {
-      it('should throw for non-string provider', () => {
+    describe("excludeRoutes validation", () => {
+      it("should throw for non-array excludeRoutes", () => {
+        const invalidConfig = { ...validConfig, excludeRoutes: "invalid" };
+
+        expect(() => config.validator(invalidConfig)).toThrow(
+          "Invalid config: excludeRoutes must be a string array",
+        );
+      });
+
+      it("should throw for array with non-string elements", () => {
+        const invalidConfig = { ...validConfig, excludeRoutes: ["/admin", true] };
+
+        expect(() => config.validator(invalidConfig)).toThrow(
+          "Invalid config: excludeRoutes must be a string array",
+        );
+      });
+    });
+
+    describe("provider validation", () => {
+      it("should throw for non-string provider", () => {
         const invalidConfig = { ...validConfig, provider: 123 };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: provider must be a string'
+          "Invalid config: provider must be a string",
         );
       });
 
-      it('should throw for invalid provider value', () => {
-        const invalidConfig = { ...validConfig, provider: 'invalid' };
+      it("should throw for invalid provider value", () => {
+        const invalidConfig = { ...validConfig, provider: "invalid" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          "Invalid config: provider must be 'memory', 'redis' or 'valkey'"
+          "Invalid config: provider must be 'memory', 'redis' or 'valkey'",
         );
       });
     });
 
-    describe('redis provider validation', () => {
+    describe("redis provider validation", () => {
       const redisConfig = {
         ...validConfig,
-        provider: 'redis' as const,
-        redisConfig: 'redis://localhost:6379',
+        provider: "redis" as const,
+        redisConfig: "redis://localhost:6379",
       };
 
-      it('should accept valid redis configuration', () => {
+      it("should accept valid redis configuration", () => {
         expect(() => config.validator(redisConfig)).not.toThrow();
       });
 
-      it('should accept valid valkey configuration', () => {
+      it("should accept valid valkey configuration", () => {
         const valkeyConfig = {
           ...validConfig,
-          provider: 'valkey' as const,
-          redisConfig: 'redis://localhost:6379',
+          provider: "valkey" as const,
+          redisConfig: "redis://localhost:6379",
         };
         expect(() => config.validator(valkeyConfig)).not.toThrow();
       });
 
-      it('should throw when redisConfig is not set', () => {
+      it("should throw when redisConfig is not set", () => {
         const invalidConfig = { ...redisConfig, redisConfig: undefined };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: redisConfig must be set when using redis or valkey provider'
+          "Invalid config: redisConfig must be set when using redis or valkey provider",
         );
       });
 
-      it('should throw for invalid redisConfig type', () => {
+      it("should throw for invalid redisConfig type", () => {
         const invalidConfig = { ...redisConfig, redisConfig: 123 };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: redisConfig must be a string or object when using redis or valkey provider'
+          "Invalid config: redisConfig must be a string or object when using redis or valkey provider",
         );
       });
 
-      it('should accept object redisConfig', () => {
+      it("should accept object redisConfig", () => {
         const validRedisConfig = {
           ...redisConfig,
-          redisConfig: { host: 'localhost', port: 6379 },
+          redisConfig: { host: "localhost", port: 6379 },
         };
 
         expect(() => config.validator(validRedisConfig)).not.toThrow();
       });
 
-      it('should throw for invalid redisClusterNodes', () => {
-        const invalidConfig = { ...redisConfig, redisClusterNodes: 'invalid' };
+      it("should throw for invalid redisClusterNodes", () => {
+        const invalidConfig = { ...redisConfig, redisClusterNodes: "invalid" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          "Invalid config: redisClusterNodes must be as a list of objects with keys 'host' and 'port'"
+          "Invalid config: redisClusterNodes must be as a list of objects with keys 'host' and 'port'",
         );
       });
 
-      it('should throw for redisClusterNodes with invalid objects', () => {
+      it("should throw for redisClusterNodes with invalid objects", () => {
         const invalidConfig = {
           ...redisConfig,
-          redisClusterNodes: [{ host: 'localhost' }, { port: 6379 }],
+          redisClusterNodes: [{ host: "localhost" }, { port: 6379 }],
         };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          "Invalid config: redisClusterNodes must be as a list of objects with keys 'host' and 'port'"
+          "Invalid config: redisClusterNodes must be as a list of objects with keys 'host' and 'port'",
         );
       });
 
-      it('should accept valid redisClusterNodes', () => {
+      it("should accept valid redisClusterNodes", () => {
         const validRedisConfig = {
           ...redisConfig,
           redisClusterNodes: [
-            { host: 'localhost', port: 6379 },
-            { host: 'localhost', port: 6380 },
+            { host: "localhost", port: 6379 },
+            { host: "localhost", port: 6380 },
           ],
         };
 
         expect(() => config.validator(validRedisConfig)).not.toThrow();
       });
 
-      it('should throw for invalid redisClusterOptions', () => {
-        const invalidConfig = { ...redisConfig, redisClusterOptions: 'invalid' };
+      it("should throw for invalid redisClusterOptions", () => {
+        const invalidConfig = { ...redisConfig, redisClusterOptions: "invalid" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: redisClusterOptions must be an object'
+          "Invalid config: redisClusterOptions must be an object",
         );
       });
     });
 
-    describe('cacheHeaders validation', () => {
-      it('should throw for non-boolean cacheHeaders', () => {
-        const invalidConfig = { ...validConfig, cacheHeaders: 'true' };
+    describe("cacheHeaders validation", () => {
+      it("should throw for non-boolean cacheHeaders", () => {
+        const invalidConfig = { ...validConfig, cacheHeaders: "true" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheHeaders must be a boolean'
+          "Invalid config: cacheHeaders must be a boolean",
         );
       });
     });
 
-    describe('cacheHeadersDenyList validation', () => {
-      it('should throw for non-array cacheHeadersDenyList', () => {
-        const invalidConfig = { ...validConfig, cacheHeadersDenyList: 'invalid' };
+    describe("cacheHeadersDenyList validation", () => {
+      it("should throw for non-array cacheHeadersDenyList", () => {
+        const invalidConfig = { ...validConfig, cacheHeadersDenyList: "invalid" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheHeadersDenyList must be an string array'
+          "Invalid config: cacheHeadersDenyList must be an string array",
         );
       });
 
-      it('should throw for array with non-string elements', () => {
-        const invalidConfig = { ...validConfig, cacheHeadersDenyList: ['authorization', 123] };
+      it("should throw for array with non-string elements", () => {
+        const invalidConfig = { ...validConfig, cacheHeadersDenyList: ["authorization", 123] };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheHeadersDenyList must be an string array'
-        );
-      });
-    });
-
-    describe('cacheHeadersAllowList validation', () => {
-      it('should throw for non-array cacheHeadersAllowList', () => {
-        const invalidConfig = { ...validConfig, cacheHeadersAllowList: 'invalid' };
-
-        expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheHeadersAllowList must be an string array'
-        );
-      });
-
-      it('should throw for array with non-string elements', () => {
-        const invalidConfig = { ...validConfig, cacheHeadersAllowList: ['content-type', true] };
-
-        expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheHeadersAllowList must be an string array'
+          "Invalid config: cacheHeadersDenyList must be an string array",
         );
       });
     });
 
-    describe('cacheAuthorizedRequests validation', () => {
-      it('should throw for non-boolean cacheAuthorizedRequests', () => {
-        const invalidConfig = { ...validConfig, cacheAuthorizedRequests: 'false' };
+    describe("cacheHeadersAllowList validation", () => {
+      it("should throw for non-array cacheHeadersAllowList", () => {
+        const invalidConfig = { ...validConfig, cacheHeadersAllowList: "invalid" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheAuthorizedRequests must be a boolean'
+          "Invalid config: cacheHeadersAllowList must be an string array",
+        );
+      });
+
+      it("should throw for array with non-string elements", () => {
+        const invalidConfig = { ...validConfig, cacheHeadersAllowList: ["content-type", true] };
+
+        expect(() => config.validator(invalidConfig)).toThrow(
+          "Invalid config: cacheHeadersAllowList must be an string array",
         );
       });
     });
 
-    describe('cacheGetTimeoutInMs validation', () => {
-      it('should throw for non-number cacheGetTimeoutInMs', () => {
-        const invalidConfig = { ...validConfig, cacheGetTimeoutInMs: '1000' };
+    describe("cacheAuthorizedRequests validation", () => {
+      it("should throw for non-boolean cacheAuthorizedRequests", () => {
+        const invalidConfig = { ...validConfig, cacheAuthorizedRequests: "false" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: cacheGetTimeoutInMs must be a number'
+          "Invalid config: cacheAuthorizedRequests must be a boolean",
         );
       });
     });
 
-    describe('autoPurgeCache validation', () => {
-      it('should throw for non-boolean autoPurgeCache', () => {
-        const invalidConfig = { ...validConfig, autoPurgeCache: 'true' };
+    describe("cacheGetTimeoutInMs validation", () => {
+      it("should throw for non-number cacheGetTimeoutInMs", () => {
+        const invalidConfig = { ...validConfig, cacheGetTimeoutInMs: "1000" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: autoPurgeCache must be a boolean'
+          "Invalid config: cacheGetTimeoutInMs must be a number",
         );
       });
     });
 
-    describe('autoPurgeGraphQL validation', () => {
-      it('should throw for non-boolean autoPurgeGraphQL', () => {
-        const invalidConfig = { ...validConfig, autoPurgeGraphQL: 'true' };
+    describe("autoPurgeCache validation", () => {
+      it("should throw for non-boolean autoPurgeCache", () => {
+        const invalidConfig = { ...validConfig, autoPurgeCache: "true" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: autoPurgeGraphQL must be a boolean'
+          "Invalid config: autoPurgeCache must be a boolean",
         );
       });
     });
 
-    it('validates graphqlDependencies as a mapping of root fields to content-type UID arrays', () => {
+    describe("autoPurgeGraphQL validation", () => {
+      it("should throw for non-boolean autoPurgeGraphQL", () => {
+        const invalidConfig = { ...validConfig, autoPurgeGraphQL: "true" };
+
+        expect(() => config.validator(invalidConfig)).toThrow(
+          "Invalid config: autoPurgeGraphQL must be a boolean",
+        );
+      });
+    });
+
+    it("validates graphqlDependencies as a mapping of root fields to content-type UID arrays", () => {
       expect(() =>
         config.validator({
           ...validConfig,
           graphqlDependencies: {
-            eventByUUID: ['api::event.event', 'api::event-start-date.event-start-date'],
+            eventByUUID: ["api::event.event", "api::event-start-date.event-start-date"],
           },
-        })
+        }),
       ).not.toThrow();
       expect(() =>
-        config.validator({ ...validConfig, graphqlDependencies: undefined })
+        config.validator({ ...validConfig, graphqlDependencies: undefined }),
       ).not.toThrow();
 
       for (const graphqlDependencies of [
         null,
         [],
-        'eventByUUID',
-        { eventByUUID: 'api::event.event' },
+        "eventByUUID",
+        { eventByUUID: "api::event.event" },
         { eventByUUID: [123] },
       ]) {
         expect(() => config.validator({ ...validConfig, graphqlDependencies })).toThrow(
-          'Invalid config: graphqlDependencies must map root field names to string arrays'
+          "Invalid config: graphqlDependencies must map root field names to string arrays",
         );
       }
     });
 
-    describe('autoPurgeCacheOnStart validation', () => {
-      it('should throw for non-boolean autoPurgeCacheOnStart', () => {
-        const invalidConfig = { ...validConfig, autoPurgeCacheOnStart: 'true' };
+    describe("autoPurgeCacheOnStart validation", () => {
+      it("should throw for non-boolean autoPurgeCacheOnStart", () => {
+        const invalidConfig = { ...validConfig, autoPurgeCacheOnStart: "true" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: autoPurgeCacheOnStart must be a boolean'
+          "Invalid config: autoPurgeCacheOnStart must be a boolean",
         );
       });
     });
 
-    describe('disableAdminPopups validation', () => {
-      it('should throw for non-boolean disableAdminPopups', () => {
-        const invalidConfig = { ...validConfig, disableAdminPopups: 'false' };
+    describe("disableAdminPopups validation", () => {
+      it("should throw for non-boolean disableAdminPopups", () => {
+        const invalidConfig = { ...validConfig, disableAdminPopups: "false" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: disableAdminPopups must be a boolean'
+          "Invalid config: disableAdminPopups must be a boolean",
         );
       });
     });
 
-    describe('disableAdminButtons validation', () => {
-      it('should not throw for boolean disableAdminButtons', () => {
+    describe("disableAdminButtons validation", () => {
+      it("should not throw for boolean disableAdminButtons", () => {
         expect(() => config.validator({ ...validConfig, disableAdminButtons: true })).not.toThrow();
-        expect(() => config.validator({ ...validConfig, disableAdminButtons: false })).not.toThrow();
-      });
-
-      it('should not throw for string array disableAdminButtons', () => {
         expect(() =>
-          config.validator({ ...validConfig, disableAdminButtons: ['/api/products', '/api/tags'] })
+          config.validator({ ...validConfig, disableAdminButtons: false }),
         ).not.toThrow();
       });
 
-      it('should throw for invalid disableAdminButtons values', () => {
-        expect(() => config.validator({ ...validConfig, disableAdminButtons: 'true' })).toThrow(
-          'Invalid config: disableAdminButtons must be a boolean or string array'
+      it("should not throw for string array disableAdminButtons", () => {
+        expect(() =>
+          config.validator({ ...validConfig, disableAdminButtons: ["/api/products", "/api/tags"] }),
+        ).not.toThrow();
+      });
+
+      it("should throw for invalid disableAdminButtons values", () => {
+        expect(() => config.validator({ ...validConfig, disableAdminButtons: "true" })).toThrow(
+          "Invalid config: disableAdminButtons must be a boolean or string array",
         );
         expect(() =>
-          config.validator({ ...validConfig, disableAdminButtons: ['/api/products', 123] })
-        ).toThrow('Invalid config: disableAdminButtons must be a boolean or string array');
+          config.validator({ ...validConfig, disableAdminButtons: ["/api/products", 123] }),
+        ).toThrow("Invalid config: disableAdminButtons must be a boolean or string array");
       });
     });
 
-    describe('redisScanDeleteCount validation', () => {
-      it('should throw for non-number redisScanDeleteCount', () => {
-        const invalidConfig = { ...validConfig, redisScanDeleteCount: '100' };
+    describe("redisScanDeleteCount validation", () => {
+      it("should throw for non-number redisScanDeleteCount", () => {
+        const invalidConfig = { ...validConfig, redisScanDeleteCount: "100" };
 
         expect(() => config.validator(invalidConfig)).toThrow(
-          'Invalid config: redisScanDeleteCount must be a number'
+          "Invalid config: redisScanDeleteCount must be a number",
         );
       });
     });

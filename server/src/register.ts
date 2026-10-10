@@ -1,5 +1,5 @@
-import type { Core } from '@strapi/strapi';
-import middlewares from './middlewares';
+import type { Core } from "@strapi/strapi";
+import middlewares from "./middlewares";
 
 const register = ({ strapi }: { strapi: Core.Strapi }) => {
   strapi.server.use(middlewares.cache);

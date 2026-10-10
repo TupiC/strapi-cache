@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Context } from 'koa';
-import { Readable } from 'stream';
-import { gzipSync } from 'zlib';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Context } from "koa";
+import { Readable } from "stream";
+import { gzipSync } from "zlib";
 
 const { rawBodyMock } = vi.hoisted(() => ({ rawBodyMock: vi.fn() }));
 
-vi.mock('raw-body', () => ({ default: rawBodyMock }));
+vi.mock("raw-body", () => ({ default: rawBodyMock }));
 
-import graphqlMiddleware from '../../server/src/middlewares/graphql';
+import graphqlMiddleware from "../../server/src/middlewares/graphql";
 
-describe('graphql middleware', () => {
+describe("graphql middleware", () => {
   const mockCacheStore = {
     get: vi.fn(),
     set: vi.fn(),
@@ -20,15 +20,15 @@ describe('graphql middleware', () => {
   let cacheAuthorizedRequests = false;
   const pluginConfig = vi.fn((key: string) => {
     switch (key) {
-      case 'keyGenerator':
+      case "keyGenerator":
         return keyGenerator;
-      case 'cacheHeaders':
+      case "cacheHeaders":
         return false;
-      case 'cacheHeadersDenyList':
+      case "cacheHeadersDenyList":
         return [];
-      case 'cacheHeadersAllowList':
+      case "cacheHeadersAllowList":
         return [];
-      case 'cacheAuthorizedRequests':
+      case "cacheAuthorizedRequests":
         return cacheAuthorizedRequests;
       default:
         return undefined;
@@ -37,7 +37,7 @@ describe('graphql middleware', () => {
 
   const mockStrapi = {
     plugin: vi.fn((pluginName: string) => {
-      if (pluginName === 'strapi-cache') {
+      if (pluginName === "strapi-cache") {
         return {
           services: {
             service: {
@@ -47,16 +47,16 @@ describe('graphql middleware', () => {
           config: pluginConfig,
         };
       }
-      if (pluginName === 'graphql') {
+      if (pluginName === "graphql") {
         return {
-          config: vi.fn().mockReturnValue('/graphql'),
+          config: vi.fn().mockReturnValue("/graphql"),
         };
       }
       return undefined;
     }),
     config: {
       get: vi.fn((key: string, defaultValue?: unknown) => {
-        if (key === 'middlewares') {
+        if (key === "middlewares") {
           return [];
         }
         return defaultValue;
@@ -64,7 +64,7 @@ describe('graphql middleware', () => {
     },
   };
 
-  vi.stubGlobal('strapi', mockStrapi);
+  vi.stubGlobal("strapi", mockStrapi);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -79,14 +79,14 @@ describe('graphql middleware', () => {
     vi.clearAllMocks();
   });
 
-  it('bypasses unsupported methods before reading the body or cache', async () => {
+  it("bypasses unsupported methods before reading the body or cache", async () => {
     const ctx = {
       request: {
-        url: '/graphql',
-        method: 'PUT',
+        url: "/graphql",
+        method: "PUT",
         headers: {},
       },
-      method: 'PUT',
+      method: "PUT",
       req: {},
     } as unknown as Context;
     const next = vi.fn();
@@ -99,14 +99,14 @@ describe('graphql middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('bypasses authorized requests before reading the body or cache', async () => {
+  it("bypasses authorized requests before reading the body or cache", async () => {
     const ctx = {
       request: {
-        url: '/graphql',
-        method: 'POST',
-        headers: { authorization: 'Bearer token' },
+        url: "/graphql",
+        method: "POST",
+        headers: { authorization: "Bearer token" },
       },
-      method: 'POST',
+      method: "POST",
       req: {},
     } as unknown as Context;
     const next = vi.fn();
@@ -119,24 +119,24 @@ describe('graphql middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('still reads authorized POST requests when configured to cache them', async () => {
+  it("still reads authorized POST requests when configured to cache them", async () => {
     cacheAuthorizedRequests = true;
     const originalReq = {
       headers: {},
-      method: 'POST',
-      url: '/graphql',
-      httpVersion: '1.1',
+      method: "POST",
+      url: "/graphql",
+      httpVersion: "1.1",
       socket: {},
       connection: {},
     };
-    rawBodyMock.mockResolvedValue(Buffer.from('{ articles { id } }'));
+    rawBodyMock.mockResolvedValue(Buffer.from("{ articles { id } }"));
     const ctx = {
       request: {
-        url: '/graphql',
-        method: 'POST',
-        headers: { authorization: 'Bearer token' },
+        url: "/graphql",
+        method: "POST",
+        headers: { authorization: "Bearer token" },
       },
-      method: 'POST',
+      method: "POST",
       req: originalReq,
       response: { headers: {} },
       set: vi.fn(),
@@ -152,14 +152,14 @@ describe('graphql middleware', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('bypasses no-cache requests before reading the body or cache', async () => {
+  it("bypasses no-cache requests before reading the body or cache", async () => {
     const ctx = {
       request: {
-        url: '/graphql',
-        method: 'POST',
-        headers: { 'cache-control': 'no-cache' },
+        url: "/graphql",
+        method: "POST",
+        headers: { "cache-control": "no-cache" },
       },
-      method: 'POST',
+      method: "POST",
       req: {},
     } as unknown as Context;
     const next = vi.fn();
@@ -172,17 +172,17 @@ describe('graphql middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('uses configured keyGenerator for GraphQL cache lookup', async () => {
+  it("uses configured keyGenerator for GraphQL cache lookup", async () => {
     const ctx = {
       request: {
-        url: '/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D',
-        method: 'GET',
+        url: "/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D",
+        method: "GET",
         query: {
-          query: '{ articles { data { id } } }',
+          query: "{ articles { data { id } } }",
         },
         headers: {},
       },
-      method: 'GET',
+      method: "GET",
       response: {
         headers: {},
       },
@@ -197,27 +197,27 @@ describe('graphql middleware', () => {
 
     expect(keyGenerator).toHaveBeenCalledWith(
       ctx,
-      expect.stringMatching(/^GET:\/graphql:articles:[A-Za-z0-9_-]+$/)
+      expect.stringMatching(/^GET:\/graphql:articles:[A-Za-z0-9_-]+$/),
     );
     expect(mockCacheStore.get).toHaveBeenCalledWith(
-      'custom:GET:/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D'
+      "custom:GET:/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D",
     );
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('falls back to generated GraphQL key when keyGenerator returns non-string', async () => {
+  it("falls back to generated GraphQL key when keyGenerator returns non-string", async () => {
     keyGenerator.mockReturnValueOnce(123 as unknown as string);
 
     const ctx = {
       request: {
-        url: '/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D',
-        method: 'GET',
+        url: "/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D",
+        method: "GET",
         query: {
-          query: '{ articles { data { id } } }',
+          query: "{ articles { data { id } } }",
         },
         headers: {},
       },
-      method: 'GET',
+      method: "GET",
       response: {
         headers: {},
       },
@@ -233,19 +233,19 @@ describe('graphql middleware', () => {
     expect(mockCacheStore.get.mock.calls[0][0]).toMatch(/^GET:\/graphql:articles:[A-Za-z0-9_-]+$/);
   });
 
-  it('stores only custom GraphQL key when keyGenerator returns custom key', async () => {
+  it("stores only custom GraphQL key when keyGenerator returns custom key", async () => {
     mockCacheStore.get.mockResolvedValueOnce(null);
 
     const ctx = {
       request: {
-        url: '/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D',
-        method: 'GET',
+        url: "/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D",
+        method: "GET",
         query: {
-          query: '{ articles { data { id } } }',
+          query: "{ articles { data { id } } }",
         },
         headers: {},
       },
-      method: 'GET',
+      method: "GET",
       response: {
         headers: {},
       },
@@ -263,32 +263,32 @@ describe('graphql middleware', () => {
 
     expect(mockCacheStore.set).toHaveBeenCalledTimes(1);
     expect(mockCacheStore.set.mock.calls[0][0]).toBe(
-      'custom:GET:/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D'
+      "custom:GET:/graphql?query=%7Barticles%7Bdata%7Bid%7D%7D%7D",
     );
     expect(mockCacheStore.set.mock.calls[0][1]).toEqual({
       body: JSON.stringify({ data: { articles: { data: [] } } }),
-      bodyType: 'json',
+      bodyType: "json",
       headers: null,
     });
     expect(ctx.body).toBe(JSON.stringify({ data: { articles: { data: [] } } }));
   });
 
-  it('caches an encoded GraphQL stream as identity JSON bytes', async () => {
+  it("caches an encoded GraphQL stream as identity JSON bytes", async () => {
     mockCacheStore.get.mockResolvedValueOnce(null);
     const originalBody = Buffer.from('{"data":{"articles":[]}}');
     const compressedBody = gzipSync(originalBody);
     const ctx = {
       request: {
-        url: '/graphql?query=%7Barticles%7BdocumentId%7D%7D',
-        method: 'GET',
-        query: { query: '{ articles { documentId } }' },
+        url: "/graphql?query=%7Barticles%7BdocumentId%7D%7D",
+        method: "GET",
+        query: { query: "{ articles { documentId } }" },
         headers: {},
       },
-      method: 'GET',
+      method: "GET",
       response: {
         headers: {
-          'content-encoding': 'gzip',
-          'content-type': 'application/json; charset=utf-8',
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=utf-8",
         },
       },
       set: vi.fn(),
@@ -303,8 +303,8 @@ describe('graphql middleware', () => {
     await graphqlMiddleware(ctx, next);
 
     expect(mockCacheStore.set).toHaveBeenCalledWith(
-      'custom:GET:/graphql?query=%7Barticles%7BdocumentId%7D%7D',
-      { body: originalBody, bodyType: 'json', headers: null }
+      "custom:GET:/graphql?query=%7Barticles%7BdocumentId%7D%7D",
+      { body: originalBody, bodyType: "json", headers: null },
     );
     expect(ctx.body).toEqual(compressedBody);
   });

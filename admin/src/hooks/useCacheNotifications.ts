@@ -1,6 +1,6 @@
-import { useIntl } from 'react-intl';
-import { useNotification } from '@strapi/strapi/admin';
-import { CacheConfig } from './useCacheConfig';
+import { useIntl } from "react-intl";
+import { useNotification } from "@strapi/strapi/admin";
+import { CacheConfig } from "./useCacheConfig";
 
 export const useCacheNotifications = (config?: CacheConfig) => {
   const formatMessage = useIntl().formatMessage;
@@ -13,10 +13,10 @@ export const useCacheNotifications = (config?: CacheConfig) => {
 
     if (!isPermissionError && !config?.disableAdminPopups) {
       toggleNotification({
-        type: 'warning',
+        type: "warning",
         message: formatMessage({
-          id: 'strapi-cache.cache.routes.fetch-error',
-          defaultMessage: 'Unable to fetch cache config. Cache purge may not work correctly.',
+          id: "strapi-cache.cache.routes.fetch-error",
+          defaultMessage: "Unable to fetch cache config. Cache purge may not work correctly.",
         }),
       });
     }
@@ -25,15 +25,15 @@ export const useCacheNotifications = (config?: CacheConfig) => {
   const showPurgeSuccess = (key: string) => {
     if (!config?.disableAdminPopups) {
       toggleNotification({
-        type: 'success',
+        type: "success",
         message: formatMessage(
           {
-            id: 'strapi-cache.cache.purge.success',
-            defaultMessage: 'Cache purged successfully',
+            id: "strapi-cache.cache.purge.success",
+            defaultMessage: "Cache purged successfully",
           },
           {
             key: `"${key}"`,
-          }
+          },
         ),
       });
     }
@@ -42,15 +42,15 @@ export const useCacheNotifications = (config?: CacheConfig) => {
   const showPurgeError = (key: string) => {
     if (!config?.disableAdminPopups) {
       toggleNotification({
-        type: 'danger',
+        type: "danger",
         message: formatMessage(
           {
-            id: 'strapi-cache.cache.purge.error',
-            defaultMessage: 'Error purging cache',
+            id: "strapi-cache.cache.purge.error",
+            defaultMessage: "Error purging cache",
           },
           {
             key: `"${key}"`,
-          }
+          },
         ),
       });
     }
@@ -59,10 +59,10 @@ export const useCacheNotifications = (config?: CacheConfig) => {
   const showNoContentTypeWarning = () => {
     if (!config?.disableAdminPopups) {
       toggleNotification({
-        type: 'warning',
+        type: "warning",
         message: formatMessage({
-          id: 'strapi-cache.cache.purge.no-content-type',
-          defaultMessage: 'No content type found',
+          id: "strapi-cache.cache.purge.no-content-type",
+          defaultMessage: "No content type found",
         }),
       });
     }

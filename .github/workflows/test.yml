@@ -1,73 +1,73 @@
 name: Test
 
 on:
-    push:
-        branches: [main, dev]
-    pull_request:
-        branches: [main, dev]
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
 
 jobs:
-    unit-test:
-        runs-on: ubuntu-latest
+  unit-test:
+    runs-on: ubuntu-latest
 
-        strategy:
-            matrix:
-                node-version: [22.x]
+    strategy:
+      matrix:
+        node-version: [22.x]
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{ matrix.node-version }}
-                  cache: "npm"
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-            - name: Update npm
-              run: npm install --global --ignore-scripts npm@11.5.1
+      - name: Update npm
+        run: npm install --global --ignore-scripts npm@11.5.1
 
-            - name: Install dependencies
-              run: |
-                  npm ci --ignore-scripts
+      - name: Install dependencies
+        run: |
+          npm ci --ignore-scripts
 
-            - name: Run unit tests
-              run: npm test -- --run
+      - name: Run unit tests
+        run: npm test -- --run
 
-            - name: Build project
-              run: npm run build
+      - name: Build project
+        run: npm run build
 
-            - name: Verify project
-              run: npm run verify
+      - name: Verify project
+        run: npm run verify
 
-    integration-test:
-        runs-on: ubuntu-latest
+  integration-test:
+    runs-on: ubuntu-latest
 
-        strategy:
-            matrix:
-                node-version: [22.x]
+    strategy:
+      matrix:
+        node-version: [22.x]
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{ matrix.node-version }}
-                  cache: "npm"
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-            - name: Update npm
-              run: npm install --global --ignore-scripts npm@11.5.1
+      - name: Update npm
+        run: npm install --global --ignore-scripts npm@11.5.1
 
-            - name: Install dependencies
-              run: |
-                  npm ci --ignore-scripts
+      - name: Install dependencies
+        run: |
+          npm ci --ignore-scripts
 
-            # Install dependencies without lifecycle scripts, then rebuild only the native
-            # packages required by the root build. The playground has its own rebuild below.
-            - name: Rebuild native dependencies
-              run: npm rebuild better-sqlite3 --foreground-scripts
+      # Install dependencies without lifecycle scripts, then rebuild only the native
+      # packages required by the root build. The playground has its own rebuild below.
+      - name: Rebuild native dependencies
+        run: npm rebuild better-sqlite3 --foreground-scripts
 
-            - name: Run integration tests
-              run: npm run test:integration
+      - name: Run integration tests
+        run: npm run test:integration

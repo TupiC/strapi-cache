@@ -1,4 +1,4 @@
-import type { LRUCache } from 'lru-cache';
+import type { LRUCache } from "lru-cache";
 
 export interface CacheProvider {
   init(): void;

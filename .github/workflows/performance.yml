@@ -59,6 +59,9 @@ jobs:
             base/package-lock.json
             candidate/package-lock.json
 
+      - name: Update npm
+        run: npm install --global --ignore-scripts npm@11.5.1
+
       - name: Install baseline dependencies
         working-directory: base
         run: npm ci --ignore-scripts
@@ -72,21 +75,32 @@ jobs:
       - name: Install benchmark harness in baseline
         run: |
           mkdir -p base/benchmark
-          cp candidate/benchmark/cache.bench.ts base/benchmark/cache.bench.ts
+          cp candidate/benchmark/*.ts base/benchmark/
 
-      - name: Benchmark baseline
-        working-directory: base
-        run: ./node_modules/.bin/vitest bench benchmark --run --outputJson=benchmark-results.json
-
-      - name: Benchmark candidate
-        working-directory: candidate
-        run: ./node_modules/.bin/vitest bench benchmark --run --outputJson=benchmark-results.json
+      - name: Benchmark both revisions in alternating order
+        shell: bash
+        run: |
+          mkdir -p base/benchmark-results candidate/benchmark-results
+          for round in 1 2; do
+            if (( round % 2 == 1 )); then
+              revisions=(base candidate)
+            else
+              revisions=(candidate base)
+            fi
+            for revision in "${revisions[@]}"; do
+              echo "Round ${round}: ${revision}"
+              (
+                cd "$revision"
+                ./node_modules/.bin/vitest bench benchmark --run --outputJson="benchmark-results/round-${round}.json"
+              )
+            done
+          done
 
       - name: Generate performance table
         run: >-
           node candidate/benchmark/report.mjs
-          base/benchmark-results.json
-          candidate/benchmark-results.json
+          base/benchmark-results
+          candidate/benchmark-results
           candidate/performance-report.md
 
       - name: Upload raw benchmark results
@@ -94,7 +108,7 @@ jobs:
         with:
           name: cache-performance-${{ github.run_id }}
           path: |
-            base/benchmark-results.json
-            candidate/benchmark-results.json
+            base/benchmark-results/*.json
+            candidate/benchmark-results/*.json
             candidate/performance-report.md
           retention-days: 30

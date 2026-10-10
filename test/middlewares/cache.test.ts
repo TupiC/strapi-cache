@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Context } from 'koa';
-import { Readable } from 'stream';
-import { gzipSync } from 'zlib';
-import cacheMiddleware from '../../server/src/middlewares/cache';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Context } from "koa";
+import { Readable } from "stream";
+import { gzipSync } from "zlib";
+import cacheMiddleware from "../../server/src/middlewares/cache";
+import { invalidateRestCacheSettings } from "../../server/src/utils/restSettings";
 
-describe('cache middleware', () => {
+describe("cache middleware", () => {
   const mockCacheStore = {
     get: vi.fn(),
     set: vi.fn(),
@@ -18,21 +19,21 @@ describe('cache middleware', () => {
 
   const pluginConfig = vi.fn((key: string) => {
     switch (key) {
-      case 'cacheableEntities':
+      case "cacheableEntities":
         return undefined;
-      case 'cacheableRoutes':
+      case "cacheableRoutes":
         return cacheableRoutes;
-      case 'excludeRoutes':
+      case "excludeRoutes":
         return excludeRoutes;
-      case 'keyGenerator':
+      case "keyGenerator":
         return keyGenerator;
-      case 'cacheHeaders':
+      case "cacheHeaders":
         return false;
-      case 'cacheHeadersDenyList':
+      case "cacheHeadersDenyList":
         return [];
-      case 'cacheHeadersAllowList':
+      case "cacheHeadersAllowList":
         return [];
-      case 'cacheAuthorizedRequests':
+      case "cacheAuthorizedRequests":
         return cacheAuthorizedRequests;
       default:
         return undefined;
@@ -50,10 +51,22 @@ describe('cache middleware', () => {
     }),
     config: {
       get: vi.fn((key: string, defaultValue?: unknown) => {
-        if (key === 'api.rest.prefix') {
-          return '/api';
+        if (key === "plugin::strapi-cache") {
+          return {
+            cacheableEntities: undefined,
+            cacheableRoutes,
+            excludeRoutes,
+            keyGenerator,
+            cacheHeaders: false,
+            cacheHeadersDenyList: [],
+            cacheHeadersAllowList: [],
+            cacheAuthorizedRequests,
+          };
         }
-        if (key === 'middlewares') {
+        if (key === "api.rest.prefix") {
+          return "/api";
+        }
+        if (key === "middlewares") {
           return [];
         }
         return defaultValue;
@@ -61,9 +74,10 @@ describe('cache middleware', () => {
     },
   };
 
-  vi.stubGlobal('strapi', mockStrapi);
+  vi.stubGlobal("strapi", mockStrapi);
 
   beforeEach(() => {
+    invalidateRestCacheSettings(mockStrapi as any);
     vi.clearAllMocks();
     cacheableRoutes = [];
     excludeRoutes = [];
@@ -79,8 +93,8 @@ describe('cache middleware', () => {
   });
 
   const createContext = ({
-    url = '/api/articles',
-    method = 'GET',
+    url = "/api/articles",
+    method = "GET",
     headers = {},
     status = 200,
     body,
@@ -100,20 +114,64 @@ describe('cache middleware', () => {
       body,
     }) as unknown as Context;
 
-  it('uses configured keyGenerator for cache lookup', async () => {
-    const ctx = createContext({ url: '/api/articles?populate=*' });
+  it("uses configured keyGenerator for cache lookup", async () => {
+    const ctx = createContext({ url: "/api/articles?populate=*" });
 
     const next = vi.fn();
 
     await cacheMiddleware(ctx, next);
 
-    expect(keyGenerator).toHaveBeenCalledWith(ctx, 'GET:/api/articles?populate=*');
-    expect(mockCacheStore.get).toHaveBeenCalledWith('custom:GET:/api/articles?populate=*');
+    expect(keyGenerator).toHaveBeenCalledWith(ctx, "GET:/api/articles?populate=*");
+    expect(mockCacheStore.get).toHaveBeenCalledWith("custom:GET:/api/articles?populate=*");
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('bypasses the cache before lookup for non-GET requests', async () => {
-    const ctx = createContext({ method: 'POST' });
+  it("reuses routing and CORS configuration across cached requests", async () => {
+    await cacheMiddleware(createContext(), vi.fn());
+    await cacheMiddleware(createContext(), vi.fn());
+
+    expect(pluginConfig.mock.calls.filter(([key]) => key === "cacheableRoutes")).toHaveLength(0);
+    expect(pluginConfig.mock.calls.filter(([key]) => key === "keyGenerator")).toHaveLength(0);
+    expect(
+      mockStrapi.config.get.mock.calls.filter(([key]) => key === "plugin::strapi-cache"),
+    ).toHaveLength(2);
+    expect(
+      mockStrapi.config.get.mock.calls.filter(([key]) => key === "api.rest.prefix"),
+    ).toHaveLength(2);
+    expect(mockStrapi.config.get.mock.calls.filter(([key]) => key === "middlewares")).toHaveLength(
+      2,
+    );
+    expect(mockCacheStore.get).toHaveBeenCalledTimes(2);
+  });
+
+  it("resolves asynchronous CORS origins separately for every cached request", async () => {
+    const origin = vi.fn(async (ctx: Context) => ctx.request.headers.origin);
+    const originalGet = mockStrapi.config.get.getMockImplementation()!;
+    mockStrapi.config.get.mockImplementation((key: string, fallback?: unknown) => {
+      if (key === "middlewares") return [{ name: "strapi::cors", config: { origin } }];
+      return originalGet(key, fallback);
+    });
+    try {
+      const a = createContext({ headers: { origin: "https://a.test" } });
+      const b = createContext({ headers: { origin: "https://b.test" } });
+      await cacheMiddleware(a, vi.fn());
+      await cacheMiddleware(b, vi.fn());
+
+      expect(origin).toHaveBeenCalledTimes(2);
+      expect(origin).toHaveBeenNthCalledWith(1, a);
+      expect(origin).toHaveBeenNthCalledWith(2, b);
+      expect(a.set).toHaveBeenCalledWith("Access-Control-Allow-Origin", "https://a.test");
+      expect(b.set).toHaveBeenCalledWith("Access-Control-Allow-Origin", "https://b.test");
+      expect(
+        mockStrapi.config.get.mock.calls.filter(([key]) => key === "middlewares"),
+      ).toHaveLength(2);
+    } finally {
+      mockStrapi.config.get.mockImplementation(originalGet);
+    }
+  });
+
+  it("bypasses the cache before lookup for non-GET requests", async () => {
+    const ctx = createContext({ method: "POST" });
     const next = vi.fn();
 
     await cacheMiddleware(ctx, next);
@@ -123,9 +181,9 @@ describe('cache middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('bypasses excluded routes before lookup', async () => {
-    excludeRoutes = ['/api/private'];
-    const ctx = createContext({ url: '/api/private/profile' });
+  it("bypasses excluded routes before lookup", async () => {
+    excludeRoutes = ["/api/private"];
+    const ctx = createContext({ url: "/api/private/profile" });
     const next = vi.fn();
 
     await cacheMiddleware(ctx, next);
@@ -135,9 +193,9 @@ describe('cache middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('bypasses non-cacheable routes before lookup', async () => {
-    cacheableRoutes = ['/api/products'];
-    const ctx = createContext({ url: '/api/articles' });
+  it("bypasses non-cacheable routes before lookup", async () => {
+    cacheableRoutes = ["/api/products"];
+    const ctx = createContext({ url: "/api/articles" });
     const next = vi.fn();
 
     await cacheMiddleware(ctx, next);
@@ -147,8 +205,8 @@ describe('cache middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('bypasses authorized requests before lookup', async () => {
-    const ctx = createContext({ headers: { authorization: 'Bearer token' } });
+  it("bypasses authorized requests before lookup", async () => {
+    const ctx = createContext({ headers: { authorization: "Bearer token" } });
     const next = vi.fn();
 
     await cacheMiddleware(ctx, next);
@@ -158,19 +216,19 @@ describe('cache middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('still reads authorized requests when configured to cache them', async () => {
+  it("still reads authorized requests when configured to cache them", async () => {
     cacheAuthorizedRequests = true;
-    const ctx = createContext({ headers: { authorization: 'Bearer token' } });
+    const ctx = createContext({ headers: { authorization: "Bearer token" } });
     const next = vi.fn();
 
     await cacheMiddleware(ctx, next);
 
-    expect(mockCacheStore.get).toHaveBeenCalledWith('custom:GET:/api/articles');
+    expect(mockCacheStore.get).toHaveBeenCalledWith("custom:GET:/api/articles");
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('bypasses no-cache requests before lookup', async () => {
-    const ctx = createContext({ headers: { 'cache-control': 'no-cache' } });
+  it("bypasses no-cache requests before lookup", async () => {
+    const ctx = createContext({ headers: { "cache-control": "no-cache" } });
     const next = vi.fn();
 
     await cacheMiddleware(ctx, next);
@@ -180,7 +238,7 @@ describe('cache middleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('stores a successful cacheable response as a wire-ready JSON string', async () => {
+  it("stores a successful cacheable response as a wire-ready JSON string", async () => {
     mockCacheStore.get.mockResolvedValueOnce(null);
     const ctx = createContext();
     const responseBody = { data: { articles: [] } };
@@ -192,21 +250,21 @@ describe('cache middleware', () => {
     await cacheMiddleware(ctx, next);
 
     expect(next).toHaveBeenCalledOnce();
-    expect(mockCacheStore.set).toHaveBeenCalledWith('custom:GET:/api/articles', {
+    expect(mockCacheStore.set).toHaveBeenCalledWith("custom:GET:/api/articles", {
       body: JSON.stringify(responseBody),
-      bodyType: 'json',
+      bodyType: "json",
       headers: null,
     });
     expect(ctx.body).toBe(JSON.stringify(responseBody));
   });
 
-  it('caches identity bytes while preserving compressed bytes for the miss response', async () => {
+  it("caches identity bytes while preserving compressed bytes for the miss response", async () => {
     mockCacheStore.get.mockResolvedValueOnce(null);
     const originalBody = Buffer.from('{"data":{"articles":[]}}');
     const compressedBody = gzipSync(originalBody);
     const ctx = createContext();
-    ctx.response.headers['content-encoding'] = 'gzip';
-    ctx.response.headers['content-type'] = 'application/json; charset=utf-8';
+    ctx.response.headers["content-encoding"] = "gzip";
+    ctx.response.headers["content-type"] = "application/json; charset=utf-8";
     const next = vi.fn(async () => {
       ctx.status = 200;
       ctx.body = Readable.from(compressedBody);
@@ -214,19 +272,19 @@ describe('cache middleware', () => {
 
     await cacheMiddleware(ctx, next);
 
-    expect(mockCacheStore.set).toHaveBeenCalledWith('custom:GET:/api/articles', {
+    expect(mockCacheStore.set).toHaveBeenCalledWith("custom:GET:/api/articles", {
       body: originalBody,
-      bodyType: 'json',
+      bodyType: "json",
       headers: null,
     });
     expect(ctx.body).toEqual(compressedBody);
   });
 
-  it('does not cache streams with an unsupported content encoding', async () => {
+  it("does not cache streams with an unsupported content encoding", async () => {
     mockCacheStore.get.mockResolvedValueOnce(null);
-    const encodedBody = Buffer.from('encoded response');
+    const encodedBody = Buffer.from("encoded response");
     const ctx = createContext();
-    ctx.response.headers['content-encoding'] = 'zstd';
+    ctx.response.headers["content-encoding"] = "zstd";
     const next = vi.fn(async () => {
       ctx.status = 200;
       ctx.body = Readable.from(encodedBody);
@@ -238,11 +296,11 @@ describe('cache middleware', () => {
     expect(ctx.body).toEqual(encodedBody);
   });
 
-  it('preserves the response and skips caching when declared compression is malformed', async () => {
+  it("preserves the response and skips caching when declared compression is malformed", async () => {
     mockCacheStore.get.mockResolvedValueOnce(null);
-    const malformedBody = Buffer.from('not actually gzip');
+    const malformedBody = Buffer.from("not actually gzip");
     const ctx = createContext();
-    ctx.response.headers['content-encoding'] = 'gzip';
+    ctx.response.headers["content-encoding"] = "gzip";
     const next = vi.fn(async () => {
       ctx.status = 200;
       ctx.body = Readable.from(malformedBody);
@@ -254,12 +312,12 @@ describe('cache middleware', () => {
     expect(ctx.body).toEqual(malformedBody);
   });
 
-  it('does not cache partial responses that would be replayed with the wrong status', async () => {
+  it("does not cache partial responses that would be replayed with the wrong status", async () => {
     mockCacheStore.get.mockResolvedValueOnce(null);
     const ctx = createContext();
     const next = vi.fn(async () => {
       ctx.status = 206;
-      ctx.body = Buffer.from('partial');
+      ctx.body = Buffer.from("partial");
     });
 
     await cacheMiddleware(ctx, next);
@@ -268,11 +326,11 @@ describe('cache middleware', () => {
     expect(ctx.status).toBe(206);
   });
 
-  it('sends a wire-ready cached body without parsing it', async () => {
+  it("sends a wire-ready cached body without parsing it", async () => {
     const cachedBody = Buffer.from('{"data":{"articles":[]}}');
     mockCacheStore.get.mockResolvedValueOnce({
       body: cachedBody,
-      bodyType: 'buffer',
+      bodyType: "buffer",
       headers: {},
     });
     const ctx = createContext();

@@ -1,8 +1,8 @@
 // MEMORY
 export default ({ env }) => ({
-  'strapi-cache': {
+  "strapi-cache": {
     enabled: true,
-    resolve: '.yalc/strapi-cache',
+    resolve: ".yalc/strapi-cache",
     config: {
       debug: true, // Enable debug logs
       max: 1000, // Maximum number of items in the cache (only for memory cache)
@@ -12,13 +12,13 @@ export default ({ env }) => ({
       keyGenerator: (ctx) => `${ctx.request.method}:${ctx.request.url}`, // Optional custom cache key for REST requests; receives koa ctx
       cacheableRoutes: [], // Caches routes which start with these paths (if empty array, all '/api' routes are cached)
       excludeRoutes: [], // Do not cache routes which start with these paths (if empty array, no routes are excluded)
-      provider: 'memory', // Use memory for integration tests (no Redis/Valkey required). Options: 'memory', 'redis', 'valkey'
-      redisConfig: env('REDIS_URL', 'redis://localhost:6379'), // Redis/Valkey config: string or object. See ioredis (Redis) or iovalkey (Valkey) docs
+      provider: "memory", // Use memory for integration tests (no Redis/Valkey required). Options: 'memory', 'redis', 'valkey'
+      redisConfig: env("REDIS_URL", "redis://localhost:6379"), // Redis/Valkey config: string or object. See ioredis (Redis) or iovalkey (Valkey) docs
       redisClusterNodes: [], // If provided any cluster node (this list is not empty), initialize cluster client. Each object must have keys 'host' and 'port'
       redisClusterOptions: {}, // Options for ioredis redis cluster client. redisOptions key is taken from redisConfig parameter above if not set here. See https://github.com/redis/ioredis for references
       cacheHeaders: true,
-      cacheHeadersDenyList: ['access-control-allow-origin', 'content-encoding'], // Headers to exclude from the cache (must be lowercase, if empty array, no headers are excluded, cacheHeaders must be true)
-      cacheHeadersAllowList: ['content-type', 'content-security-policy'], // Headers to include in the cache (must be lowercase, if empty array, all headers are cached, cacheHeaders must be true),
+      cacheHeadersDenyList: ["access-control-allow-origin", "content-encoding"], // Headers to exclude from the cache (must be lowercase, if empty array, no headers are excluded, cacheHeaders must be true)
+      cacheHeadersAllowList: ["content-type", "content-security-policy"], // Headers to include in the cache (must be lowercase, if empty array, all headers are cached, cacheHeaders must be true),
       cacheAuthorizedRequests: false,
       autoPurgeCache: true, // Automatically purge cache on content CRUD operations
       autoPurgeGraphQL: true, // Automatically purge GraphQL cache on content CRUD operations

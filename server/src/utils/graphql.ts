@@ -1,6 +1,6 @@
 export function parseGraphqlPayload(
   body: string,
-  isGet: boolean
+  isGet: boolean,
 ): {
   query: string;
   variables: Record<string, unknown> | string | null;
@@ -15,13 +15,13 @@ export function parseGraphqlPayload(
       };
       const variables = parsed.variables;
       const variablesParsed =
-        typeof variables === 'string'
+        typeof variables === "string"
           ? variables
             ? JSON.parse(variables)
             : null
           : (variables ?? null);
       return {
-        query: parsed.query ?? '',
+        query: parsed.query ?? "",
         variables: variablesParsed,
         operationName: parsed.operationName ?? null,
       };
@@ -36,7 +36,7 @@ export function parseGraphqlPayload(
       operationName?: string;
     };
     return {
-      query: parsed.query ?? '',
+      query: parsed.query ?? "",
       variables: parsed.variables ?? null,
       operationName: parsed.operationName ?? null,
     };
@@ -50,7 +50,7 @@ export function getRootFieldsFromQuery(query: string): string[] {
   let depth = 0;
   let i = 0;
   while (i < query.length) {
-    if (query[i] === '{') {
+    if (query[i] === "{") {
       depth++;
       i++;
       if (depth === 1) {
@@ -61,7 +61,7 @@ export function getRootFieldsFromQuery(query: string): string[] {
           i += match[0].length - 1;
         }
       }
-    } else if (query[i] === '}') {
+    } else if (query[i] === "}") {
       depth--;
       i++;
     } else if (depth === 1) {
