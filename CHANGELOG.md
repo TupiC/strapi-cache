@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.12.4](https://github.com/TupiC/strapi-cache/compare/v1.12.3...v1.12.4) (2026-10-10)
+
+
+### Bug Fixes
+
+* **admin:** acknowledge background config fetch promises ([dd5750f](https://github.com/TupiC/strapi-cache/commit/dd5750f9ec476138daa2e4ef644497f0d3050d75))
+
+
+### Performance Improvements
+
+* **rest-cache:** reuse settings snapshots and entity matcher ([0faeac6](https://github.com/TupiC/strapi-cache/commit/0faeac67c9fcd961e24fee2d573edbda370fefc8))
+
 ## [1.12.3](https://github.com/TupiC/strapi-cache/compare/v1.12.2...v1.12.3) (2026-09-28)
 
 ### Bug Fixes
