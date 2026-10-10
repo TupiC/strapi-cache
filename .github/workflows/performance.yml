@@ -59,6 +59,9 @@ jobs:
             base/package-lock.json
             candidate/package-lock.json
 
+      - name: Update npm
+        run: npm install --global --ignore-scripts npm@11.5.1
+
       - name: Install baseline dependencies
         working-directory: base
         run: npm ci --ignore-scripts
