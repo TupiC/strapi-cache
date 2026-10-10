@@ -1,7 +1,7 @@
-import type { Core } from '@strapi/strapi';
-import { LRUCache } from 'lru-cache';
-import { CacheProvider, CacheService } from '../../types/cache.types';
-import { loggy } from '../../utils/log';
+import type { Core } from "@strapi/strapi";
+import { LRUCache } from "lru-cache";
+import { CacheProvider } from "../../types/cache.types";
+import { loggy } from "../../utils/log";
 
 export class InMemoryCacheProvider implements CacheProvider {
   private initialized = false;
@@ -11,16 +11,16 @@ export class InMemoryCacheProvider implements CacheProvider {
 
   init(): void {
     if (this.initialized) {
-      loggy.error('Provider already initialized');
+      loggy.error("Provider already initialized");
       return;
     }
 
     this.initialized = true;
 
-    const max = Number(this.strapi.plugin('strapi-cache').config('max'));
-    const ttl = Number(this.strapi.plugin('strapi-cache').config('ttl'));
-    const size = Number(this.strapi.plugin('strapi-cache').config('size'));
-    const allowStale = Boolean(this.strapi.plugin('strapi-cache').config('allowStale'));
+    const max = Number(this.strapi.plugin("strapi-cache").config("max"));
+    const ttl = Number(this.strapi.plugin("strapi-cache").config("ttl"));
+    const size = Number(this.strapi.plugin("strapi-cache").config("size"));
+    const allowStale = Boolean(this.strapi.plugin("strapi-cache").config("allowStale"));
 
     this.provider = new LRUCache({
       max,
@@ -29,12 +29,12 @@ export class InMemoryCacheProvider implements CacheProvider {
       allowStale,
     });
 
-    loggy.info('Provider initialized');
+    loggy.info("Provider initialized");
   }
 
   get ready(): boolean {
     if (!this.initialized) {
-      loggy.info('Provider not initialized');
+      loggy.info("Provider not initialized");
       return false;
     }
 

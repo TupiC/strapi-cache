@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { EventEmitter } from 'events';
-import { Redis } from 'ioredis';
-import { RedisCacheProvider } from '../../server/src/services/redis/provider';
-import type { Core } from '@strapi/strapi';
-import type { ChainableCommander } from 'ioredis';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { EventEmitter } from "events";
+import { Redis } from "ioredis";
+import { RedisCacheProvider } from "../../server/src/services/redis/provider";
+import type { Core } from "@strapi/strapi";
+import type { ChainableCommander } from "ioredis";
 
 // Mock logger
-vi.mock('../../server/src/utils/log', () => ({
+vi.mock("../../server/src/utils/log", () => ({
   loggy: {
     info: vi.fn(),
     error: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('../../server/src/utils/log', () => ({
 }));
 
 // Mock ioredis
-vi.mock('ioredis', () => {
+vi.mock("ioredis", () => {
   const Redis = vi.fn().mockImplementation(() => ({
     get: vi.fn(),
     getBuffer: vi.fn(),
@@ -46,11 +46,11 @@ function flushAsync() {
   return new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
 
-describe('RedisCacheProvider', () => {
+describe("RedisCacheProvider", () => {
   let provider: RedisCacheProvider;
-  let mockStrapi: Pick<Core.Strapi, 'plugin'>;
+  let mockStrapi: Pick<Core.Strapi, "plugin">;
   let mockClient: InstanceType<typeof Redis>;
-  let mockPipeline: Pick<ChainableCommander, 'del' | 'exec'>;
+  let mockPipeline: Pick<ChainableCommander, "del" | "exec">;
   let ttl: number | undefined;
 
   beforeEach(() => {
@@ -78,11 +78,11 @@ describe('RedisCacheProvider', () => {
     mockStrapi = {
       plugin: vi.fn().mockReturnValue({
         config: vi.fn((key: string) => {
-          if (key === 'redisConfig') return { keyPrefix: 'test-prefix:' };
-          if (key === 'cacheGetTimeoutInMs') return 1000;
-          if (key === 'redisClusterNodes') return [];
-          if (key === 'redisScanDeleteCount') return 100;
-          if (key === 'ttl') return ttl;
+          if (key === "redisConfig") return { keyPrefix: "test-prefix:" };
+          if (key === "cacheGetTimeoutInMs") return 1000;
+          if (key === "redisClusterNodes") return [];
+          if (key === "redisScanDeleteCount") return 100;
+          if (key === "ttl") return ttl;
           return undefined;
         }),
       }),
@@ -92,7 +92,7 @@ describe('RedisCacheProvider', () => {
 
     (provider as any).client = mockClient;
     (provider as any).initialized = true;
-    (provider as any).keyPrefix = 'test-prefix:';
+    (provider as any).keyPrefix = "test-prefix:";
     (provider as any).redisScanDeleteCount = 100;
   });
 
@@ -100,229 +100,229 @@ describe('RedisCacheProvider', () => {
     vi.clearAllMocks();
   });
 
-  describe('wire-ready entries', () => {
-    it('stores and retrieves response bytes without JSON encoding or a custom prefix', async () => {
+  describe("wire-ready entries", () => {
+    it("stores and retrieves response bytes without JSON encoding or a custom prefix", async () => {
       const body = Buffer.from([0x00, 0xff, 0x7b, 0x22, 0x7d]);
       const entry = {
         body,
-        bodyType: 'buffer' as const,
-        headers: { 'content-type': 'application/octet-stream' },
+        bodyType: "buffer" as const,
+        headers: { "content-type": "application/octet-stream" },
       };
 
-      await provider.set('cache-key', entry);
+      await provider.set("cache-key", entry);
 
       const storedValue = (mockClient.set as ReturnType<typeof vi.fn>).mock.calls[0][1];
       expect(Buffer.isBuffer(storedValue)).toBe(true);
-      expect(storedValue.includes(Buffer.from('strapi-cache:wire:'))).toBe(false);
+      expect(storedValue.includes(Buffer.from("strapi-cache:wire:"))).toBe(false);
       expect(mockClient.get).not.toHaveBeenCalled();
 
       (mockClient.getBuffer as ReturnType<typeof vi.fn>).mockResolvedValue(storedValue);
 
-      await expect(provider.get('cache-key')).resolves.toEqual(entry);
-      expect(mockClient.getBuffer).toHaveBeenCalledWith('cache-key');
+      await expect(provider.get("cache-key")).resolves.toEqual(entry);
+      expect(mockClient.getBuffer).toHaveBeenCalledWith("cache-key");
     });
 
-    it('preserves the complete serialized JSON response body', async () => {
+    it("preserves the complete serialized JSON response body", async () => {
       const entry = {
-        body: JSON.stringify({ data: [{ id: 1, name: 'Ada' }] }),
-        bodyType: 'json' as const,
-        headers: { 'content-type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({ data: [{ id: 1, name: "Ada" }] }),
+        bodyType: "json" as const,
+        headers: { "content-type": "application/json; charset=utf-8" },
       };
 
-      await provider.set('cache-key', entry);
+      await provider.set("cache-key", entry);
       const storedValue = (mockClient.set as ReturnType<typeof vi.fn>).mock.calls[0][1];
       (mockClient.getBuffer as ReturnType<typeof vi.fn>).mockResolvedValue(storedValue);
 
-      const cached = await provider.get('cache-key');
+      const cached = await provider.get("cache-key");
 
       expect(cached).toEqual(entry);
-      expect(cached.body).not.toBe('');
+      expect(cached.body).not.toBe("");
     });
 
-    it('continues reading legacy JSON entries after an upgrade', async () => {
+    it("continues reading legacy JSON entries after an upgrade", async () => {
       const legacyEntry = {
-        body: { type: 'Buffer', data: [0, 255, 123, 34, 125] },
-        headers: { 'content-type': 'application/octet-stream' },
+        body: { type: "Buffer", data: [0, 255, 123, 34, 125] },
+        headers: { "content-type": "application/octet-stream" },
       };
       (mockClient.getBuffer as ReturnType<typeof vi.fn>).mockResolvedValue(
-        Buffer.from(JSON.stringify(legacyEntry))
+        Buffer.from(JSON.stringify(legacyEntry)),
       );
 
-      await expect(provider.get('cache-key')).resolves.toEqual(legacyEntry);
+      await expect(provider.get("cache-key")).resolves.toEqual(legacyEntry);
     });
 
-    it('preserves empty and Unicode response bodies', async () => {
+    it("preserves empty and Unicode response bodies", async () => {
       const entries = [
-        { body: '', bodyType: 'string' as const, headers: null },
-        { body: 'Grüße 🌍 你好', bodyType: 'string' as const, headers: null },
-        { body: Buffer.alloc(0), bodyType: 'buffer' as const, headers: null },
+        { body: "", bodyType: "string" as const, headers: null },
+        { body: "Grüße 🌍 你好", bodyType: "string" as const, headers: null },
+        { body: Buffer.alloc(0), bodyType: "buffer" as const, headers: null },
       ];
 
       for (const entry of entries) {
         vi.mocked(mockClient.set).mockClear();
-        await provider.set('cache-key', entry);
+        await provider.set("cache-key", entry);
         const storedValue = vi.mocked(mockClient.set).mock.calls[0][1] as Buffer;
         vi.mocked(mockClient.getBuffer).mockResolvedValueOnce(storedValue);
-        await expect(provider.get('cache-key')).resolves.toEqual(entry);
+        await expect(provider.get("cache-key")).resolves.toEqual(entry);
       }
     });
 
-    it('treats missing, empty, and malformed Redis values as cache misses', async () => {
+    it("treats missing, empty, and malformed Redis values as cache misses", async () => {
       vi.mocked(mockClient.getBuffer)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(Buffer.alloc(0))
         .mockResolvedValueOnce(Buffer.from([0x00, 0xff, 0x01]));
 
-      await expect(provider.get('missing')).resolves.toBeNull();
-      await expect(provider.get('empty')).resolves.toBeNull();
-      await expect(provider.get('malformed')).resolves.toBeNull();
+      await expect(provider.get("missing")).resolves.toBeNull();
+      await expect(provider.get("empty")).resolves.toBeNull();
+      await expect(provider.get("malformed")).resolves.toBeNull();
     });
 
-    it('uses millisecond Redis expiry without rounding short TTLs to no expiry', async () => {
+    it("uses millisecond Redis expiry without rounding short TTLs to no expiry", async () => {
       ttl = 250;
 
-      await provider.set('cache-key', { body: 'short lived', headers: null });
+      await provider.set("cache-key", { body: "short lived", headers: null });
 
-      expect(mockClient.set).toHaveBeenCalledWith('cache-key', expect.any(Buffer), 'PX', 250);
+      expect(mockClient.set).toHaveBeenCalledWith("cache-key", expect.any(Buffer), "PX", 250);
     });
   });
 
-  describe('clearByRegexp', () => {
-    it('should call scanStream with correct match and count params', async () => {
+  describe("clearByRegexp", () => {
+    it("should call scanStream with correct match and count params", async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
       const promise = provider.clearByRegexp([/\/api\/articles/]);
-      stream.emit('end');
+      stream.emit("end");
       await promise;
 
-      expect(mockClient.scanStream).toHaveBeenCalledWith({ match: 'test-prefix:*', count: 100 });
+      expect(mockClient.scanStream).toHaveBeenCalledWith({ match: "test-prefix:*", count: 100 });
     });
 
-    it('should filter matching keys and delete via pipeline', async () => {
+    it("should filter matching keys and delete via pipeline", async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
       const promise = provider.clearByRegexp([/\/api\/articles/]);
 
-      stream.emit('data', ['test-prefix:GET:/api/articles', 'test-prefix:GET:/api/users']);
+      stream.emit("data", ["test-prefix:GET:/api/articles", "test-prefix:GET:/api/users"]);
       await flushAsync();
-      stream.emit('end');
+      stream.emit("end");
       await promise;
 
       expect(mockClient.pipeline).toHaveBeenCalledOnce();
       expect(mockPipeline.del).toHaveBeenCalledOnce();
-      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles');
+      expect(mockPipeline.del).toHaveBeenCalledWith("GET:/api/articles");
       expect(mockPipeline.exec).toHaveBeenCalledOnce();
     });
 
-    it('should skip pipeline when no keys in batch match', async () => {
+    it("should skip pipeline when no keys in batch match", async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
       const promise = provider.clearByRegexp([/\/api\/articles/]);
 
-      stream.emit('data', ['test-prefix:GET:/api/users', 'test-prefix:GET:/api/products']);
+      stream.emit("data", ["test-prefix:GET:/api/users", "test-prefix:GET:/api/products"]);
       await flushAsync();
-      stream.emit('end');
+      stream.emit("end");
       await promise;
 
       expect(mockClient.pipeline).not.toHaveBeenCalled();
       expect(mockPipeline.del).not.toHaveBeenCalled();
     });
 
-    it('should pause and resume stream around each batch', async () => {
+    it("should pause and resume stream around each batch", async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
       const promise = provider.clearByRegexp([/\/api\/articles/]);
 
-      stream.emit('data', ['test-prefix:GET:/api/articles/1']);
+      stream.emit("data", ["test-prefix:GET:/api/articles/1"]);
       expect(stream.pause).toHaveBeenCalledTimes(1);
       await flushAsync();
       expect(stream.resume).toHaveBeenCalledTimes(1);
 
-      stream.emit('data', ['test-prefix:GET:/api/articles/2']);
+      stream.emit("data", ["test-prefix:GET:/api/articles/2"]);
       expect(stream.pause).toHaveBeenCalledTimes(2);
       await flushAsync();
       expect(stream.resume).toHaveBeenCalledTimes(2);
 
-      stream.emit('end');
+      stream.emit("end");
       await promise;
 
       expect(mockPipeline.del).toHaveBeenCalledTimes(2);
-      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles/1');
-      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles/2');
+      expect(mockPipeline.del).toHaveBeenCalledWith("GET:/api/articles/1");
+      expect(mockPipeline.del).toHaveBeenCalledWith("GET:/api/articles/2");
     });
 
-    it('should strip keyPrefix before calling pipeline.del', async () => {
+    it("should strip keyPrefix before calling pipeline.del", async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
       const promise = provider.clearByRegexp([/some\/key/]);
 
-      stream.emit('data', ['test-prefix:some/key']);
+      stream.emit("data", ["test-prefix:some/key"]);
       await flushAsync();
-      stream.emit('end');
+      stream.emit("end");
       await promise;
 
-      expect(mockPipeline.del).toHaveBeenCalledWith('some/key');
+      expect(mockPipeline.del).toHaveBeenCalledWith("some/key");
     });
 
-    it('should ignore keys that do not start with keyPrefix', async () => {
+    it("should ignore keys that do not start with keyPrefix", async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
       const promise = provider.clearByRegexp([/bare-key/]);
 
-      stream.emit('data', ['bare-key']);
+      stream.emit("data", ["bare-key"]);
       await flushAsync();
-      stream.emit('end');
+      stream.emit("end");
       await promise;
 
       expect(mockClient.pipeline).not.toHaveBeenCalled();
       expect(mockPipeline.del).not.toHaveBeenCalled();
     });
 
-    it('should match regex against keys after keyPrefix is stripped', async () => {
+    it("should match regex against keys after keyPrefix is stripped", async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
       const promise = provider.clearByRegexp([/^GET:\/api\/articles$/]);
 
-      stream.emit('data', ['test-prefix:GET:/api/articles']);
+      stream.emit("data", ["test-prefix:GET:/api/articles"]);
       await flushAsync();
-      stream.emit('end');
+      stream.emit("end");
       await promise;
 
-      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles');
+      expect(mockPipeline.del).toHaveBeenCalledWith("GET:/api/articles");
     });
 
-    it('should match regex against the full key when keyPrefix is configured', async () => {
+    it("should match regex against the full key when keyPrefix is configured", async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
       const promise = provider.clearByRegexp([/^test-prefix:GET:\/api\/articles$/]);
 
-      stream.emit('data', ['test-prefix:GET:/api/articles']);
+      stream.emit("data", ["test-prefix:GET:/api/articles"]);
       await flushAsync();
-      stream.emit('end');
+      stream.emit("end");
       await promise;
 
-      expect(mockPipeline.del).toHaveBeenCalledWith('GET:/api/articles');
+      expect(mockPipeline.del).toHaveBeenCalledWith("GET:/api/articles");
     });
 
-    it('should reject when stream emits an error', async () => {
+    it("should reject when stream emits an error", async () => {
       const stream = createMockStream();
       (mockClient.scanStream as ReturnType<typeof vi.fn>).mockReturnValue(stream);
 
       const promise = provider.clearByRegexp([/\/api\/articles/]);
-      stream.emit('error', new Error('scan failed'));
+      stream.emit("error", new Error("scan failed"));
 
-      await expect(promise).rejects.toThrow('scan failed');
+      await expect(promise).rejects.toThrow("scan failed");
     });
 
-    it('should iterate master nodes in cluster mode', async () => {
+    it("should iterate master nodes in cluster mode", async () => {
       const nodePipeline1 = { del: vi.fn().mockReturnThis(), exec: vi.fn().mockResolvedValue([]) };
       const nodePipeline2 = { del: vi.fn().mockReturnThis(), exec: vi.fn().mockResolvedValue([]) };
       const nodeStream1 = createMockStream();
@@ -345,38 +345,38 @@ describe('RedisCacheProvider', () => {
 
       const promise = provider.clearByRegexp([/\/api\/articles/]);
 
-      nodeStream1.emit('data', ['test-prefix:GET:/api/articles/1']);
-      nodeStream2.emit('data', ['test-prefix:GET:/api/articles/2']);
+      nodeStream1.emit("data", ["test-prefix:GET:/api/articles/1"]);
+      nodeStream2.emit("data", ["test-prefix:GET:/api/articles/2"]);
       await flushAsync();
-      nodeStream1.emit('end');
-      nodeStream2.emit('end');
+      nodeStream1.emit("end");
+      nodeStream2.emit("end");
       await promise;
 
-      expect(mockCluster.nodes).toHaveBeenCalledWith('master');
-      expect(nodePipeline1.del).toHaveBeenCalledWith('GET:/api/articles/1');
-      expect(nodePipeline2.del).toHaveBeenCalledWith('GET:/api/articles/2');
+      expect(mockCluster.nodes).toHaveBeenCalledWith("master");
+      expect(nodePipeline1.del).toHaveBeenCalledWith("GET:/api/articles/1");
+      expect(nodePipeline2.del).toHaveBeenCalledWith("GET:/api/articles/2");
     });
   });
 
-  describe('reset', () => {
-    it('should delete only keys with keyPrefix when keyPrefix is configured', async () => {
+  describe("reset", () => {
+    it("should delete only keys with keyPrefix when keyPrefix is configured", async () => {
       (mockClient.keys as ReturnType<typeof vi.fn>).mockResolvedValue([
-        'test-prefix:GET:/api/articles',
-        'other-prefix:GET:/api/articles',
-        'plain-key',
+        "test-prefix:GET:/api/articles",
+        "other-prefix:GET:/api/articles",
+        "plain-key",
       ]);
 
       await provider.reset();
 
-      expect(mockClient.keys).toHaveBeenCalledWith('test-prefix:*');
+      expect(mockClient.keys).toHaveBeenCalledWith("test-prefix:*");
       expect(mockClient.del).toHaveBeenCalledOnce();
-      expect(mockClient.del).toHaveBeenCalledWith('GET:/api/articles');
+      expect(mockClient.del).toHaveBeenCalledWith("GET:/api/articles");
       expect(mockClient.flushdb).not.toHaveBeenCalled();
     });
 
-    it('should flush the database only when no keyPrefix is configured', async () => {
-      (provider as any).keyPrefix = '';
-      (mockClient.flushdb as ReturnType<typeof vi.fn>).mockResolvedValue('OK');
+    it("should flush the database only when no keyPrefix is configured", async () => {
+      (provider as any).keyPrefix = "";
+      (mockClient.flushdb as ReturnType<typeof vi.fn>).mockResolvedValue("OK");
 
       await provider.reset();
 

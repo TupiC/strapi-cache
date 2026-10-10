@@ -2,6 +2,6 @@
  * about service.
  */
 
-import { factories } from '@strapi/strapi';
+import { factories } from "@strapi/strapi";
 
-export default factories.createCoreService('api::about.about');
+export default factories.createCoreService("api::about.about");

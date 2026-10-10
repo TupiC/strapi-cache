@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import bootstrap from '../server/src/bootstrap';
-import { invalidateCache, invalidateGraphqlCache } from '../server/src/utils/invalidateCache';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import bootstrap from "../server/src/bootstrap";
+import { invalidateCache, invalidateGraphqlCache } from "../server/src/utils/invalidateCache";
 
-vi.mock('../server/src/utils/invalidateCache', () => ({
+vi.mock("../server/src/utils/invalidateCache", () => ({
   invalidateCache: vi.fn().mockResolvedValue(undefined),
   invalidateGraphqlCache: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../server/src/utils/log', () => ({
+vi.mock("../server/src/utils/log", () => ({
   loggy: {
     info: vi.fn(),
     error: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('../server/src/utils/log', () => ({
   },
 }));
 
-describe('bootstrap', () => {
+describe("bootstrap", () => {
   const cacheStore = {
     init: vi.fn(),
     reset: vi.fn().mockResolvedValue(undefined),
@@ -54,9 +54,9 @@ describe('bootstrap', () => {
     cacheStore.reset.mockResolvedValue(undefined);
   });
 
-  it('does not block lifecycle callbacks on REST cache invalidation', async () => {
+  it("does not block lifecycle callbacks on REST cache invalidation", async () => {
     const strapi = createStrapi({ autoPurgeCache: true });
-    const event = { model: { uid: 'api::article.article' } };
+    const event = { model: { uid: "api::article.article" } };
 
     bootstrap({ strapi });
 
@@ -71,9 +71,9 @@ describe('bootstrap', () => {
     expect(invalidateCache).toHaveBeenCalledWith(event, cacheStore, strapi);
   });
 
-  it('does not block lifecycle callbacks on GraphQL cache invalidation', async () => {
+  it("does not block lifecycle callbacks on GraphQL cache invalidation", async () => {
     const strapi = createStrapi({ autoPurgeGraphQL: true });
-    const event = { model: { uid: 'api::article.article' } };
+    const event = { model: { uid: "api::article.article" } };
 
     bootstrap({ strapi });
 

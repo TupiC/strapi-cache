@@ -1,7 +1,7 @@
-import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { setupStrapi, cleanupStrapi } from './setup';
-import type { Core } from '@strapi/types';
+import request from "supertest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { setupStrapi, cleanupStrapi } from "./setup";
+import type { Core } from "@strapi/types";
 
 declare global {
   var strapi: Core.Strapi;
@@ -25,12 +25,12 @@ const GRAPHQL_QUERY = `
  * GraphQL supports both GET and POST; we use GET in tests.
  */
 function graphqlGet(server: any, query: string) {
-  const encoded = encodeURIComponent(query.replace(/\s+/g, ' ').trim());
+  const encoded = encodeURIComponent(query.replace(/\s+/g, " ").trim());
   return request(server).get(`/graphql?query=${encoded}`).expect(200);
 }
 
 function graphqlGetWithOperationName(server: any, query: string, operationName: string) {
-  const encoded = encodeURIComponent(query.replace(/\s+/g, ' ').trim());
+  const encoded = encodeURIComponent(query.replace(/\s+/g, " ").trim());
   const encodedOperationName = encodeURIComponent(operationName);
   const path = `/graphql?query=${encoded}&operationName=${encodedOperationName}`;
   return {
@@ -39,10 +39,10 @@ function graphqlGetWithOperationName(server: any, query: string, operationName: 
   };
 }
 
-describe('GraphQL cache integration', () => {
+describe("GraphQL cache integration", () => {
   let graphqlRouteAvailable = false;
   const getCacheStore = () =>
-    strapi.plugin('strapi-cache').services.service.getCacheInstance() as {
+    strapi.plugin("strapi-cache").services.service.getCacheInstance() as {
       keys: () => Promise<string[] | null>;
       reset: () => Promise<any | null>;
     };
@@ -53,7 +53,9 @@ describe('GraphQL cache integration', () => {
     // Detect if /graphql is registered (GraphQL plugin may not register when schema is empty in test env)
     const server = instance.server.httpServer;
     try {
-      const res = await request(server).get('/graphql?query=' + encodeURIComponent('{ __typename }'));
+      const res = await request(server).get(
+        "/graphql?query=" + encodeURIComponent("{ __typename }"),
+      );
       graphqlRouteAvailable = res.status === 200;
     } catch {
       graphqlRouteAvailable = false;
@@ -64,7 +66,7 @@ describe('GraphQL cache integration', () => {
     await cleanupStrapi();
   }, 10000);
 
-  it('should cache GraphQL query on first request and return cached response on second request', async () => {
+  it("should cache GraphQL query on first request and return cached response on second request", async () => {
     if (!graphqlRouteAvailable) {
       return; // skip when /graphql is not registered (e.g. empty schema in test env)
     }
@@ -77,7 +79,7 @@ describe('GraphQL cache integration', () => {
     expect(firstResponse.body.data).toBeDefined();
   });
 
-  it('should use different cache keys for different GraphQL queries', async () => {
+  it("should use different cache keys for different GraphQL queries", async () => {
     if (!graphqlRouteAvailable) {
       return; // skip when /graphql is not registered
     }
@@ -110,7 +112,7 @@ describe('GraphQL cache integration', () => {
     expect(responseCategories.body.data?.categories).toBeDefined();
   });
 
-  it('should invalidate GraphQL cache when content is created', async () => {
+  it("should invalidate GraphQL cache when content is created", async () => {
     if (!graphqlRouteAvailable) {
       return; // skip when /graphql is not registered
     }
@@ -124,9 +126,9 @@ describe('GraphQL cache integration', () => {
     const cachedArticleCount = firstResponse.body.data?.articles?.data?.length ?? 0;
 
     // 2. Create a new article (triggers afterCreate → invalidateGraphqlCache)
-    await strapi.documents('api::article.article').create({
-      data: { title: 'Cache invalidation test article' },
-      status: 'published',
+    await strapi.documents("api::article.article").create({
+      data: { title: "Cache invalidation test article" },
+      status: "published",
     });
 
     // 3. Same query should return fresh data with the new article
@@ -136,12 +138,13 @@ describe('GraphQL cache integration', () => {
     expect(freshArticleCount).toBe(cachedArticleCount + 1);
 
     const newArticle = thirdResponse.body.data?.articles?.data?.find(
-      (a: { attributes: { title?: string } }) => a.attributes?.title === 'Cache invalidation test article'
+      (a: { attributes: { title?: string } }) =>
+        a.attributes?.title === "Cache invalidation test article",
     );
     expect(newArticle).toBeDefined();
   });
 
-  it('should use configured keyGenerator format for GraphQL keys', async () => {
+  it("should use configured keyGenerator format for GraphQL keys", async () => {
     if (!graphqlRouteAvailable) {
       return; // skip when /graphql is not registered
     }
@@ -150,7 +153,7 @@ describe('GraphQL cache integration', () => {
     await cacheStore.reset();
 
     const server = strapi.server.httpServer;
-    const operationName = 'ArticlesKeyGenOp';
+    const operationName = "ArticlesKeyGenOp";
     const query = `
       query ArticlesKeyGenOp {
         articles {

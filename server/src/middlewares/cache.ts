@@ -1,33 +1,34 @@
-import { Context } from 'koa';
-import { CacheKeyGenerator, generateCacheKey, generateEntityKey } from '../utils/key';
-import { CacheService } from '../../src/types/cache.types';
-import { loggy } from '../utils/log';
-import Stream from 'stream';
+import { Context } from "koa";
+import { CacheKeyGenerator, generateCacheKey, generateEntityKey } from "../utils/key";
+import { CacheService } from "../../src/types/cache.types";
+import { loggy } from "../utils/log";
+import Stream from "stream";
 import {
   normalizeStreamForCache,
   restoreCachedBody,
   streamToBuffer,
   toWireReadyBody,
-} from '../utils/body';
+} from "../utils/body";
 import {
   getCacheHeaderConfig,
   getHeadersForUncompressedBody,
   getHeadersToStore,
-} from '../utils/header';
-import { applyCorsHeaders, getCorsConfig, resolveCorsOrigin } from '../utils/cors';
+} from "../utils/header";
+import { applyCorsHeaders, getCorsConfig, resolveCorsOrigin } from "../utils/cors";
 
 const middleware = async (ctx: Context, next: any) => {
   const { url, method } = ctx.request;
 
-  if (method !== 'GET') {
+  if (method !== "GET") {
     return next();
   }
 
-  const cacheableEntities = strapi.plugin('strapi-cache').config('cacheableEntities') as
-    string[] | undefined;
-  const cacheableRoutes = strapi.plugin('strapi-cache').config('cacheableRoutes') as string[];
-  const excludeRoutes = strapi.plugin('strapi-cache').config('excludeRoutes') as string[];
-  const restApiPrefix = strapi.config.get('api.rest.prefix', '/api');
+  const cacheableEntities = strapi.plugin("strapi-cache").config("cacheableEntities") as
+    | string[]
+    | undefined;
+  const cacheableRoutes = strapi.plugin("strapi-cache").config("cacheableRoutes") as string[];
+  const excludeRoutes = strapi.plugin("strapi-cache").config("excludeRoutes") as string[];
+  const restApiPrefix = strapi.config.get("api.rest.prefix", "/api");
   const routeIsExcluded = excludeRoutes.some((route) => url.startsWith(route));
 
   if (routeIsExcluded) {
@@ -50,9 +51,9 @@ const middleware = async (ctx: Context, next: any) => {
 
   const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
     getCacheHeaderConfig();
-  const cacheControlHeader = ctx.request.headers['cache-control'];
-  const noCache = cacheControlHeader && cacheControlHeader.includes('no-cache');
-  const authorizationHeader = ctx.request.headers['authorization'];
+  const cacheControlHeader = ctx.request.headers["cache-control"];
+  const noCache = cacheControlHeader && cacheControlHeader.includes("no-cache");
+  const authorizationHeader = ctx.request.headers["authorization"];
 
   if (authorizationHeader && !cacheAuthorizedRequests) {
     loggy.info(`Authorized request bypassing cache: ${url}`);
@@ -63,16 +64,17 @@ const middleware = async (ctx: Context, next: any) => {
     return next();
   }
 
-  const cacheService = strapi.plugin('strapi-cache').services.service as CacheService;
-  const keyGenerator = strapi.plugin('strapi-cache').config('keyGenerator') as
-    CacheKeyGenerator | undefined;
+  const cacheService = strapi.plugin("strapi-cache").services.service as CacheService;
+  const keyGenerator = strapi.plugin("strapi-cache").config("keyGenerator") as
+    | CacheKeyGenerator
+    | undefined;
   const cacheStore = cacheService.getCacheInstance();
   const key = generateCacheKey(ctx, keyGenerator);
   const cacheEntry = await cacheStore.get(key);
 
-  const middlewaresConfig = strapi.config.get('middlewares') as any[];
+  const middlewaresConfig = strapi.config.get("middlewares") as any[];
   const corsConfig = getCorsConfig(middlewaresConfig);
-  const corsOrigin = corsConfig ? await resolveCorsOrigin(ctx, corsConfig) : '';
+  const corsOrigin = corsConfig ? await resolveCorsOrigin(ctx, corsConfig) : "";
 
   if (cacheEntry && !noCache) {
     loggy.info(`HIT with key: ${key}`);
@@ -81,8 +83,8 @@ const middleware = async (ctx: Context, next: any) => {
       ctx.set(cacheEntry.headers);
     }
     const cachedBody = restoreCachedBody(cacheEntry.body);
-    if (cacheEntry.bodyType === 'json' && !ctx.response.headers['content-type']) {
-      ctx.type = 'json';
+    if (cacheEntry.bodyType === "json" && !ctx.response.headers["content-type"]) {
+      ctx.type = "json";
     }
     ctx.body = cachedBody;
 
@@ -93,14 +95,14 @@ const middleware = async (ctx: Context, next: any) => {
 
   await next();
 
-  if (ctx.method === 'GET' && ctx.status === 200 && isCacheable) {
+  if (ctx.method === "GET" && ctx.status === 200 && isCacheable) {
     loggy.info(`MISS with key: ${key}`);
     if (corsConfig) applyCorsHeaders(ctx, corsConfig, corsOrigin);
     const headersToStore = getHeadersToStore(
       ctx,
       cacheHeaders,
       cacheHeadersAllowList,
-      cacheHeadersDenyList
+      cacheHeadersDenyList,
     );
 
     const setCache = !corsConfig || Boolean(corsOrigin);
@@ -109,8 +111,8 @@ const middleware = async (ctx: Context, next: any) => {
       const buf = await streamToBuffer(ctx.body);
       ctx.body = buf;
       if (setCache) {
-        const contentEncoding = ctx.response.headers['content-encoding'];
-        const contentType = ctx.response.headers['content-type'];
+        const contentEncoding = ctx.response.headers["content-encoding"];
+        const contentType = ctx.response.headers["content-type"];
         try {
           const wireReadyBody = await normalizeStreamForCache(buf, contentEncoding, contentType);
           if (wireReadyBody) {
@@ -130,10 +132,10 @@ const middleware = async (ctx: Context, next: any) => {
       if (setCache) {
         const wireReadyBody = await toWireReadyBody(
           ctx.body,
-          ctx.response.headers['content-type'] as string | undefined
+          ctx.response.headers["content-type"] as string | undefined,
         );
-        if (wireReadyBody.bodyType === 'json' && !ctx.response.headers['content-type']) {
-          ctx.type = 'json';
+        if (wireReadyBody.bodyType === "json" && !ctx.response.headers["content-type"]) {
+          ctx.type = "json";
         }
         await cacheStore.set(key, {
           body: wireReadyBody.body,

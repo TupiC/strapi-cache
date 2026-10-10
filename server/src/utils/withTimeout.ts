@@ -10,7 +10,7 @@ export const withTimeout = (callback: () => Promise<any>, ms: number) => {
     }),
     new Promise((_, reject) => {
       timeout = setTimeout(() => {
-        reject(new Error('timeout'));
+        reject(new Error("timeout"));
       }, ms);
     }),
   ]);

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useFetchClient } from '@strapi/strapi/admin';
-import type { DisableAdminButtonsConfig } from '../utils/adminButtons';
+import { useState, useEffect } from "react";
+import { useFetchClient } from "@strapi/strapi/admin";
+import type { DisableAdminButtonsConfig } from "../utils/adminButtons";
 
 export type CacheConfig = {
   cacheableRoutes: string[];
@@ -24,7 +24,7 @@ export const useCacheConfig = (enabled: boolean = true) => {
       setError(null);
 
       try {
-        const { data } = await get<CacheConfig>('/strapi-cache/config');
+        const { data } = await get<CacheConfig>("/strapi-cache/config");
         setConfig(data);
       } catch (error: any) {
         setError(error);
@@ -46,7 +46,7 @@ export const useCacheConfig = (enabled: boolean = true) => {
         setError(null);
 
         try {
-          const { data } = await get<CacheConfig>('/strapi-cache/config');
+          const { data } = await get<CacheConfig>("/strapi-cache/config");
           setConfig(data);
         } catch (error: any) {
           setError(error);

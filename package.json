@@ -1,10 +1,21 @@
 {
+  "name": "strapi-cache",
   "version": "1.12.3",
+  "description": "An LRU-Cache plugin for strapi v5",
   "keywords": [
+    "strapi 5 cache",
     "strapi cache",
     "strapi rest cache",
-    "strapi 5 cache",
     "strapi v5 cache plugin"
+  ],
+  "license": "MIT",
+  "author": "TupiC <christoph.tupi@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TupiC/strapi-cache.git"
+  },
+  "files": [
+    "dist"
   ],
   "type": "commonjs",
   "exports": {
@@ -24,9 +35,6 @@
       "default": "./dist/server/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "strapi-plugin build",
     "watch": "strapi-plugin watch",
@@ -91,13 +99,5 @@
     "name": "strapi-cache",
     "displayName": "Strapi Cache",
     "description": "An LRU-Cache plugin for strapi v5"
-  },
-  "name": "strapi-cache",
-  "description": "An LRU-Cache plugin for strapi v5",
-  "license": "MIT",
-  "author": "TupiC <christoph.tupi@gmail.com>",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/TupiC/strapi-cache.git"
   }
 }

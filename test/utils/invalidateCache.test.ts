@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { invalidateCache, invalidateGraphqlCache } from '../../server/src/utils/invalidateCache';
-import type { CacheProvider } from '../../server/src/types/cache.types';
-import type { Core } from '@strapi/strapi';
-import { InMemoryCacheProvider } from '../../server/src/services/memory/provider';
-import { generateGraphqlCacheKey } from '../../server/src/utils/key';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { invalidateCache, invalidateGraphqlCache } from "../../server/src/utils/invalidateCache";
+import type { CacheProvider } from "../../server/src/types/cache.types";
+import type { Core } from "@strapi/strapi";
+import { InMemoryCacheProvider } from "../../server/src/services/memory/provider";
+import { generateGraphqlCacheKey } from "../../server/src/utils/key";
 
 // Mock the logger
-vi.mock('../../server/src/utils/log', () => ({
+vi.mock("../../server/src/utils/log", () => ({
   loggy: {
     info: vi.fn(),
     error: vi.fn(),
@@ -15,20 +15,20 @@ vi.mock('../../server/src/utils/log', () => ({
 }));
 
 // Import the mocked logger
-import { loggy } from '../../server/src/utils/log';
+import { loggy } from "../../server/src/utils/log";
 
-describe('invalidateCache', () => {
-  let mockCacheStore: Pick<CacheProvider, 'clearByRegexp'>;
-  let mockStrapi: Pick<Core.Strapi, 'config' | 'contentType' | 'plugin'>;
+describe("invalidateCache", () => {
+  let mockCacheStore: Pick<CacheProvider, "clearByRegexp">;
+  let mockStrapi: Pick<Core.Strapi, "config" | "contentType" | "plugin">;
 
   const mockPluginConfig = (values: Record<string, unknown> = {}) =>
     vi.fn((key: string) => {
       switch (key) {
-        case 'cacheableEntities':
+        case "cacheableEntities":
           return values.cacheableEntities;
-        case 'cacheableRoutes':
+        case "cacheableRoutes":
           return values.cacheableRoutes ?? [];
-        case 'excludeRoutes':
+        case "excludeRoutes":
           return values.excludeRoutes ?? [];
         default:
           return undefined;
@@ -57,48 +57,48 @@ describe('invalidateCache', () => {
     vi.restoreAllMocks();
   });
 
-  it('should invalidate cache for collection type content', async () => {
+  it("should invalidate cache for collection type content", async () => {
     const event = {
       model: {
-        uid: 'api::article.article',
+        uid: "api::article.article",
       },
     };
 
     const contentType = {
-      kind: 'collectionType',
+      kind: "collectionType",
       info: {
-        pluralName: 'articles',
+        pluralName: "articles",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
 
-    expect(mockStrapi.config.get).toHaveBeenCalledWith('api.rest.prefix', '/api');
-    expect(mockStrapi.contentType).toHaveBeenCalledWith('api::article.article');
+    expect(mockStrapi.config.get).toHaveBeenCalledWith("api.rest.prefix", "/api");
+    expect(mockStrapi.contentType).toHaveBeenCalledWith("api::article.article");
     expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
       /^.*:\/api\/articles(\/.*)?(\?.*)?$/,
     ]);
-    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /api/articles');
+    expect(loggy.info).toHaveBeenCalledWith("Invalidated cache for /api/articles");
   });
 
-  it('should invalidate cache for single type content', async () => {
+  it("should invalidate cache for single type content", async () => {
     const event = {
       model: {
-        uid: 'api::homepage.homepage',
+        uid: "api::homepage.homepage",
       },
     };
 
     const contentType = {
-      kind: 'singleType',
+      kind: "singleType",
       info: {
-        singularName: 'homepage',
+        singularName: "homepage",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
@@ -106,24 +106,24 @@ describe('invalidateCache', () => {
     expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
       /^.*:\/api\/homepage(\/.*)?(\?.*)?$/,
     ]);
-    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /api/homepage');
+    expect(loggy.info).toHaveBeenCalledWith("Invalidated cache for /api/homepage");
   });
 
-  it('should use custom REST API prefix', async () => {
+  it("should use custom REST API prefix", async () => {
     const event = {
       model: {
-        uid: 'api::article.article',
+        uid: "api::article.article",
       },
     };
 
     const contentType = {
-      kind: 'collectionType',
+      kind: "collectionType",
       info: {
-        pluralName: 'articles',
+        pluralName: "articles",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/custom-api');
+    mockStrapi.config.get.mockReturnValue("/custom-api");
     mockStrapi.contentType.mockReturnValue(contentType);
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
@@ -131,81 +131,81 @@ describe('invalidateCache', () => {
     expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
       /^.*:\/custom-api\/articles(\/.*)?(\?.*)?$/,
     ]);
-    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /custom-api/articles');
+    expect(loggy.info).toHaveBeenCalledWith("Invalidated cache for /custom-api/articles");
   });
 
-  it('should handle content type not found', async () => {
+  it("should handle content type not found", async () => {
     const event = {
       model: {
-        uid: 'api::nonexistent.nonexistent',
+        uid: "api::nonexistent.nonexistent",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(null);
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
 
-    expect(mockStrapi.contentType).toHaveBeenCalledWith('api::nonexistent.nonexistent');
+    expect(mockStrapi.contentType).toHaveBeenCalledWith("api::nonexistent.nonexistent");
     expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
-    expect(loggy.info).toHaveBeenCalledWith('Content type api::nonexistent.nonexistent not found');
+    expect(loggy.info).toHaveBeenCalledWith("Content type api::nonexistent.nonexistent not found");
   });
 
-  it('should handle content type without kind', async () => {
+  it("should handle content type without kind", async () => {
     const event = {
       model: {
-        uid: 'api::article.article',
+        uid: "api::article.article",
       },
     };
 
     const contentType = {
       info: {
-        pluralName: 'articles',
+        pluralName: "articles",
       },
       // kind is missing
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
 
     expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
-    expect(loggy.info).toHaveBeenCalledWith('Content type api::article.article not found');
+    expect(loggy.info).toHaveBeenCalledWith("Content type api::article.article not found");
   });
 
-  it('should handle cache store errors gracefully', async () => {
+  it("should handle cache store errors gracefully", async () => {
     const event = {
       model: {
-        uid: 'api::article.article',
+        uid: "api::article.article",
       },
     };
 
     const contentType = {
-      kind: 'collectionType',
+      kind: "collectionType",
       info: {
-        pluralName: 'articles',
+        pluralName: "articles",
       },
     };
 
-    const error = new Error('Cache store error');
-    mockStrapi.config.get.mockReturnValue('/api');
+    const error = new Error("Cache store error");
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
     mockCacheStore.clearByRegexp.mockRejectedValue(error);
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
 
     expect(mockCacheStore.clearByRegexp).toHaveBeenCalled();
-    expect(loggy.error).toHaveBeenCalledWith('Cache invalidation error:');
+    expect(loggy.error).toHaveBeenCalledWith("Cache invalidation error:");
     expect(loggy.error).toHaveBeenCalledWith(error);
   });
 
-  it('should throw error for malformed event without model', async () => {
+  it("should throw error for malformed event without model", async () => {
     const event = {
       // model is missing
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
 
     await expect(invalidateCache(event, mockCacheStore, mockStrapi)).rejects.toThrow();
 
@@ -213,77 +213,77 @@ describe('invalidateCache', () => {
     expect(loggy.info).not.toHaveBeenCalled();
   });
 
-  it('should skip invalidation when entity is not in cacheableEntities list', async () => {
+  it("should skip invalidation when entity is not in cacheableEntities list", async () => {
     const event = {
       model: {
-        uid: 'api::article.article',
-        tableName: 'articles',
+        uid: "api::article.article",
+        tableName: "articles",
       },
     };
 
     const contentType = {
-      kind: 'collectionType',
+      kind: "collectionType",
       info: {
-        pluralName: 'articles',
+        pluralName: "articles",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
     mockStrapi.plugin.mockReturnValue({
-      config: mockPluginConfig({ cacheableEntities: ['users', 'products'] }), // articles not in list
+      config: mockPluginConfig({ cacheableEntities: ["users", "products"] }), // articles not in list
     });
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
 
     expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
-    expect(loggy.info).toHaveBeenCalledWith('Not invalidated. /api/articles is not cacheable.');
+    expect(loggy.info).toHaveBeenCalledWith("Not invalidated. /api/articles is not cacheable.");
   });
 
-  it('should invalidate cache when entity is in cacheableEntities list', async () => {
+  it("should invalidate cache when entity is in cacheableEntities list", async () => {
     const event = {
       model: {
-        uid: 'api::article.article',
-        tableName: 'articles',
+        uid: "api::article.article",
+        tableName: "articles",
       },
     };
 
     const contentType = {
-      kind: 'collectionType',
+      kind: "collectionType",
       info: {
-        pluralName: 'articles',
+        pluralName: "articles",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
     mockStrapi.plugin.mockReturnValue({
-      config: mockPluginConfig({ cacheableEntities: ['articles', 'users'] }), // articles is in list
+      config: mockPluginConfig({ cacheableEntities: ["articles", "users"] }), // articles is in list
     });
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
     expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
       /^.*:\/api\/articles(\/.*)?(\?.*)?$/,
     ]);
-    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /api/articles');
+    expect(loggy.info).toHaveBeenCalledWith("Invalidated cache for /api/articles");
   });
 
-  it('should invalidate all entities when cacheableEntities is not configured (defaults to all cacheable)', async () => {
+  it("should invalidate all entities when cacheableEntities is not configured (defaults to all cacheable)", async () => {
     const event = {
       model: {
-        uid: 'api::article.article',
-        tableName: 'articles',
+        uid: "api::article.article",
+        tableName: "articles",
       },
     };
 
     const contentType = {
-      kind: 'collectionType',
+      kind: "collectionType",
       info: {
-        pluralName: 'articles',
+        pluralName: "articles",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
     mockStrapi.plugin.mockReturnValue({
       config: mockPluginConfig({ cacheableEntities: null }), // null/falsy means cacheableRoutes decides
@@ -294,30 +294,30 @@ describe('invalidateCache', () => {
     expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
       /^.*:\/api\/articles(\/.*)?(\?.*)?$/,
     ]);
-    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /api/articles');
+    expect(loggy.info).toHaveBeenCalledWith("Invalidated cache for /api/articles");
   });
 
-  it('should skip invalidation when route is not in cacheableRoutes', async () => {
+  it("should skip invalidation when route is not in cacheableRoutes", async () => {
     const event = {
       model: {
-        uid: 'api::accommodation.accommodation',
-        tableName: 'accommodations',
+        uid: "api::accommodation.accommodation",
+        tableName: "accommodations",
       },
     };
 
     const contentType = {
-      kind: 'collectionType',
+      kind: "collectionType",
       info: {
-        singularName: 'accommodation',
-        pluralName: 'accommodations',
+        singularName: "accommodation",
+        pluralName: "accommodations",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
     mockStrapi.plugin.mockReturnValue({
       config: mockPluginConfig({
-        cacheableRoutes: ['/api/transversal-info', '/api/translations', '/api/footer'],
+        cacheableRoutes: ["/api/transversal-info", "/api/translations", "/api/footer"],
       }),
     });
 
@@ -325,31 +325,31 @@ describe('invalidateCache', () => {
 
     expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
     expect(loggy.info).toHaveBeenCalledWith(
-      'Not invalidated. /api/accommodations is not cacheable.'
+      "Not invalidated. /api/accommodations is not cacheable.",
     );
   });
 
-  it('should invalidate single type cache when route is in cacheableRoutes', async () => {
+  it("should invalidate single type cache when route is in cacheableRoutes", async () => {
     const event = {
       model: {
-        uid: 'api::transversal-info.transversal-info',
-        tableName: 'transversal_infos',
+        uid: "api::transversal-info.transversal-info",
+        tableName: "transversal_infos",
       },
     };
 
     const contentType = {
-      kind: 'singleType',
+      kind: "singleType",
       info: {
-        singularName: 'transversal-info',
-        pluralName: 'transversal-infos',
+        singularName: "transversal-info",
+        pluralName: "transversal-infos",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
     mockStrapi.plugin.mockReturnValue({
       config: mockPluginConfig({
-        cacheableRoutes: ['/api/transversal-info', '/api/translations', '/api/footer'],
+        cacheableRoutes: ["/api/transversal-info", "/api/translations", "/api/footer"],
       }),
     });
 
@@ -358,44 +358,44 @@ describe('invalidateCache', () => {
     expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([
       /^.*:\/api\/transversal-info(\/.*)?(\?.*)?$/,
     ]);
-    expect(loggy.info).toHaveBeenCalledWith('Invalidated cache for /api/transversal-info');
+    expect(loggy.info).toHaveBeenCalledWith("Invalidated cache for /api/transversal-info");
   });
 
-  it('should let excludeRoutes take precedence over cacheableEntities', async () => {
+  it("should let excludeRoutes take precedence over cacheableEntities", async () => {
     const event = {
       model: {
-        uid: 'api::article.article',
-        tableName: 'articles',
+        uid: "api::article.article",
+        tableName: "articles",
       },
     };
 
     const contentType = {
-      kind: 'collectionType',
+      kind: "collectionType",
       info: {
-        singularName: 'article',
-        pluralName: 'articles',
+        singularName: "article",
+        pluralName: "articles",
       },
     };
 
-    mockStrapi.config.get.mockReturnValue('/api');
+    mockStrapi.config.get.mockReturnValue("/api");
     mockStrapi.contentType.mockReturnValue(contentType);
     mockStrapi.plugin.mockReturnValue({
       config: mockPluginConfig({
-        cacheableEntities: ['articles'],
-        excludeRoutes: ['/api/articles/private', '/api/articles'],
+        cacheableEntities: ["articles"],
+        excludeRoutes: ["/api/articles/private", "/api/articles"],
       }),
     });
 
     await invalidateCache(event, mockCacheStore, mockStrapi);
 
     expect(mockCacheStore.clearByRegexp).not.toHaveBeenCalled();
-    expect(loggy.info).toHaveBeenCalledWith('Not invalidated. /api/articles is not cacheable.');
+    expect(loggy.info).toHaveBeenCalledWith("Not invalidated. /api/articles is not cacheable.");
   });
 });
 
-describe('invalidateGraphqlCache', () => {
-  let mockCacheStore: Pick<CacheProvider, 'clearByRegexp'>;
-  let mockStrapi: Pick<Core.Strapi, 'contentType' | 'plugin'>;
+describe("invalidateGraphqlCache", () => {
+  let mockCacheStore: Pick<CacheProvider, "clearByRegexp">;
+  let mockStrapi: Pick<Core.Strapi, "contentType" | "plugin">;
 
   beforeEach(() => {
     mockCacheStore = {
@@ -405,7 +405,7 @@ describe('invalidateGraphqlCache', () => {
     mockStrapi = {
       contentType: vi.fn(),
       plugin: vi.fn((name: string) => ({
-        config: vi.fn(() => (name === 'graphql' ? '/graphql' : undefined)),
+        config: vi.fn(() => (name === "graphql" ? "/graphql" : undefined)),
       })),
     };
 
@@ -416,56 +416,56 @@ describe('invalidateGraphqlCache', () => {
     vi.restoreAllMocks();
   });
 
-  it('purges mapped custom resolvers on dependency changes while preserving unrelated queries', async () => {
+  it("purges mapped custom resolvers on dependency changes while preserving unrelated queries", async () => {
     const config: Record<string, unknown> = {
       max: 100,
       ttl: 3_600_000,
       size: 1024,
       allowStale: false,
       graphqlDependencies: {
-        eventByUUID: ['api::event.event', 'api::event-start-date.event-start-date'],
+        eventByUUID: ["api::event.event", "api::event-start-date.event-start-date"],
       },
     };
     const strapi = {
       contentType: vi.fn((uid: string) => ({
         info:
-          uid === 'api::event.event'
-            ? { singularName: 'event', pluralName: 'events' }
-            : uid === 'api::event-start-date.event-start-date'
-              ? { singularName: 'event-start-date', pluralName: 'event-start-dates' }
-              : { singularName: 'article', pluralName: 'articles' },
+          uid === "api::event.event"
+            ? { singularName: "event", pluralName: "events" }
+            : uid === "api::event-start-date.event-start-date"
+              ? { singularName: "event-start-date", pluralName: "event-start-dates" }
+              : { singularName: "article", pluralName: "articles" },
       })),
       plugin: vi.fn((name: string) => ({
         config: vi.fn((key: string, fallback?: unknown) =>
-          name === 'graphql' ? '/graphql' : config[key] ?? fallback
+          name === "graphql" ? "/graphql" : (config[key] ?? fallback),
         ),
       })),
     } as unknown as Core.Strapi;
     const cacheStore = new InMemoryCacheProvider(strapi);
     cacheStore.init();
-    const cachedResponse = { data: { blockingText: 'Lieber Ehrengast,' } };
-    const graphqlKeys = (['GET', 'POST'] as const).map((method) =>
+    const cachedResponse = { data: { blockingText: "Lieber Ehrengast," } };
+    const graphqlKeys = (["GET", "POST"] as const).map((method) =>
       generateGraphqlCacheKey(
         JSON.stringify({ query: '{ eventByUUID(uuid: "test-uuid") { blockingText } }' }),
         method,
-        ['eventByUUID'],
-        strapi
-      )
+        ["eventByUUID"],
+        strapi,
+      ),
     );
     const unrelatedKey = generateGraphqlCacheKey(
-      '{ guestRegistration { title } }',
-      'POST',
-      ['guestRegistration'],
-      strapi
+      "{ guestRegistration { title } }",
+      "POST",
+      ["guestRegistration"],
+      strapi,
     );
-    const restKey = 'GET:/api/events/test-uuid';
+    const restKey = "GET:/api/events/test-uuid";
     await cacheStore.set(unrelatedKey, cachedResponse);
     await cacheStore.set(restKey, cachedResponse);
 
     for (const uid of [
-      'api::event.event',
-      'api::event-start-date.event-start-date',
-      'api::article.article',
+      "api::event.event",
+      "api::event-start-date.event-start-date",
+      "api::article.article",
     ]) {
       for (const key of graphqlKeys) {
         await cacheStore.set(key, cachedResponse);
@@ -475,7 +475,7 @@ describe('invalidateGraphqlCache', () => {
       await invalidateGraphqlCache({ model: { uid } }, cacheStore, strapi);
 
       for (const key of graphqlKeys) {
-        if (uid === 'api::article.article') {
+        if (uid === "api::article.article") {
           expect(await cacheStore.get(key)).toEqual(cachedResponse);
         } else {
           expect(await cacheStore.get(key)).toBeUndefined();
@@ -486,10 +486,10 @@ describe('invalidateGraphqlCache', () => {
     }
   });
 
-  it('should invalidate GraphQL cache for specific collection only', async () => {
-    const event = { model: { uid: 'api::article.article' } };
+  it("should invalidate GraphQL cache for specific collection only", async () => {
+    const event = { model: { uid: "api::article.article" } };
     mockStrapi.contentType.mockReturnValue({
-      info: { singularName: 'article', pluralName: 'articles' },
+      info: { singularName: "article", pluralName: "articles" },
     });
 
     await invalidateGraphqlCache(event, mockCacheStore, mockStrapi);
@@ -498,44 +498,44 @@ describe('invalidateGraphqlCache', () => {
       /^(GET|POST):\/graphql:[^:]*\b(article|articles)\b[^:]*:/,
     ]);
     expect(loggy.info).toHaveBeenCalledWith(
-      'Invalidated GraphQL cache for api::article.article (article, articles)'
+      "Invalidated GraphQL cache for api::article.article (article, articles)",
     );
   });
 
-  it('should purge all GraphQL cache when content type not found', async () => {
-    const event = { model: { uid: 'api::unknown.unknown' } };
+  it("should purge all GraphQL cache when content type not found", async () => {
+    const event = { model: { uid: "api::unknown.unknown" } };
     mockStrapi.contentType.mockReturnValue(null);
 
     await invalidateGraphqlCache(event, mockCacheStore, mockStrapi);
 
     expect(mockCacheStore.clearByRegexp).toHaveBeenCalledWith([/^(GET|POST):\/graphql.*/]);
     expect(loggy.info).toHaveBeenCalledWith(
-      'Content type api::unknown.unknown not found, purging all GraphQL cache'
+      "Content type api::unknown.unknown not found, purging all GraphQL cache",
     );
   });
 
-  it('should handle cache store errors gracefully', async () => {
-    const event = { model: { uid: 'api::article.article' } };
+  it("should handle cache store errors gracefully", async () => {
+    const event = { model: { uid: "api::article.article" } };
     mockStrapi.contentType.mockReturnValue({
-      info: { singularName: 'article', pluralName: 'articles' },
+      info: { singularName: "article", pluralName: "articles" },
     });
-    const error = new Error('GraphQL cache store error');
+    const error = new Error("GraphQL cache store error");
     mockCacheStore.clearByRegexp.mockRejectedValue(error);
 
     await invalidateGraphqlCache(event, mockCacheStore, mockStrapi);
 
     expect(mockCacheStore.clearByRegexp).toHaveBeenCalled();
-    expect(loggy.error).toHaveBeenCalledWith('GraphQL cache invalidation error:');
+    expect(loggy.error).toHaveBeenCalledWith("GraphQL cache invalidation error:");
     expect(loggy.error).toHaveBeenCalledWith(error);
   });
 
-  it('should create regex that matches GraphQL cache keys with root fields', () => {
+  it("should create regex that matches GraphQL cache keys with root fields", () => {
     const regex = /^(GET|POST):\/graphql:[^:]*\b(article|articles)\b[^:]*:/;
 
-    expect(regex.test('POST:/graphql:article,category:abc123')).toBe(true);
-    expect(regex.test('POST:/graphql:articles:xyz')).toBe(true);
-    expect(regex.test('GET:/graphql:article:hash')).toBe(true);
-    expect(regex.test('POST:/graphql:category,author:hash')).toBe(false);
-    expect(regex.test('POST:/api/articles')).toBe(false);
+    expect(regex.test("POST:/graphql:article,category:abc123")).toBe(true);
+    expect(regex.test("POST:/graphql:articles:xyz")).toBe(true);
+    expect(regex.test("GET:/graphql:article:hash")).toBe(true);
+    expect(regex.test("POST:/graphql:category,author:hash")).toBe(false);
+    expect(regex.test("POST:/api/articles")).toBe(false);
   });
 });

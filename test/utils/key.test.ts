@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   getCustomCacheKey,
   generateCacheKey,
@@ -6,27 +6,27 @@ import {
   escapeRegExp,
   generateEntityKey,
   resolveGraphqlCacheKey,
-} from '../../server/src/utils/key';
-import { Context } from 'koa';
+} from "../../server/src/utils/key";
+import { Context } from "koa";
 
-describe('getCustomCacheKey', () => {
-  it('should return custom key when generator returns a string', () => {
+describe("getCustomCacheKey", () => {
+  it("should return custom key when generator returns a string", () => {
     const mockContext = {
       request: {
-        url: '/api/articles',
-        method: 'GET',
+        url: "/api/articles",
+        method: "GET",
       },
     } as Context;
 
-    const result = getCustomCacheKey(mockContext, () => 'custom-key');
-    expect(result).toBe('custom-key');
+    const result = getCustomCacheKey(mockContext, () => "custom-key");
+    expect(result).toBe("custom-key");
   });
 
-  it('should return undefined when generator is not provided', () => {
+  it("should return undefined when generator is not provided", () => {
     const mockContext = {
       request: {
-        url: '/api/articles',
-        method: 'GET',
+        url: "/api/articles",
+        method: "GET",
       },
     } as Context;
 
@@ -34,11 +34,11 @@ describe('getCustomCacheKey', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should return undefined when generator returns non-string', () => {
+  it("should return undefined when generator returns non-string", () => {
     const mockContext = {
       request: {
-        url: '/api/articles',
-        method: 'GET',
+        url: "/api/articles",
+        method: "GET",
       },
     } as Context;
 
@@ -47,26 +47,26 @@ describe('getCustomCacheKey', () => {
   });
 });
 
-describe('generateCacheKey', () => {
-  it('should generate cache key from context method and url', () => {
+describe("generateCacheKey", () => {
+  it("should generate cache key from context method and url", () => {
     const mockContext = {
       request: {
-        url: '/api/articles',
-        method: 'GET',
+        url: "/api/articles",
+        method: "GET",
       },
     } as Context;
 
     const result = generateCacheKey(mockContext);
-    expect(result).toBe('GET:/api/articles');
+    expect(result).toBe("GET:/api/articles");
   });
 
-  it('should handle different HTTP methods', () => {
-    const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+  it("should handle different HTTP methods", () => {
+    const methods = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 
     methods.forEach((method) => {
       const mockContext = {
         request: {
-          url: '/api/test',
+          url: "/api/test",
           method,
         },
       } as Context;
@@ -76,130 +76,130 @@ describe('generateCacheKey', () => {
     });
   });
 
-  it('should handle URLs with query parameters', () => {
+  it("should handle URLs with query parameters", () => {
     const mockContext = {
       request: {
-        url: '/api/articles?populate=*&sort=title',
-        method: 'GET',
+        url: "/api/articles?populate=*&sort=title",
+        method: "GET",
       },
     } as Context;
 
     const result = generateCacheKey(mockContext);
-    expect(result).toBe('GET:/api/articles?populate=*&sort=title');
+    expect(result).toBe("GET:/api/articles?populate=*&sort=title");
   });
 
-  it('should handle URLs with special characters', () => {
+  it("should handle URLs with special characters", () => {
     const mockContext = {
       request: {
-        url: '/api/articles/123?title=test&category=news&tags[]=tech&tags[]=web',
-        method: 'GET',
+        url: "/api/articles/123?title=test&category=news&tags[]=tech&tags[]=web",
+        method: "GET",
       },
     } as Context;
 
     const result = generateCacheKey(mockContext);
-    expect(result).toBe('GET:/api/articles/123?title=test&category=news&tags[]=tech&tags[]=web');
+    expect(result).toBe("GET:/api/articles/123?title=test&category=news&tags[]=tech&tags[]=web");
   });
 
-  it('should use custom key generator when provided', () => {
+  it("should use custom key generator when provided", () => {
     const mockContext = {
       request: {
-        url: '/api/articles',
-        method: 'GET',
+        url: "/api/articles",
+        method: "GET",
       },
     } as Context;
 
     const result = generateCacheKey(mockContext, (ctx) => `custom:${ctx.request.url}`);
-    expect(result).toBe('custom:/api/articles');
+    expect(result).toBe("custom:/api/articles");
   });
 
-  it('should fallback to default key when custom key generator returns non-string', () => {
+  it("should fallback to default key when custom key generator returns non-string", () => {
     const mockContext = {
       request: {
-        url: '/api/articles',
-        method: 'GET',
+        url: "/api/articles",
+        method: "GET",
       },
     } as Context;
 
     const result = generateCacheKey(mockContext, () => 123 as unknown as string);
-    expect(result).toBe('GET:/api/articles');
+    expect(result).toBe("GET:/api/articles");
   });
 });
 
-describe('resolveGraphqlCacheKey', () => {
-  it('should use custom key when generator returns a string', () => {
+describe("resolveGraphqlCacheKey", () => {
+  it("should use custom key when generator returns a string", () => {
     const mockContext = {
       request: {
-        url: '/graphql',
-        method: 'POST',
+        url: "/graphql",
+        method: "POST",
       },
     } as Context;
 
-    const result = resolveGraphqlCacheKey(mockContext, 'POST:/graphql:articles:hash', () => {
-      return 'custom:graphql:key';
+    const result = resolveGraphqlCacheKey(mockContext, "POST:/graphql:articles:hash", () => {
+      return "custom:graphql:key";
     });
 
-    expect(result).toBe('custom:graphql:key');
+    expect(result).toBe("custom:graphql:key");
   });
 
-  it('should fallback to generated GraphQL key when generator returns non-string', () => {
+  it("should fallback to generated GraphQL key when generator returns non-string", () => {
     const mockContext = {
       request: {
-        url: '/graphql',
-        method: 'POST',
+        url: "/graphql",
+        method: "POST",
       },
     } as Context;
 
     const result = resolveGraphqlCacheKey(
       mockContext,
-      'POST:/graphql:articles:hash',
-      () => null as unknown as string
+      "POST:/graphql:articles:hash",
+      () => null as unknown as string,
     );
 
-    expect(result).toBe('POST:/graphql:articles:hash');
+    expect(result).toBe("POST:/graphql:articles:hash");
   });
 });
 
-describe('generateGraphqlCacheKey', () => {
-  it('should generate GraphQL cache key with hashed payload', () => {
-    const payload = '{ user(id: 1) { name email } }';
+describe("generateGraphqlCacheKey", () => {
+  it("should generate GraphQL cache key with hashed payload", () => {
+    const payload = "{ user(id: 1) { name email } }";
     const result = generateGraphqlCacheKey(payload);
 
     expect(result).toMatch(/^POST:\/graphql:[^:]+:[A-Za-z0-9_-]+$/);
-    expect(result.startsWith('POST:/graphql:')).toBe(true);
+    expect(result.startsWith("POST:/graphql:")).toBe(true);
   });
 
-  it('should include root fields in key for collection-based purging', () => {
-    const payload = '{ articles { title content } }';
-    const result = generateGraphqlCacheKey(payload, 'POST', ['articles']);
+  it("should include root fields in key for collection-based purging", () => {
+    const payload = "{ articles { title content } }";
+    const result = generateGraphqlCacheKey(payload, "POST", ["articles"]);
 
     expect(result).toMatch(/^POST:\/graphql:articles:[A-Za-z0-9_-]+$/);
   });
 
-  it('should sort root fields for consistent keys', () => {
-    const payload = 'query { category { id } article { id } }';
-    const result = generateGraphqlCacheKey(payload, 'POST', ['category', 'article']);
+  it("should sort root fields for consistent keys", () => {
+    const payload = "query { category { id } article { id } }";
+    const result = generateGraphqlCacheKey(payload, "POST", ["category", "article"]);
 
     expect(result).toMatch(/^POST:\/graphql:article,category:[A-Za-z0-9_-]+$/);
   });
 
-  it('should use underscore when no root fields', () => {
-    const payload = '';
-    const result = generateGraphqlCacheKey(payload, 'POST', []);
+  it("should use underscore when no root fields", () => {
+    const payload = "";
+    const result = generateGraphqlCacheKey(payload, "POST", []);
 
     expect(result).toMatch(/^POST:\/graphql:_:[A-Za-z0-9_-]+$/);
   });
 
-  it('should generate consistent hash for same payload', () => {
-    const payload = '{ articles { title content } }';
-    const result1 = generateGraphqlCacheKey(payload, 'POST', ['articles']);
-    const result2 = generateGraphqlCacheKey(payload, 'POST', ['articles']);
+  it("should generate consistent hash for same payload", () => {
+    const payload = "{ articles { title content } }";
+    const result1 = generateGraphqlCacheKey(payload, "POST", ["articles"]);
+    const result2 = generateGraphqlCacheKey(payload, "POST", ["articles"]);
 
     expect(result1).toBe(result2);
   });
 
-  it('should generate different hashes for different payloads', () => {
-    const payload1 = '{ user(id: 1) { name } }';
-    const payload2 = '{ user(id: 2) { name } }';
+  it("should generate different hashes for different payloads", () => {
+    const payload1 = "{ user(id: 1) { name } }";
+    const payload2 = "{ user(id: 2) { name } }";
 
     const result1 = generateGraphqlCacheKey(payload1);
     const result2 = generateGraphqlCacheKey(payload2);
@@ -207,21 +207,21 @@ describe('generateGraphqlCacheKey', () => {
     expect(result1).not.toBe(result2);
   });
 
-  it('should handle empty payload', () => {
-    const payload = '';
+  it("should handle empty payload", () => {
+    const payload = "";
     const result = generateGraphqlCacheKey(payload);
 
     expect(result).toMatch(/^POST:\/graphql:_:[A-Za-z0-9_-]+$/);
   });
 
-  it('should handle large payloads', () => {
-    const payload = 'x'.repeat(10000);
+  it("should handle large payloads", () => {
+    const payload = "x".repeat(10000);
     const result = generateGraphqlCacheKey(payload);
 
     expect(result).toMatch(/^POST:\/graphql:_:[A-Za-z0-9_-]+$/);
   });
 
-  it('should handle special characters in payload', () => {
+  it("should handle special characters in payload", () => {
     const payload = '{ query: "test with spaces & symbols !@#$%^&*()" }';
     const result = generateGraphqlCacheKey(payload);
 
@@ -229,121 +229,123 @@ describe('generateGraphqlCacheKey', () => {
   });
 });
 
-describe('escapeRegExp', () => {
-  it('should escape all special regex characters', () => {
-    const input = '.*+?^${}()|[]\\';
+describe("escapeRegExp", () => {
+  it("should escape all special regex characters", () => {
+    const input = ".*+?^${}()|[]\\";
     const result = escapeRegExp(input);
-    expect(result).toBe('\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\');
+    expect(result).toBe("\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\");
   });
 
-  it('should not modify normal characters', () => {
-    const input = 'hello world 123';
+  it("should not modify normal characters", () => {
+    const input = "hello world 123";
     const result = escapeRegExp(input);
-    expect(result).toBe('hello world 123');
+    expect(result).toBe("hello world 123");
   });
 
-  it('should handle empty string', () => {
-    const input = '';
+  it("should handle empty string", () => {
+    const input = "";
     const result = escapeRegExp(input);
-    expect(result).toBe('');
+    expect(result).toBe("");
   });
 
-  it('should handle strings with mixed special and normal characters', () => {
-    const input = 'test.*pattern^here';
+  it("should handle strings with mixed special and normal characters", () => {
+    const input = "test.*pattern^here";
     const result = escapeRegExp(input);
-    expect(result).toBe('test\\.\\*pattern\\^here');
+    expect(result).toBe("test\\.\\*pattern\\^here");
   });
 
-  it('should escape square brackets properly', () => {
-    const input = '[abc]';
+  it("should escape square brackets properly", () => {
+    const input = "[abc]";
     const result = escapeRegExp(input);
-    expect(result).toBe('\\[abc\\]');
+    expect(result).toBe("\\[abc\\]");
   });
 
-  it('should escape parentheses properly', () => {
-    const input = '(test)';
+  it("should escape parentheses properly", () => {
+    const input = "(test)";
     const result = escapeRegExp(input);
-    expect(result).toBe('\\(test\\)');
+    expect(result).toBe("\\(test\\)");
   });
 
-  it('should escape curly braces properly', () => {
-    const input = '{1,3}';
+  it("should escape curly braces properly", () => {
+    const input = "{1,3}";
     const result = escapeRegExp(input);
-    expect(result).toBe('\\{1,3\\}');
+    expect(result).toBe("\\{1,3\\}");
   });
 
-  it('should escape pipe character properly', () => {
-    const input = 'a|b';
+  it("should escape pipe character properly", () => {
+    const input = "a|b";
     const result = escapeRegExp(input);
-    expect(result).toBe('a\\|b');
+    expect(result).toBe("a\\|b");
   });
 
-  it('should escape plus character properly', () => {
-    const input = 'a+';
+  it("should escape plus character properly", () => {
+    const input = "a+";
     const result = escapeRegExp(input);
-    expect(result).toBe('a\\+');
+    expect(result).toBe("a\\+");
   });
 
-  it('should escape asterisk character properly', () => {
-    const input = 'a*';
+  it("should escape asterisk character properly", () => {
+    const input = "a*";
     const result = escapeRegExp(input);
-    expect(result).toBe('a\\*');
+    expect(result).toBe("a\\*");
   });
 
-  it('should escape question mark properly', () => {
-    const input = 'a?';
+  it("should escape question mark properly", () => {
+    const input = "a?";
     const result = escapeRegExp(input);
-    expect(result).toBe('a\\?');
+    expect(result).toBe("a\\?");
   });
 
-  it('should escape caret properly', () => {
-    const input = '^start';
+  it("should escape caret properly", () => {
+    const input = "^start";
     const result = escapeRegExp(input);
-    expect(result).toBe('\\^start');
+    expect(result).toBe("\\^start");
   });
 
-  it('should escape dollar sign properly', () => {
-    const input = 'end$';
+  it("should escape dollar sign properly", () => {
+    const input = "end$";
     const result = escapeRegExp(input);
-    expect(result).toBe('end\\$');
+    expect(result).toBe("end\\$");
   });
 
-  it('should escape backslash properly', () => {
-    const input = 'test\\path';
+  it("should escape backslash properly", () => {
+    const input = "test\\path";
     const result = escapeRegExp(input);
-    expect(result).toBe('test\\\\path');
+    expect(result).toBe("test\\\\path");
   });
 });
 
-describe('generateEntityKey', () => {
-  it('should extract entity name from URLs', () => {
-    const restApiPrefix = '/api';
+describe("generateEntityKey", () => {
+  it("should extract entity name from URLs", () => {
+    const restApiPrefix = "/api";
 
-    expect(generateEntityKey('/api/articles', restApiPrefix)).toBe('articles');
-    expect(generateEntityKey('/api/articles/123', restApiPrefix)).toBe('articles');
-    expect(generateEntityKey('/api/users', restApiPrefix)).toBe('users');
+    expect(generateEntityKey("/api/articles", restApiPrefix)).toBe("articles");
+    expect(generateEntityKey("/api/articles/123", restApiPrefix)).toBe("articles");
+    expect(generateEntityKey("/api/users", restApiPrefix)).toBe("users");
   });
 
-  it('should ignore query parameters', () => {
-    const restApiPrefix = '/api';
+  it("should ignore query parameters", () => {
+    const restApiPrefix = "/api";
 
-    expect(generateEntityKey('/api/articles?populate=*&sort=title', restApiPrefix)).toBe('articles');
-    expect(generateEntityKey('/api/articles/123?populate=author', restApiPrefix)).toBe('articles');
+    expect(generateEntityKey("/api/articles?populate=*&sort=title", restApiPrefix)).toBe(
+      "articles",
+    );
+    expect(generateEntityKey("/api/articles/123?populate=author", restApiPrefix)).toBe("articles");
   });
 
-  it('should handle custom REST API prefix', () => {
-    expect(generateEntityKey('/custom-api/users', '/custom-api')).toBe('users');
-    expect(generateEntityKey('/v2/api/products', '/v2/api')).toBe('products');
+  it("should handle custom REST API prefix", () => {
+    expect(generateEntityKey("/custom-api/users", "/custom-api")).toBe("users");
+    expect(generateEntityKey("/v2/api/products", "/v2/api")).toBe("products");
   });
 
-  it('should escape special regex characters in prefix', () => {
-    expect(generateEntityKey('/api.v2/articles', '/api.v2')).toBe('articles');
+  it("should escape special regex characters in prefix", () => {
+    expect(generateEntityKey("/api.v2/articles", "/api.v2")).toBe("articles");
   });
 
-  it('should return empty string for non-matching URLs', () => {
-    const restApiPrefix = '/api';
+  it("should return empty string for non-matching URLs", () => {
+    const restApiPrefix = "/api";
 
-    expect(generateEntityKey('/graphql', restApiPrefix)).toBe('');
-    expect(generateEntityKey('/other/articles', restApiPrefix)).toBe('');
+    expect(generateEntityKey("/graphql", restApiPrefix)).toBe("");
+    expect(generateEntityKey("/other/articles", restApiPrefix)).toBe("");
   });
 });

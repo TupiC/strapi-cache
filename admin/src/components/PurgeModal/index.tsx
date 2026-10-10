@@ -1,14 +1,14 @@
-import { useIntl } from 'react-intl';
-import { Archive } from '@strapi/icons';
-import { Button, Modal } from '@strapi/design-system';
-import { Typography } from '@strapi/design-system';
-import { useEffect } from 'react';
+import { useIntl } from "react-intl";
+import { Archive } from "@strapi/icons";
+import { Button, Modal } from "@strapi/design-system";
+import { Typography } from "@strapi/design-system";
+import { useEffect } from "react";
 import {
   useCacheConfig,
   useCachePermissions,
   useCacheOperations,
   useCacheNotifications,
-} from '../../hooks';
+} from "../../hooks";
 
 export type PurgeProps = {
   buttonText: string;
@@ -44,9 +44,9 @@ function PurgeModal({
     if (isPurgeAll) {
       const result = await clearAllCache();
       if (result.success) {
-        showPurgeSuccess('all keys');
+        showPurgeSuccess("all keys");
       } else {
-        showPurgeError('all keys');
+        showPurgeError("all keys");
       }
       return;
     }
@@ -92,16 +92,16 @@ function PurgeModal({
           <Typography variant="omega">
             {isPurgeAll
               ? formatMessage({
-                  id: 'strapi-cache.cache.purge.confirmation-all',
+                  id: "strapi-cache.cache.purge.confirmation-all",
                   defaultMessage:
-                    'This purges all items in the cache. Are you sure you want to purge the cache?',
+                    "This purges all items in the cache. Are you sure you want to purge the cache?",
                 })
               : formatMessage(
                   {
-                    id: 'strapi-cache.cache.purge.confirmation',
-                    defaultMessage: 'Are you sure you want to purge the cache?',
+                    id: "strapi-cache.cache.purge.confirmation",
+                    defaultMessage: "Are you sure you want to purge the cache?",
                   },
-                  { key: `"${keyToUse}"` }
+                  { key: `"${keyToUse}"` },
                 )}
           </Typography>
         </Modal.Body>
@@ -109,16 +109,16 @@ function PurgeModal({
           <Modal.Close>
             <Button variant="tertiary">
               {formatMessage({
-                id: 'strapi-cache.cache.cancel',
-                defaultMessage: 'No, cancel',
+                id: "strapi-cache.cache.cancel",
+                defaultMessage: "No, cancel",
               })}
             </Button>
           </Modal.Close>
           <Modal.Close>
             <Button onClick={handleClearCache}>
               {formatMessage({
-                id: 'strapi-cache.cache.confirm',
-                defaultMessage: 'Yes, confirm',
+                id: "strapi-cache.cache.confirm",
+                defaultMessage: "Yes, confirm",
               })}
             </Button>
           </Modal.Close>

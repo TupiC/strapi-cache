@@ -1,47 +1,47 @@
 export default [
   {
-    method: 'POST',
-    path: '/purge-cache',
-    handler: 'controller.purgeCache',
+    method: "POST",
+    path: "/purge-cache",
+    handler: "controller.purgeCache",
     config: {
       policies: [
-        'admin::isAuthenticatedAdmin',
+        "admin::isAuthenticatedAdmin",
         {
-          name: 'plugin::content-manager.hasPermissions',
+          name: "plugin::content-manager.hasPermissions",
           config: {
-            actions: ['plugin::strapi-cache.purge-cache'],
+            actions: ["plugin::strapi-cache.purge-cache"],
           },
         },
       ],
     },
   },
   {
-    method: 'POST',
-    path: '/purge-cache/key',
-    handler: 'controller.purgeCacheByKey',
+    method: "POST",
+    path: "/purge-cache/key",
+    handler: "controller.purgeCacheByKey",
     config: {
       policies: [
-        'admin::isAuthenticatedAdmin',
+        "admin::isAuthenticatedAdmin",
         {
-          name: 'plugin::content-manager.hasPermissions',
+          name: "plugin::content-manager.hasPermissions",
           config: {
-            actions: ['plugin::strapi-cache.purge-cache'],
+            actions: ["plugin::strapi-cache.purge-cache"],
           },
         },
       ],
     },
   },
   {
-    method: 'GET',
-    path: '/config',
-    handler: 'controller.config',
+    method: "GET",
+    path: "/config",
+    handler: "controller.config",
     config: {
       policies: [
-        'admin::isAuthenticatedAdmin',
+        "admin::isAuthenticatedAdmin",
         {
-          name: 'plugin::content-manager.hasPermissions',
+          name: "plugin::content-manager.hasPermissions",
           config: {
-            actions: ['plugin::strapi-cache.purge-cache'],
+            actions: ["plugin::strapi-cache.purge-cache"],
           },
         },
       ],
