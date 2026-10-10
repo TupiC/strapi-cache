@@ -1,6 +1,6 @@
 {
   "name": "strapi-cache",
-  "version": "1.12.3",
+  "version": "1.12.4",
   "description": "An LRU-Cache plugin for strapi v5",
   "keywords": [
     "strapi 5 cache",
