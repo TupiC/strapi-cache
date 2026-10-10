@@ -33,7 +33,7 @@ export const useCacheConfig = (enabled: boolean = true) => {
       }
     };
 
-    fetchConfig();
+    void fetchConfig();
   }, [enabled, get]);
 
   return {
@@ -54,7 +54,7 @@ export const useCacheConfig = (enabled: boolean = true) => {
           setIsLoading(false);
         }
       };
-      fetchConfig();
+      void fetchConfig();
     },
   };
 };
