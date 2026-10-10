@@ -1,5 +1,6 @@
 import { Context } from "koa";
 import { OutgoingHttpHeaders } from "http";
+import type { Core } from "@strapi/strapi";
 
 const encodedBodyHeaders = new Set([
   "content-encoding",
@@ -54,15 +55,15 @@ export function getHeadersForUncompressedBody(
   );
 }
 
-export function getCacheHeaderConfig() {
-  const cacheHeaders = strapi.plugin("strapi-cache").config("cacheHeaders") as boolean;
-  const cacheHeadersDenyList = strapi
+export function getCacheHeaderConfig(instance: Core.Strapi = strapi) {
+  const cacheHeaders = instance.plugin("strapi-cache").config("cacheHeaders") as boolean;
+  const cacheHeadersDenyList = instance
     .plugin("strapi-cache")
     .config("cacheHeadersDenyList") as string[];
-  const cacheHeadersAllowList = strapi
+  const cacheHeadersAllowList = instance
     .plugin("strapi-cache")
     .config("cacheHeadersAllowList") as string[];
-  const cacheAuthorizedRequests = strapi
+  const cacheAuthorizedRequests = instance
     .plugin("strapi-cache")
     .config("cacheAuthorizedRequests") as boolean;
 

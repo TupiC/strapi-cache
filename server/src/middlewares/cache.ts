@@ -1,5 +1,5 @@
 import { Context } from "koa";
-import { CacheKeyGenerator, generateCacheKey, generateEntityKey } from "../utils/key";
+import { generateCacheKey, generateEntityKey } from "../utils/key";
 import { CacheService } from "../../src/types/cache.types";
 import { loggy } from "../utils/log";
 import Stream from "stream";
@@ -9,12 +9,9 @@ import {
   streamToBuffer,
   toWireReadyBody,
 } from "../utils/body";
-import {
-  getCacheHeaderConfig,
-  getHeadersForUncompressedBody,
-  getHeadersToStore,
-} from "../utils/header";
-import { applyCorsHeaders, getCorsConfig, resolveCorsOrigin } from "../utils/cors";
+import { getHeadersForUncompressedBody, getHeadersToStore } from "../utils/header";
+import { applyCorsHeaders, resolveCorsOrigin } from "../utils/cors";
+import { getRestCacheSettings } from "../utils/restSettings";
 
 const middleware = async (ctx: Context, next: any) => {
   const { url, method } = ctx.request;
@@ -23,12 +20,19 @@ const middleware = async (ctx: Context, next: any) => {
     return next();
   }
 
-  const cacheableEntities = strapi.plugin("strapi-cache").config("cacheableEntities") as
-    | string[]
-    | undefined;
-  const cacheableRoutes = strapi.plugin("strapi-cache").config("cacheableRoutes") as string[];
-  const excludeRoutes = strapi.plugin("strapi-cache").config("excludeRoutes") as string[];
-  const restApiPrefix = strapi.config.get("api.rest.prefix", "/api");
+  const {
+    cacheableEntities,
+    cacheableRoutes,
+    excludeRoutes,
+    restApiPrefix,
+    entityMatcher,
+    cacheHeaders,
+    cacheHeadersDenyList,
+    cacheHeadersAllowList,
+    cacheAuthorizedRequests,
+    keyGenerator,
+    corsConfig,
+  } = getRestCacheSettings(strapi);
   const routeIsExcluded = excludeRoutes.some((route) => url.startsWith(route));
 
   if (routeIsExcluded) {
@@ -36,7 +40,7 @@ const middleware = async (ctx: Context, next: any) => {
     return next();
   }
 
-  const entityKey = generateEntityKey(url, restApiPrefix);
+  const entityKey = generateEntityKey(url, entityMatcher);
   const entityIsCacheable = cacheableEntities?.length
     ? cacheableEntities.includes(entityKey)
     : undefined;
@@ -49,8 +53,6 @@ const middleware = async (ctx: Context, next: any) => {
     return next();
   }
 
-  const { cacheHeaders, cacheHeadersDenyList, cacheHeadersAllowList, cacheAuthorizedRequests } =
-    getCacheHeaderConfig();
   const cacheControlHeader = ctx.request.headers["cache-control"];
   const noCache = cacheControlHeader && cacheControlHeader.includes("no-cache");
   const authorizationHeader = ctx.request.headers["authorization"];
@@ -65,15 +67,10 @@ const middleware = async (ctx: Context, next: any) => {
   }
 
   const cacheService = strapi.plugin("strapi-cache").services.service as CacheService;
-  const keyGenerator = strapi.plugin("strapi-cache").config("keyGenerator") as
-    | CacheKeyGenerator
-    | undefined;
   const cacheStore = cacheService.getCacheInstance();
   const key = generateCacheKey(ctx, keyGenerator);
   const cacheEntry = await cacheStore.get(key);
 
-  const middlewaresConfig = strapi.config.get("middlewares") as any[];
-  const corsConfig = getCorsConfig(middlewaresConfig);
   const corsOrigin = corsConfig ? await resolveCorsOrigin(ctx, corsConfig) : "";
 
   if (cacheEntry && !noCache) {

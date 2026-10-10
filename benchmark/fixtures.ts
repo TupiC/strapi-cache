@@ -75,7 +75,13 @@ export const createStrapi = (provider?: CacheProvider, redisUrl?: string) => {
       name === "graphql" ? { config: (_key: string, fallback: unknown) => fallback } : cachePlugin,
     config: {
       get: (key: string, fallback?: unknown) =>
-        key === "middlewares" ? middlewares : key === "api.rest.prefix" ? "/api" : fallback,
+        key === "plugin::strapi-cache"
+          ? settings
+          : key === "middlewares"
+            ? middlewares
+            : key === "api.rest.prefix"
+              ? "/api"
+              : fallback,
     },
     log: { info: () => undefined, error: () => undefined, warn: () => undefined },
   };

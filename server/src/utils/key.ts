@@ -53,8 +53,12 @@ export const generateGraphqlCacheKey = (
 
 export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-export const generateEntityKey = (url: string, restApiPrefix: string): string => {
-  const regex = new RegExp(`${restApiPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/([^/?]*)`);
+export const createEntityKeyMatcher = (restApiPrefix: string): RegExp =>
+  new RegExp(`${escapeRegExp(restApiPrefix)}/([^/?]*)`);
+
+export const generateEntityKey = (url: string, restApiPrefix: string | RegExp): string => {
+  const regex =
+    typeof restApiPrefix === "string" ? createEntityKeyMatcher(restApiPrefix) : restApiPrefix;
   const match = url.match(regex);
   return match ? match[1] : "";
 };

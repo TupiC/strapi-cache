@@ -3,6 +3,7 @@ import { Context } from "koa";
 import { Readable } from "stream";
 import { gzipSync } from "zlib";
 import cacheMiddleware from "../../server/src/middlewares/cache";
+import { invalidateRestCacheSettings } from "../../server/src/utils/restSettings";
 
 describe("cache middleware", () => {
   const mockCacheStore = {
@@ -50,6 +51,18 @@ describe("cache middleware", () => {
     }),
     config: {
       get: vi.fn((key: string, defaultValue?: unknown) => {
+        if (key === "plugin::strapi-cache") {
+          return {
+            cacheableEntities: undefined,
+            cacheableRoutes,
+            excludeRoutes,
+            keyGenerator,
+            cacheHeaders: false,
+            cacheHeadersDenyList: [],
+            cacheHeadersAllowList: [],
+            cacheAuthorizedRequests,
+          };
+        }
         if (key === "api.rest.prefix") {
           return "/api";
         }
@@ -64,6 +77,7 @@ describe("cache middleware", () => {
   vi.stubGlobal("strapi", mockStrapi);
 
   beforeEach(() => {
+    invalidateRestCacheSettings(mockStrapi as any);
     vi.clearAllMocks();
     cacheableRoutes = [];
     excludeRoutes = [];
@@ -110,6 +124,50 @@ describe("cache middleware", () => {
     expect(keyGenerator).toHaveBeenCalledWith(ctx, "GET:/api/articles?populate=*");
     expect(mockCacheStore.get).toHaveBeenCalledWith("custom:GET:/api/articles?populate=*");
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it("reuses routing and CORS configuration across cached requests", async () => {
+    await cacheMiddleware(createContext(), vi.fn());
+    await cacheMiddleware(createContext(), vi.fn());
+
+    expect(pluginConfig.mock.calls.filter(([key]) => key === "cacheableRoutes")).toHaveLength(0);
+    expect(pluginConfig.mock.calls.filter(([key]) => key === "keyGenerator")).toHaveLength(0);
+    expect(
+      mockStrapi.config.get.mock.calls.filter(([key]) => key === "plugin::strapi-cache"),
+    ).toHaveLength(2);
+    expect(
+      mockStrapi.config.get.mock.calls.filter(([key]) => key === "api.rest.prefix"),
+    ).toHaveLength(2);
+    expect(mockStrapi.config.get.mock.calls.filter(([key]) => key === "middlewares")).toHaveLength(
+      2,
+    );
+    expect(mockCacheStore.get).toHaveBeenCalledTimes(2);
+  });
+
+  it("resolves asynchronous CORS origins separately for every cached request", async () => {
+    const origin = vi.fn(async (ctx: Context) => ctx.request.headers.origin);
+    const originalGet = mockStrapi.config.get.getMockImplementation()!;
+    mockStrapi.config.get.mockImplementation((key: string, fallback?: unknown) => {
+      if (key === "middlewares") return [{ name: "strapi::cors", config: { origin } }];
+      return originalGet(key, fallback);
+    });
+    try {
+      const a = createContext({ headers: { origin: "https://a.test" } });
+      const b = createContext({ headers: { origin: "https://b.test" } });
+      await cacheMiddleware(a, vi.fn());
+      await cacheMiddleware(b, vi.fn());
+
+      expect(origin).toHaveBeenCalledTimes(2);
+      expect(origin).toHaveBeenNthCalledWith(1, a);
+      expect(origin).toHaveBeenNthCalledWith(2, b);
+      expect(a.set).toHaveBeenCalledWith("Access-Control-Allow-Origin", "https://a.test");
+      expect(b.set).toHaveBeenCalledWith("Access-Control-Allow-Origin", "https://b.test");
+      expect(
+        mockStrapi.config.get.mock.calls.filter(([key]) => key === "middlewares"),
+      ).toHaveLength(2);
+    } finally {
+      mockStrapi.config.get.mockImplementation(originalGet);
+    }
   });
 
   it("bypasses the cache before lookup for non-GET requests", async () => {
