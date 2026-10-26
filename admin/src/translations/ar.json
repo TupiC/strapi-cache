@@ -1,0 +1,16 @@
+{
+  "strapi-cache.name": "Strapi-Cache",
+  "strapi-cache.cache.purge": "مسح ذاكرة التخزين المؤقت",
+  "strapi-cache.cache.purge.entity": "مسح ذاكرة التخزين المؤقت للكيان",
+  "strapi-cache.cache.cancel": "لا، إلغاء",
+  "strapi-cache.cache.confirm": "نعم، امسح",
+  "strapi-cache.cache.purge.confirmation": "سيؤدي هذا إلى مسح جميع المفاتيح التي يكون {key} جزءًا منها. هل أنت متأكد أنك تريد مسح ذاكرة التخزين المؤقت؟",
+  "strapi-cache.cache.purge.confirmation-all": "سيؤدي هذا إلى مسح جميع العناصر في ذاكرة التخزين المؤقت. هل أنت متأكد أنك تريد مسح ذاكرة التخزين المؤقت؟",
+  "strapi-cache.cache.purge.success": "تم مسح ذاكرة التخزين المؤقت بنجاح لـ {key}",
+  "strapi-cache.cache.purge.error": "خطأ أثناء مسح ذاكرة التخزين المؤقت لـ {key}",
+  "strapi-cache.cache.purge.no-content-type": "لم يتم العثور على نوع محتوى",
+  "strapi-cache.cache.purge.all-keys": "جميع المفاتيح",
+  "strapi-cache.cache.routes.fetch-error": "تعذر جلب المسارات القابلة للتخزين المؤقت. قد لا يعمل مسح ذاكرة التخزين المؤقت بشكل صحيح.",
+  "strapi-cache.settings.description": "أدخل مفتاح ذاكرة التخزين المؤقت أدناه وانقر على 'مسح ذاكرة التخزين المؤقت' لمسح محتوى محدد.",
+  "strapi-cache.settings.key-placeholder": "أدخل مفتاح ذاكرة التخزين المؤقت للمسح"
+}

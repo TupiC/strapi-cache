@@ -1,0 +1,16 @@
+{
+  "strapi-cache.name": "Strapi-Cache",
+  "strapi-cache.cache.purge": "Önbelleği Temizle",
+  "strapi-cache.cache.purge.entity": "Varlık Önbelleğini Temizle",
+  "strapi-cache.cache.cancel": "Hayır, iptal et",
+  "strapi-cache.cache.confirm": "Evet, temizle",
+  "strapi-cache.cache.purge.confirmation": "Bu işlem, anahtarında {key} geçen tüm anahtarları temizler. Önbelleği temizlemek istediğinizden emin misiniz?",
+  "strapi-cache.cache.purge.confirmation-all": "Bu işlem önbellekteki tüm öğeleri temizler. Önbelleği temizlemek istediğinizden emin misiniz?",
+  "strapi-cache.cache.purge.success": "{key} için önbellek başarıyla temizlendi",
+  "strapi-cache.cache.purge.error": "{key} için önbellek temizlenirken hata oluştu",
+  "strapi-cache.cache.purge.no-content-type": "İçerik türü bulunamadı",
+  "strapi-cache.cache.purge.all-keys": "tüm anahtarlar",
+  "strapi-cache.cache.routes.fetch-error": "Önbelleğe alınabilir rotalar getirilemedi. Önbellek temizleme düzgün çalışmayabilir.",
+  "strapi-cache.settings.description": "Belirli önbelleğe alınmış içeriği temizlemek için aşağıya bir önbellek anahtarı girin ve 'Önbelleği Temizle' düğmesine tıklayın.",
+  "strapi-cache.settings.key-placeholder": "Temizlenecek önbellek anahtarını girin"
+}

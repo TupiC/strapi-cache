@@ -42,11 +42,15 @@ function PurgeModal({
 
   const handleClearCache = async () => {
     if (isPurgeAll) {
+      const allKeys = formatMessage({
+        id: "strapi-cache.cache.purge.all-keys",
+        defaultMessage: "all keys",
+      });
       const result = await clearAllCache();
       if (result.success) {
-        showPurgeSuccess("all keys");
+        showPurgeSuccess(allKeys);
       } else {
-        showPurgeError("all keys");
+        showPurgeError(allKeys);
       }
       return;
     }
