@@ -2,6 +2,7 @@ import { Core } from "@strapi/strapi";
 import { CacheProvider } from "src/types/cache.types";
 import { loggy } from "./log";
 import { UID } from "@strapi/strapi";
+import { runOnPurge } from "./onPurge";
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const getGraphqlEndpoint = (strapi: Core.Strapi) =>
@@ -57,6 +58,7 @@ export async function invalidateCache(event: any, cacheStore: CacheProvider, str
 
     await cacheStore.clearByRegexp([regex]);
     loggy.info(`Invalidated cache for ${apiPath}`);
+    await runOnPurge(strapi, { scope: "rest", source: "auto", key: apiPath });
   } catch (error) {
     loggy.error("Cache invalidation error:");
     loggy.error(error);
@@ -76,6 +78,7 @@ export async function invalidateGraphqlCache(
       loggy.info(`Content type ${model.uid} not found, purging all GraphQL cache`);
       const graphqlRegex = getGraphqlAllKeysRegex(strapi);
       await cacheStore.clearByRegexp([graphqlRegex]);
+      await runOnPurge(strapi, { scope: "graphql", source: "auto" });
       return;
     }
 
@@ -94,6 +97,7 @@ export async function invalidateGraphqlCache(
       loggy.info(`No field names for ${model.uid}, purging all GraphQL cache`);
       const graphqlRegex = getGraphqlAllKeysRegex(strapi);
       await cacheStore.clearByRegexp([graphqlRegex]);
+      await runOnPurge(strapi, { scope: "graphql", source: "auto" });
       return;
     }
 
@@ -104,6 +108,7 @@ export async function invalidateGraphqlCache(
 
     await cacheStore.clearByRegexp([graphqlRegex]);
     loggy.info(`Invalidated GraphQL cache for ${model.uid} (${fieldNames.join(", ")})`);
+    await runOnPurge(strapi, { scope: "graphql", source: "auto", key: model.uid });
   } catch (error) {
     loggy.error("GraphQL cache invalidation error:");
     loggy.error(error);
