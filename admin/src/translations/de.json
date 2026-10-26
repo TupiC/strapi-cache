@@ -11,5 +11,6 @@
   "strapi-cache.cache.purge.no-content-type": "Kein Inhaltstyp gefunden",
   "strapi-cache.cache.routes.fetch-error": "Cacheable-Routen konnten nicht abgerufen werden. Die Cache-Löschung funktioniert möglicherweise nicht korrekt.",
   "strapi-cache.settings.description": "Geben Sie unten einen Cache-Schlüssel ein und klicken Sie auf 'Cache leeren', um bestimmte gecachte Inhalte zu löschen.",
-  "strapi-cache.settings.key-placeholder": "Cache-Schlüssel zum Leeren eingeben"
+  "strapi-cache.settings.key-placeholder": "Cache-Schlüssel zum Leeren eingeben",
+  "strapi-cache.cache.purge.all-keys": "alle Schlüssel"
 }

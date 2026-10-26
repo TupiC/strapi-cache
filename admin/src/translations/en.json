@@ -11,5 +11,6 @@
   "strapi-cache.cache.purge.no-content-type": "No content type found",
   "strapi-cache.cache.routes.fetch-error": "Unable to fetch cacheable routes. Cache purge may not work correctly.",
   "strapi-cache.settings.description": "Enter a cache key below and click 'Purge Cache' to clear specific cached content.",
-  "strapi-cache.settings.key-placeholder": "Enter cache key to purge"
+  "strapi-cache.settings.key-placeholder": "Enter cache key to purge",
+  "strapi-cache.cache.purge.all-keys": "all keys"
 }
