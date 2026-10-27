@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.0](https://github.com/TupiC/strapi-cache/compare/v1.12.4...v1.13.0) (2026-10-27)
+
+
+### Features
+
+* **admin:** add es, ar, tr translations ([#145](https://github.com/TupiC/strapi-cache/issues/145)) ([b46c875](https://github.com/TupiC/strapi-cache/commit/b46c8756764f2f978dc42891332ea7a796a1e8f9))
+* **server:** add onPurge hook to react to cache purges ([#146](https://github.com/TupiC/strapi-cache/issues/146)) ([32050e9](https://github.com/TupiC/strapi-cache/commit/32050e97d28de4ccb73bc2f2039bfd52daf3b085))
+
 ## [1.12.4](https://github.com/TupiC/strapi-cache/compare/v1.12.3...v1.12.4) (2026-10-10)
 
 
