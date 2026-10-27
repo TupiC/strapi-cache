@@ -2,6 +2,7 @@ import type { Core } from "@strapi/strapi";
 import { Context } from "koa";
 import { CacheService } from "src/types/cache.types";
 import { escapeRegExp } from "../utils/key";
+import { runOnPurge } from "../utils/onPurge";
 
 interface PluginConfig {
   cacheableEntities?: string[];
@@ -15,6 +16,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     const service = strapi.plugin("strapi-cache").service("service") as CacheService;
 
     await service.getCacheInstance().reset();
+    await runOnPurge(strapi, { scope: "all", source: "admin" });
 
     ctx.body = {
       message: "Cache purged successfully",
@@ -35,6 +37,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     const regex = new RegExp(escapeRegExp(key));
 
     await service.getCacheInstance().clearByRegexp([regex]);
+    await runOnPurge(strapi, { scope: "key", source: "admin", key });
 
     ctx.body = {
       message: `Cache purged successfully for key: ${key}`,

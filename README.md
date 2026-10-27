@@ -93,6 +93,7 @@ Full configuration example:
     autoPurgeCacheOnStart: true, // Automatically purge cache on Strapi startup
     disableAdminPopups: false, // Disable popups in the admin panel
     disableAdminButtons: false, // Disable the purge cache buttons in the admin panel. Use true for all content types or an array like ['/api/products'] for specific content types
+    // onPurge: async ({ scope, source, key }) => {}, // (Optional) hook called after the cache was purged, e.g. to purge a CDN such as Cloudflare
   },
 },
 ```
@@ -128,6 +129,30 @@ Possible configuration keys are listed below; omitted keys keep the plugin defau
 | `autoPurgeCacheOnStart`   | Clear the cache when Strapi starts                                                                                                                                                                                                                                                                                                                     | `true` or `false` (default: `true`)                                                                                           |
 | `disableAdminPopups`      | Turn off admin UI notifications for cache actions                                                                                                                                                                                                                                                                                                      | `true` or `false` (default: `false`)                                                                                          |
 | `disableAdminButtons`     | Hide manual purge controls in the admin (list and edit views), either globally or for specific REST content type paths                                                                                                                                                                                                                                 | `true`, `false`, or an array of paths such as `['/api/products', '/api/tags']` (default: `false`)                             |
+| `onPurge`                 | Hook called after the cache was purged by the admin buttons or by automatic invalidation, e.g. to also purge a CDN. Receives `{ scope: 'all' \| 'key' \| 'rest' \| 'graphql', source: 'admin' \| 'auto', key? }`. Errors thrown by the hook are logged and do not affect the purge | Function `(event) => void \| Promise<void>` (default: unset) |
+
+### Purging a CDN (e.g. Cloudflare)
+
+Use `onPurge` to purge an external cache whenever the plugin purges its own:
+
+```javascript
+// config/plugins.{js,ts}
+'strapi-cache': {
+  enabled: true,
+  config: {
+    onPurge: async ({ scope, source, key }) => {
+      await fetch(`https://api.cloudflare.com/client/v4/zones/${process.env.CF_ZONE_ID}/purge_cache`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.CF_API_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ purge_everything: true }),
+      });
+    },
+  },
+},
+```
 
 ## 🔍 Routes
 

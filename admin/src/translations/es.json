@@ -1,0 +1,16 @@
+{
+  "strapi-cache.name": "Strapi-Cache",
+  "strapi-cache.cache.purge": "Purgar caché",
+  "strapi-cache.cache.purge.entity": "Purgar caché de la entidad",
+  "strapi-cache.cache.cancel": "No, cancelar",
+  "strapi-cache.cache.confirm": "Sí, purgar",
+  "strapi-cache.cache.purge.confirmation": "Esto purga todas las claves que contienen {key}. ¿Seguro que quieres purgar la caché?",
+  "strapi-cache.cache.purge.confirmation-all": "Esto purga todos los elementos de la caché. ¿Seguro que quieres purgar la caché?",
+  "strapi-cache.cache.purge.success": "Caché purgada correctamente para {key}",
+  "strapi-cache.cache.purge.error": "Error al purgar la caché para {key}",
+  "strapi-cache.cache.purge.no-content-type": "No se encontró ningún tipo de contenido",
+  "strapi-cache.cache.purge.all-keys": "todas las claves",
+  "strapi-cache.cache.routes.fetch-error": "No se pudieron obtener las rutas almacenables en caché. Es posible que la purga de la caché no funcione correctamente.",
+  "strapi-cache.settings.description": "Introduce una clave de caché abajo y haz clic en 'Purgar caché' para borrar contenido específico almacenado en caché.",
+  "strapi-cache.settings.key-placeholder": "Introduce la clave de caché a purgar"
+}

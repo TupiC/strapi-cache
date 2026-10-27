@@ -37,6 +37,7 @@ describe("config", () => {
         disableAdminButtons: false,
         disableAdminPopups: false,
         redisScanDeleteCount: 100,
+        onPurge: undefined,
       });
     });
 
