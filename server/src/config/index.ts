@@ -25,6 +25,7 @@ export default {
     disableAdminPopups: false,
     disableAdminButtons: false,
     redisScanDeleteCount: 100,
+    onPurge: undefined,
   }),
   validator: (config) => {
     if (typeof config.debug !== "boolean") {
@@ -152,6 +153,9 @@ export default {
     }
     if (typeof config.redisScanDeleteCount !== "number") {
       throw new Error(`Invalid config: redisScanDeleteCount must be a number`);
+    }
+    if (config.onPurge !== undefined && typeof config.onPurge !== "function") {
+      throw new Error(`Invalid config: onPurge must be a function`);
     }
   },
 };
